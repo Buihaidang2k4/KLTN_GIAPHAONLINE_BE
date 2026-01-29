@@ -1,0 +1,121 @@
+package com.codewithdang.kltn_giaphaonline.service.role;
+
+import com.codewithdang.kltn_giaphaonline.dto.request.CreateRoleReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.UpdateRoleReq;
+import com.codewithdang.kltn_giaphaonline.entity.Permission;
+import com.codewithdang.kltn_giaphaonline.entity.Role;
+import com.codewithdang.kltn_giaphaonline.entity.RolePermission;
+import com.codewithdang.kltn_giaphaonline.entity.RolePermissionId;
+import com.codewithdang.kltn_giaphaonline.exception.AppException;
+import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
+import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
+import com.codewithdang.kltn_giaphaonline.repo.PermissionRepo;
+import com.codewithdang.kltn_giaphaonline.repo.RolePermissionRepo;
+import com.codewithdang.kltn_giaphaonline.repo.RoleRepo;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class RoleServiceImpl implements RoleService {
+    RoleRepo roleRepository;
+    AccountRoleRepo accountRoleRepository;
+    PermissionRepo permissionRepo;
+    RolePermissionRepo rolePermissionRepo;
+
+    @Override
+    @Transactional
+    public Role createRole(CreateRoleReq request) {
+        if (roleRepository.existsRolesByName(request.name()))
+            throw new AppException(ErrorCode.ROLE_EXISTED);
+
+        Role role = Role.builder()
+                .name(request.name())
+                .description(request.description())
+                .build();
+
+        return roleRepository.save(role);
+    }
+
+    @Override
+    @Transactional
+    public Role addPermissionToRole(String roleName, UpdateRoleReq request) {
+        Role role = roleRepository.findById(roleName)
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
+        if (request.description() != null)
+            role.setDescription(request.description());
+
+
+        List<Permission> foundPermissions = permissionRepo.findAllById(request.permissions());
+        if (foundPermissions.size() != request.permissions().size()) {
+            log.error("Một số Permission trong danh sách không tồn tại");
+            throw new AppException(ErrorCode.PERMISSION_NOT_EXISTED);
+        }
+
+        Set<String> existingPermissionNames = rolePermissionRepo.findByRole_Name(roleName).
+                stream()
+                .map(rp -> rp.getPermission().getName())
+                .collect(Collectors.toSet());
+
+        List<RolePermission> newRolePermission = foundPermissions.stream()
+                .filter(p -> !existingPermissionNames.contains(p.getName()))
+                .map(p -> {
+                    RolePermissionId compositeId = new RolePermissionId(role.getName(), p.getName());
+
+                    return RolePermission.builder()
+                            .id(compositeId)
+                            .role(role)
+                            .permission(p)
+                            .build();
+                }).toList();
+
+        if (!newRolePermission.isEmpty())
+            rolePermissionRepo.saveAll(newRolePermission);
+
+        return roleRepository.save(role);
+    }
+
+    @Override
+    @Transactional
+    public void removePermissionFromRole(String roleName, UpdateRoleReq req) {
+        List<RolePermission> toRemove = rolePermissionRepo.findByRole_NameAndPermission_NameIn(roleName, req.permissions());
+
+        if (toRemove.isEmpty()) {
+            throw new AppException(ErrorCode.PERMISSION_NOT_ASSIGNED_TO_ROLE);
+        }
+
+        rolePermissionRepo.deleteAllInBatch(toRemove);
+
+        log.info("Đã gỡ {} quyền khỏi Role {}", toRemove.size(), roleName);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRole(String roleName) {
+        Role role = roleRepository.findById(roleName)
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
+        boolean roleUsed = accountRoleRepository.countByRole_Name(role.getName()) > 0;
+        if (roleUsed)
+            throw new AppException(ErrorCode.ROLE_IS_ALREADY_USED);
+
+        roleRepository.delete(role);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Role> getAllRoles() {
+        return roleRepository.findAll();
+    }
+}
