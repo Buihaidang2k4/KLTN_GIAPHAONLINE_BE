@@ -9,6 +9,7 @@ import com.codewithdang.kltn_giaphaonline.entity.Role;
 import com.codewithdang.kltn_giaphaonline.mapper.RoleMapper;
 import com.codewithdang.kltn_giaphaonline.service.role.RoleService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -34,24 +35,24 @@ public class RoleController {
     }
 
     @PostMapping
-    ResponseEntity<ApiResponse<RoleRes>> createRole(@RequestBody CreateRoleReq req) {
+    ResponseEntity<ApiResponse<RoleRes>> createRole(@Valid @RequestBody CreateRoleReq req) {
         return ResponseEntity.ok(new ApiResponse<>(201, "CREATE ROLE SUCCESSFULLY", roleMapper.toRes(roleService.createRole(req))));
     }
 
     @PutMapping("/add-permission/{roleName}")
-    ResponseEntity<ApiResponse<RoleRes>> addPermission(@PathVariable String roleName, @RequestBody UpdateRoleReq req) {
+    ResponseEntity<ApiResponse<RoleRes>> addPermission(@PathVariable String roleName,@Valid @RequestBody UpdateRoleReq req) {
         return ResponseEntity.ok(new ApiResponse<>(200, "ADD PERMISSION", roleMapper.toRes(roleService.addPermissionToRole(roleName, req))));
     }
 
     @DeleteMapping("/remove-permission/{roleName}")
-    ResponseEntity<ApiResponse<?>> removePermissions(@PathVariable String roleName, @RequestBody UpdateRoleReq req) {
+    ResponseEntity<ApiResponse<?>> removePermissions(@PathVariable String roleName,@Valid @RequestBody UpdateRoleReq req) {
         roleService.removePermissionFromRole(roleName, req);
-        return ResponseEntity.ok(new ApiResponse<>(204, "DELETE PERMISSION FROM ROLE: " + roleName, null));
+        return ResponseEntity.ok(new ApiResponse<>(204, "DELETE PERMISSION" + req.permissions() + " FROM ROLE: " + roleName, null));
     }
 
     @DeleteMapping("/{roleName}")
     ResponseEntity<ApiResponse<?>> deleteRole(@PathVariable String roleName) {
         roleService.deleteRole(roleName);
-        return ResponseEntity.ok(new ApiResponse<>(204, "DELETE ROLE: {}" + roleName, null));
+        return ResponseEntity.ok(new ApiResponse<>(204, "DELETE ROLE: " + roleName, null));
     }
 }

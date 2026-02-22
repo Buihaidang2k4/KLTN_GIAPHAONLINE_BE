@@ -4,6 +4,8 @@ import com.codewithdang.kltn_giaphaonline.entity.AccountRole;
 import com.codewithdang.kltn_giaphaonline.entity.AccountRoleId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface AccountRoleRepo extends JpaRepository<AccountRole, AccountRoleId> {
     boolean existsByRoleName(String roleName);
 
@@ -12,4 +14,8 @@ public interface AccountRoleRepo extends JpaRepository<AccountRole, AccountRoleI
     boolean existsByRoleNameAndAccount_AccountId(String roleName, Long accountAccountId);
 
     AccountRole findByAccount_AccountIdAndRole_Name(Long accountAccountId, String roleName);
+
+    AccountRole findByAccount_Email(String accountEmail);
+
+    List<AccountRole> findAllByAccount_Email(String email);
 }

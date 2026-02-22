@@ -1,6 +1,8 @@
 package com.codewithdang.kltn_giaphaonline.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 public record AccountRes(
         Long accountId,
@@ -13,8 +15,6 @@ public record AccountRes(
 
         String avatarUrl,
 
-        String passwordHash,
-
         String accountStatus,
 
         String lockReason,
@@ -23,6 +23,8 @@ public record AccountRes(
 
         LocalDateTime createdAt,
 
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+
+        List<String> roles
 ) {
 }

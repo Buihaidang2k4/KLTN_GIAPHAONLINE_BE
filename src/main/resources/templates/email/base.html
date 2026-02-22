@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Các style hỗ trợ cho màn hình điện thoại */
+        @media only screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+                padding: 15px !important;
+            }
+
+            h2 {
+                font-size: 20px !important;
+            }
+        }
+
+        /* Hiệu ứng hover cho nút (chỉ chạy trên một số trình duyệt hiện đại) */
+        .btn:hover {
+            background-color: #345481 !important;
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f9f9f9; font-family: 'Segoe UI', Arial, sans-serif;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+        <td align="center" style="padding: 40px 0;">
+            <div class="container"
+                 style="max-width: 600px; background: #ffffff; padding: 40px; border-radius: 12px; border: 1px solid #eeeeee; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="https://your-domain.com/images/dragon.png"
+                         alt="Dragon Logo"
+                         width="150"
+                         style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
+                </div>
+
+                <div style="margin-bottom: 30px; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px;">
+                    <h1 style="margin: 0; color: #4A6FA5; font-size: 28px; letter-spacing: -1px;">GIA PHẢ ONLINE</h1>
+                </div>
+
+                <div th:utext="${content}"></div>
+
+                <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #999999; text-align: center;">
+                    <p>© 2026 KLTN Gia Phả Online - Gìn giữ giá trị cội nguồn</p>
+                    <p>Đây là email tự động, vui lòng không trả lời email này.</p>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

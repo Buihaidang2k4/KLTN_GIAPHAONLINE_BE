@@ -5,4 +5,8 @@ import lombok.Getter;
 @Getter
 public class Constant {
     public static final String Avatar = "avatars";
+
+
+    // role
+    public static final String FAMILY_ADMIN = "FAMILY_ADMIN";
 }

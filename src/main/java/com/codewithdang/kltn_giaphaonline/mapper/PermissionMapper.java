@@ -12,4 +12,5 @@ public interface PermissionMapper {
 
     PermissionRes toResponse(Permission permission);
 
+
 }

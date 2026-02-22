@@ -7,8 +7,10 @@ import com.codewithdang.kltn_giaphaonline.dto.response.AccountRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.AccountRole;
+import com.codewithdang.kltn_giaphaonline.entity.AccountRoleId;
 import com.codewithdang.kltn_giaphaonline.entity.Role;
 import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
+import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.AccountMapper;
@@ -57,19 +59,23 @@ public class AccountServiceImpl implements AccountService {
         Account account = accountMapper.toEntity(req);
         account.setPasswordHash(passwordEncoder.encode(req.password()));
         account.setAccountStatus(AccountStatus.ACTIVE);
+        accountRepo.save(account);
 
         // check role
-        Role role = roleRepo.findById(req.roleDefault())
+        Role role = roleRepo.findById(Constant.FAMILY_ADMIN)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
+
         AccountRole accountRole = AccountRole.builder()
+                .id(new AccountRoleId(account.getAccountId(), role.getName()))
                 .account(account)
                 .role(role)
                 .build();
 
+        accountRoleRepo.save(accountRole);
         account.setAccountRoles(new HashSet<>(Set.of(accountRole)));
 
-        return accountMapper.toRes(accountRepo.save(account));
+        return accountMapper.toRes(account);
     }
 
     @Override
@@ -79,10 +85,10 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
 
         // check pass old
-        if (!passwordEncoder.matches(req.newPassword(), account.getPasswordHash()))
+        if (!passwordEncoder.matches(req.oldPassword(), account.getPasswordHash()))
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
 
-        if (req.newPassword().matches(req.confirmPassword()))
+        if (!req.newPassword().matches(req.confirmPassword()))
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
 
         account.setPasswordHash(passwordEncoder.encode(req.newPassword()));
@@ -92,23 +98,28 @@ public class AccountServiceImpl implements AccountService {
 
     // lock , unlock
     @Override
+    @Transactional
     public AccountRes updateAccountStatus(Long accountId, ChangeStatusLockReq req) {
         Account account = accountRepo.findById(accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
 
-        if (account.getAccountStatus().equals(AccountStatus.ACTIVE) && req.accountStatus().equals(AccountStatus.LOCKED)) {
+        if (account.getAccountStatus().equals(AccountStatus.ACTIVE)
+                && req.accountStatus().equals(AccountStatus.LOCKED)
+        ) {
             account.setAccountStatus(req.accountStatus());
             account.setLockReason(req.lockReason());
             account.setLockedAt(LocalDateTime.now());
 
-        } else if (account.getAccountStatus().equals(AccountStatus.LOCKED) && req.accountStatus().equals(AccountStatus.ACTIVE)) {
+        } else if (account.getAccountStatus().equals(AccountStatus.LOCKED)
+                && req.accountStatus().equals(AccountStatus.ACTIVE)
+        ) {
             account.setAccountStatus(req.accountStatus());
             account.setLockReason(null);
             account.setLockedAt(null);
         } else {
             throw new AppException(ErrorCode.ACCOUNT_CANNOT_UPDATE_STATUS);
         }
-        return accountMapper.toRes(accountRepo.save(account));
+        return accountMapper.toRes(account);
     }
 
     @Override
@@ -130,7 +141,13 @@ public class AccountServiceImpl implements AccountService {
         if (accountRoleRepo.existsByRoleNameAndAccount_AccountId(roleName, accountId))
             throw new AppException(ErrorCode.ROLE_IS_ALREADY_IN_ACCOUNT);
 
+        AccountRoleId accountRoleId = AccountRoleId.builder()
+                .accountId(accountId)
+                .roleName(roleName)
+                .build();
+
         AccountRole accountRole = AccountRole.builder()
+                .id(accountRoleId)
                 .account(account)
                 .role(role)
                 .build();

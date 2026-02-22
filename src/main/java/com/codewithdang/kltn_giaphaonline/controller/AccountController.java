@@ -54,20 +54,21 @@ public class AccountController {
         return ResponseEntity.ok(new ApiResponse<>(200, "CHANGE STATUS LOCK ACCOUNT SUCCESS", accountService.updateAccountStatus(accountId, req)));
     }
 
-    @PutMapping("/change-avatar/{accountId}")
-    ResponseEntity<ApiResponse<?>> changeStatusLock(@PathVariable Long accountId, MultipartFile file) {
+    @PutMapping("/change-avatar")
+    ResponseEntity<ApiResponse<?>> changeStatusLock(@RequestParam Long accountId,
+                                                    @RequestPart("file") MultipartFile file) {
         accountService.changeAvatar(accountId, file);
         return ResponseEntity.ok(new ApiResponse<>(200, "CHANGE AVATAR ACCOUNT SUCCESS", null));
     }
 
-    @PostMapping("/add-role-to-account/{accountId}")
-    ResponseEntity<ApiResponse<?>> addRole(@PathVariable Long accountId, @RequestParam String roleName) {
+    @PostMapping("/add-role-to-account")
+    ResponseEntity<ApiResponse<?>> addRole(@RequestParam Long accountId, @RequestParam String roleName) {
         accountService.addRole(accountId, roleName);
         return ResponseEntity.ok(new ApiResponse(200, "ADD ROLE SUCCESS", null));
     }
 
-    @PutMapping("/remove-role-from-account/{accountId}")
-    ResponseEntity<ApiResponse<?>> removeRoleFromAccount(@PathVariable Long accountId, @RequestParam String roleName) {
+    @DeleteMapping("/remove-role-from-account")
+    ResponseEntity<ApiResponse<?>> removeRoleFromAccount(@RequestParam Long accountId, @RequestParam String roleName) {
         accountService.removeRole(accountId, roleName);
         return ResponseEntity.ok(new ApiResponse(200, "REMOVE ROLE SUCCESS", null));
     }

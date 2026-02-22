@@ -8,10 +8,12 @@ import com.codewithdang.kltn_giaphaonline.entity.Permission;
 import com.codewithdang.kltn_giaphaonline.mapper.PermissionMapper;
 import com.codewithdang.kltn_giaphaonline.service.permission.PermissionService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("${api.prefix}/permissions")
 @RequiredArgsConstructor
+@Validated
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "Permission Management")
 public class PermissionController {
@@ -40,12 +43,12 @@ public class PermissionController {
     }
 
     @PostMapping
-    ResponseEntity<ApiResponse<PermissionRes>> createPermission(@RequestBody CreatePermissionReq req) {
+    ResponseEntity<ApiResponse<PermissionRes>> createPermission(@Valid  @RequestBody CreatePermissionReq req) {
         return ResponseEntity.ok(new ApiResponse<>(201, "permission", permissionMapper.toResponse(permissionService.createPermission(req))));
     }
 
     @PutMapping
-    ResponseEntity<ApiResponse<PermissionRes>> updatePermission(@RequestBody CreatePermissionReq req) {
+    ResponseEntity<ApiResponse<PermissionRes>> updatePermission(@Valid @RequestBody CreatePermissionReq req) {
         return ResponseEntity
                 .ok(new ApiResponse<>(200,
                         "update desc successfully",

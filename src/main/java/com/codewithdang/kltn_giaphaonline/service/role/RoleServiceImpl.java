@@ -56,7 +56,6 @@ public class RoleServiceImpl implements RoleService {
         if (request.description() != null)
             role.setDescription(request.description());
 
-
         List<Permission> foundPermissions = permissionRepo.findAllById(request.permissions());
         if (foundPermissions.size() != request.permissions().size()) {
             log.error("Một số Permission trong danh sách không tồn tại");
