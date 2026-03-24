@@ -2,6 +2,7 @@ package com.codewithdang.kltn_giaphaonline.service.permission;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreatePermissionReq;
 import com.codewithdang.kltn_giaphaonline.entity.Permission;
+import com.codewithdang.kltn_giaphaonline.enums.RoleScopeType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.repo.PermissionRepo;
@@ -31,10 +32,11 @@ public class PermissionServiceImpl implements PermissionService {
 
         Permission permission = Permission.builder()
                 .name(req.name())
+                .scopeType(RoleScopeType.valueOf(req.scopeType().trim().toUpperCase()))
                 .description(req.description())
                 .build();
 
-        Permission saved =  permissionRepo.save(permission);
+        Permission saved = permissionRepo.save(permission);
         log.info("Created permission with name {}", saved.getName());
         return saved;
     }
@@ -44,6 +46,7 @@ public class PermissionServiceImpl implements PermissionService {
     public Permission updatePermission(CreatePermissionReq req) {
         Permission permission = permissionRepo.findById(req.name())
                 .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_EXISTED));
+        permission.setScopeType(RoleScopeType.valueOf(req.scopeType().trim().toUpperCase()));
         permission.setDescription(req.description());
 
         return permissionRepo.save(permission);

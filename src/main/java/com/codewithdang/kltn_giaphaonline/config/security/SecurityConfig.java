@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.config.security;
 
+import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -9,16 +10,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+
+import static com.codewithdang.kltn_giaphaonline.config.security.SecurityWhitelist.SWAGGER_ENDPOINTS;
 
 /**
  * Allow or block requests
@@ -30,17 +32,38 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class SecurityConfig {
 
-    public static final List<String> SWAGGER_ENDPOINTS = List.of(
-            "/swagger-ui/**", "/v3/api-docs/**",
-            "/swagger-resources/**", "/webjars/**"
-    );
+    @Autowired
+    CustomJwtDecoder customJwtDecoder;
+    @Autowired
+    JwtAuthEntryPoint jwtAuthEntryPoint;
+    @Autowired
+    RateLimitFilter rateLimitFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.authorizeHttpRequests(request ->
-                request.anyRequest().permitAll());
-        httpSecurity.csrf(csrf -> csrf.disable());
-        httpSecurity.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+        httpSecurity
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .httpBasic(httpBasic -> httpBasic.disable())
+
+                .authorizeHttpRequests(auth ->
+                        auth.requestMatchers(SecurityWhitelist.PUBLIC_ENDPOINTS.toArray(String[]::new)).permitAll()
+                                .requestMatchers(SWAGGER_ENDPOINTS.toArray(String[]::new)).permitAll()
+                                .anyRequest().authenticated()
+                )
+
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+
+                .oauth2ResourceServer(oauth ->
+                        oauth.bearerTokenResolver(new CustomCookiesResolver(ConstantUtils.ACCESS_TOKEN))
+                                .jwt(jwt ->
+                                        jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())
+                                                .decoder(customJwtDecoder)
+                                )
+                                .authenticationEntryPoint(jwtAuthEntryPoint)
+
+                );
+
         return httpSecurity.build();
     }
 
@@ -59,7 +82,14 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
+
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
     }
+
+
 }

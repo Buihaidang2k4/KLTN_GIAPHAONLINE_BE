@@ -16,13 +16,13 @@ public class AccountRole {
     @EmbeddedId
     AccountRoleId id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("accountId")
-    @JoinColumn(name = "account_id")
+    @ManyToOne(fetch = FetchType.LAZY,optional = false)
+    @JoinColumn(name = "account_id",nullable = false)
     Account account;
 
-    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("roleName")
-    @JoinColumn(name = "role_name")
+    @ManyToOne(fetch = FetchType.LAZY,optional = false)
+    @JoinColumn(name = "role_name",nullable = false)
     Role role;
 }

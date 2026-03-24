@@ -1,17 +1,19 @@
 package com.codewithdang.kltn_giaphaonline.service.auth;
 
+import com.codewithdang.kltn_giaphaonline.dto.event.UserRegisteredEvent;
 import com.codewithdang.kltn_giaphaonline.dto.request.AuthReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AuthRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.IntrospectRes;
-import com.codewithdang.kltn_giaphaonline.entity.Account;
-import com.codewithdang.kltn_giaphaonline.entity.AccountRole;
-import com.codewithdang.kltn_giaphaonline.entity.RevokedToken;
+import com.codewithdang.kltn_giaphaonline.entity.*;
 import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
+import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
-import com.codewithdang.kltn_giaphaonline.repo.RevokedTokenRepo;
+import com.codewithdang.kltn_giaphaonline.repo.RoleRepo;
+import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
 import com.codewithdang.kltn_giaphaonline.service.revoked_token.RevokedTokenService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -30,18 +32,22 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.*;
+
+import static com.codewithdang.kltn_giaphaonline.utils.ConstantUtils.ACCESS_TOKEN;
+import static com.codewithdang.kltn_giaphaonline.utils.ConstantUtils.REFRESH_TOKEN;
 
 @Slf4j
 @Service
@@ -51,6 +57,12 @@ public class AuthServiceImpl implements AuthService {
     AccountRepo accountRepo;
     PasswordEncoder passwordEncoder;
     RevokedTokenService revokedTokenService;
+    // data transfer intermediate station
+    ApplicationEventPublisher eventPublisher;
+    RoleRepo roleRepo;
+    AccountVerificationTokenService verificationTokenService;
+    AccountRoleRepo accountRoleRepo;
+
 
     @NonFinal
     @Value("${jwt.secret}")
@@ -62,12 +74,10 @@ public class AuthServiceImpl implements AuthService {
     @Value("${jwt.refreshable-duration}")
     protected Long REFRESH_TOKEN_DURATION;
 
-
-    private static final String ACCESS_TOKEN = "access_token";
-    private static final String REFRESH_TOKEN = "refresh_token";
     private static final Duration REFRESH_COOKIES_EXPIRATION = Duration.ofDays(7);
 
     @Override
+    @Transactional(readOnly = true)
     public AuthRes authenticate(AuthReq authReq, HttpServletResponse httpRes) throws ParseException {
         Account account = accountRepo.findByEmail(authReq.email())
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
@@ -94,6 +104,51 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
+    public void register(RegisterReq req, String requestedIp, String userAgent) {
+        String email = req.email().trim().toLowerCase();
+
+        if (accountRepo.existsByEmail(email))
+            throw new AppException(ErrorCode.ACCOUNT_EXISTED);
+
+        if (!req.password().equals(req.confirmPassword()))
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+
+        Account account = Account.builder()
+                .email(email)
+                .passwordHash(passwordEncoder.encode(req.password()))
+                .fullName(req.fullName())
+                .accountStatus(AccountStatus.PENDING)
+                .build();
+
+        accountRepo.save(account);
+
+        Role userRole = roleRepo.findById(RoleEnums.FAMILY_USERS.name())
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
+        AccountRole accountRole = AccountRole.builder()
+                .id(new AccountRoleId(account.getAccountId(), userRole.getName()))
+                .account(account)
+                .role(userRole)
+                .build();
+
+        accountRoleRepo.save(accountRole);
+
+        // verification email
+        AccountVerificationToken verificationToken =
+                verificationTokenService.createVerificationToken(account, requestedIp, userAgent);
+
+        eventPublisher.publishEvent(new UserRegisteredEvent(
+                account.getAccountId(),
+                account.getEmail(),
+                account.getFullName(),
+                verificationToken.getToken()
+        ));
+    }
+
+
+    @Override
+    @Transactional
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException {
         String refreshTokenFromCookieOld = getTokenFromCookie(request, REFRESH_TOKEN);
         if (refreshTokenFromCookieOld == null)
@@ -109,7 +164,7 @@ public class AuthServiceImpl implements AuthService {
 
         // Ngay khi sử dụng thành công, đưa RT cũ vào danh sách đen
         Instant expiryTime = jwtClaimsSet.getExpirationTime().toInstant();
-        revokedTokenService.revokedToken(refreshTokenFromCookieOld, expiryTime);
+        revokedTokenService.revokedToken(refreshTokenFromCookieOld, expiryTime, request);
 
         Account account = accountRepo.
                 findByEmail(email).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
@@ -125,32 +180,33 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public IntrospectRes introspect(HttpServletRequest request) throws ParseException, JOSEException {
-        String token = getTokenFromCookie(request, ACCESS_TOKEN);
+    @Transactional
+    public IntrospectRes introspect(String token) throws ParseException, JOSEException {
         if (token == null) return new IntrospectRes(false, null);
 
-        boolean isValid = true;
-
-        JWTClaimsSet claimsSet = decodeToken(token);
-        Date expiration = claimsSet.getExpirationTime();
-        Instant exp = expiration.toInstant();
-
         try {
+            // check sign
+            SignedJWT signedJWT = verifyToken(token, false);
+
+            JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+            Date expiration = claimsSet.getExpirationTime();
+
             if (revokedTokenService.isTokenRevoked(token)) {
-                throw new AppException(ErrorCode.TOKEN_REVOKED);
+                return IntrospectRes.builder()
+                        .valid(false)
+                        .exp(expiration.toInstant())
+                        .build();
             }
-            verifyToken(token, false);
+
+            return IntrospectRes.builder()
+                    .valid(true)
+                    .exp(expiration.toInstant())
+                    .build();
         } catch (AppException e) {
-            isValid = false;
             log.warn("Token introspection failed: {}", e.getMessage());
+            return IntrospectRes.builder().valid(false).build();
         }
-
-        return IntrospectRes.builder()
-                .valid(isValid)
-                .exp(exp)
-                .build();
     }
-
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response) throws ParseException {
@@ -160,14 +216,16 @@ public class AuthServiceImpl implements AuthService {
         if (accessToken != null)
             revokedTokenService.revokedToken(
                     accessToken,
-                    decodeToken(accessToken).getExpirationTime().toInstant()
+                    decodeToken(accessToken).getExpirationTime().toInstant(),
+                    request
             );
 
         // Thu hồi Refresh Token
         if (refreshToken != null)
             revokedTokenService.revokedToken(
                     refreshToken,
-                    decodeToken(refreshToken).getExpirationTime().toInstant()
+                    decodeToken(refreshToken).getExpirationTime().toInstant(),
+                    request
             );
 
         // Clear cookies
@@ -186,7 +244,8 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    private String getTokenFromCookie(HttpServletRequest request, String cookieName) {
+    @Override
+    public String getTokenFromCookie(HttpServletRequest request, String cookieName) {
         return Arrays.stream(Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
                 .filter(c -> cookieName.equals(c.getName()))
                 .map(Cookie::getValue)
@@ -199,9 +258,7 @@ public class AuthServiceImpl implements AuthService {
 
         // verify
         JWSVerifier jwsVerifier = new MACVerifier(TOKEN_KEY.getBytes());
-        boolean verified = signedJWT.verify(jwsVerifier);
-
-        if (!verified)
+        if (!signedJWT.verify(jwsVerifier))
             throw new AppException(ErrorCode.UNAUTHENTICATED);
 
         JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
@@ -248,17 +305,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-    // Lấy quyền trong từng dòng họ (Dùng cho logic nghiệp vụ gia phả)
-//    private List<Map<String, Object>> buildFamilyClaims(Account account) {
-//        return familyMemberRepo.findAllByAccount_AccountId(account.getAccountId()).stream()
-//                .map(fm -> {
-//                    Map<String, Object> map = new HashMap<>();
-//                    map.put("fid", fm.getFamily().getFamilyId());
-//                    map.put("role", fm.getRole().name());
-//                    return map;
-//                }).toList();
-//    }
-
     private String buildScope(Account account) {
         StringJoiner stringJoiner = new StringJoiner(" ");
         Set<AccountRole> accountRoles = account.getAccountRoles();
@@ -287,4 +333,5 @@ public class AuthServiceImpl implements AuthService {
         SignedJWT signedJWT = SignedJWT.parse(token);
         return signedJWT.getJWTClaimsSet();
     }
+
 }

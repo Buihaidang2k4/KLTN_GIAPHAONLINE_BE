@@ -4,9 +4,11 @@ import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
@@ -58,6 +60,14 @@ public class Account {
     @Builder.Default
     @OneToMany(mappedBy = "account", fetch = FetchType.LAZY)
     Set<AccountRole> accountRoles = new HashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "owner")
+    Set<Family> ownedFamilies = new LinkedHashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "account")
+    Set<FamilyMember> familyMemberships = new LinkedHashSet<>();
 
     @PrePersist
     public void prePersist() {

@@ -1,8 +1,11 @@
 package com.codewithdang.kltn_giaphaonline.exception;
 
-import lombok.Getter;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.experimental.FieldDefaults;
 
-@Getter
+@Data
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class AppException extends RuntimeException {
     private final ErrorCode errorCode;
 

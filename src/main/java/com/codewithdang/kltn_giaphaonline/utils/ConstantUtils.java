@@ -3,9 +3,9 @@ package com.codewithdang.kltn_giaphaonline.utils;
 import lombok.Getter;
 
 @Getter
-public class Constant {
+public class ConstantUtils {
     public static final String Avatar = "avatars";
-    
+
     // role
     public static final String FAMILY_ADMIN = "FAMILY_ADMIN";
 

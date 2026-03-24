@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.repo;
 
+import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.AccountRole;
 import com.codewithdang.kltn_giaphaonline.entity.AccountRoleId;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,7 +16,5 @@ public interface AccountRoleRepo extends JpaRepository<AccountRole, AccountRoleI
 
     AccountRole findByAccount_AccountIdAndRole_Name(Long accountAccountId, String roleName);
 
-    AccountRole findByAccount_Email(String accountEmail);
-
-    List<AccountRole> findAllByAccount_Email(String email);
+    void deleteByAccount(Account account);
 }

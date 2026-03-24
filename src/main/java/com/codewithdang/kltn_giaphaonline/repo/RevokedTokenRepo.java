@@ -8,7 +8,8 @@ import java.util.Optional;
 
 @Repository
 public interface RevokedTokenRepo extends JpaRepository<RevokedToken, Long> {
-    boolean existsByToken(String token);
 
-    Optional<RevokedToken> findByToken(String token);
+    Optional<RevokedToken> findByTokenHash(String tokenHash);
+
+    boolean existsByTokenHash(String tokenHash);
 }

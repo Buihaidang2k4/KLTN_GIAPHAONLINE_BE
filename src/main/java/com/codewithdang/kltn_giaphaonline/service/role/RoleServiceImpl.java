@@ -6,6 +6,7 @@ import com.codewithdang.kltn_giaphaonline.entity.Permission;
 import com.codewithdang.kltn_giaphaonline.entity.Role;
 import com.codewithdang.kltn_giaphaonline.entity.RolePermission;
 import com.codewithdang.kltn_giaphaonline.entity.RolePermissionId;
+import com.codewithdang.kltn_giaphaonline.enums.RoleScopeType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
@@ -39,8 +40,13 @@ public class RoleServiceImpl implements RoleService {
         if (roleRepository.existsRolesByName(request.name()))
             throw new AppException(ErrorCode.ROLE_EXISTED);
 
+        if (request.scopeType() == null || request.scopeType().isBlank()) {
+            throw new AppException(ErrorCode.SCOPE_TYPE_IS_NULL);
+        }
+
         Role role = Role.builder()
                 .name(request.name())
+                .scopeType(RoleScopeType.valueOf(request.scopeType().trim().toUpperCase()))
                 .description(request.description())
                 .build();
 
@@ -60,6 +66,14 @@ public class RoleServiceImpl implements RoleService {
         if (foundPermissions.size() != request.permissions().size()) {
             log.error("Một số Permission trong danh sách không tồn tại");
             throw new AppException(ErrorCode.PERMISSION_NOT_EXISTED);
+        }
+
+        boolean hasDifferentScope = foundPermissions.stream().
+                anyMatch(permission -> permission.getScopeType() != role.getScopeType());
+
+        if (hasDifferentScope) {
+            log.error("Có permission khác scope với role. Role: {}, scope: {}", role.getName(), role.getScopeType());
+            throw new AppException(ErrorCode.ROLE_PERMISSION_SCOPE_MISMATCH);
         }
 
         Set<String> existingPermissionNames = rolePermissionRepo.findByRole_Name(roleName).

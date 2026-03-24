@@ -22,7 +22,6 @@ public class RabbitMQConfig {
     public static final String EMAIL_DLQ = "email.dead.letter.queue";
     public static final String EMAIL_DL_ROUTING_KEY = "email.dead.letter";
 
-
     @Bean
     Queue emailQueue() {
         // tạo một hàng đợi
@@ -89,6 +88,11 @@ public class RabbitMQConfig {
                 .backOffOptions(1000, 2.0, 10000)
                 .build()
         );
+
+        factory.setConcurrentConsumers(3);  // min thread
+        factory.setMaxConcurrentConsumers(10); // max thread
+
+        factory.setPrefetchCount(5); //  Each thread takes 5 messages.
 
         return factory;
     }

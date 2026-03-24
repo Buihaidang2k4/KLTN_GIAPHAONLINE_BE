@@ -5,10 +5,6 @@ import com.codewithdang.kltn_giaphaonline.dto.request.CreateAccountReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangePasswordAccountReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
-import com.codewithdang.kltn_giaphaonline.entity.Account;
-import com.codewithdang.kltn_giaphaonline.entity.Role;
-import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +18,9 @@ public interface AccountService {
     // lock / unlock
     AccountRes updateAccountStatus(Long accountId, ChangeStatusLockReq req);
 
-    void deleteAccount(Long accountId); // soft delete
+    void softDeleteAccount(Long accountId); // soft delete
+
+    void hardDeleteAccount(Long accountId);
 
     void addRole(Long accountId, String roleName);
 
@@ -34,5 +32,5 @@ public interface AccountService {
 
     AccountRes getAccountById(Long accountId);
 
-    AccountRes  getMyInfo(Long accountId);
+    AccountRes getMyInfo(Long accountId);
 }

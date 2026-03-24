@@ -1,10 +1,9 @@
 package com.codewithdang.kltn_giaphaonline.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
@@ -13,16 +12,30 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "revoked_tokens")
 public class RevokedToken {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "refresh_token_id")
+    Long refreshTokenId;
 
-    @Lob
-    @Column(columnDefinition = "TEXT", unique = true)
-    private String token;
+    @Column(name = "token_hash", nullable = false, unique = true, length = 255)
+    String tokenHash;
 
-    private Instant revokedAt;
-    private Instant expiresAt;
+    @Column(name = "revoked_at")
+    Instant revokedAt;
+
+    @Column(name = "device_info", length = 255)
+    String deviceInfo;
+
+    @Column(name = "ip_address", length = 45)
+    String ipAddress;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
+    Instant createdAt;
+
+    @Column(name = "expires_at", nullable = false)
+    Instant expiresAt;
 }

@@ -73,9 +73,17 @@ public class AccountController {
         return ResponseEntity.ok(new ApiResponse(200, "REMOVE ROLE SUCCESS", null));
     }
 
-    @DeleteMapping("/{accountId}")
-    ResponseEntity<ApiResponse<?>> deleteAccount(@PathVariable Long accountId) {
-        accountService.deleteAccount(accountId);
+    @DeleteMapping("/soft-delete/{accountId}")
+    ResponseEntity<ApiResponse<?>> softDeleteAccount(@PathVariable Long accountId) {
+        accountService.softDeleteAccount(accountId);
         return ResponseEntity.ok(new ApiResponse(200, "DELETE ACCOUNT SUCCESS", null));
     }
+
+    @DeleteMapping("/hard-delete/{accountId}")
+    ResponseEntity<ApiResponse<?>> hardDeleteAccount(@PathVariable Long accountId) {
+        accountService.hardDeleteAccount(accountId);
+        return ResponseEntity.ok(new ApiResponse(200, "DELETE ACCOUNT SUCCESS", null));
+    }
+
+
 }

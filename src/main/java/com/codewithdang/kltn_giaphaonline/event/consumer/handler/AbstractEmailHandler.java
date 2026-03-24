@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.event.producer;
+package com.codewithdang.kltn_giaphaonline.event.consumer.handler;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailBase;
 import jakarta.mail.MessagingException;
@@ -21,11 +21,7 @@ public abstract class AbstractEmailHandler<T extends EmailBase>
     SpringTemplateEngine templateEngine;
 
     @Override
-    public abstract Class<T> supportType();
-
-    @Override
     public abstract void handle(T email) throws Exception;
-
 
     protected void sendHtml(
             String toEmail,

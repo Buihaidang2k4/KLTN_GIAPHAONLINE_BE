@@ -1,5 +1,6 @@
-package com.codewithdang.kltn_giaphaonline.event.producer;
+package com.codewithdang.kltn_giaphaonline.event.consumer.handler;
 
+import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailBase;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailOTP;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
@@ -11,11 +12,6 @@ public class EmailOTPHandler extends AbstractEmailHandler<EmailOTP> {
 
     public EmailOTPHandler(JavaMailSender mailSender, SpringTemplateEngine templateEngine) {
         super(mailSender, templateEngine);
-    }
-
-    @Override
-    public Class<EmailOTP> supportType() {
-        return EmailOTP.class;
     }
 
     @Override

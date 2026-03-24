@@ -5,6 +5,7 @@ import lombok.Builder;
 @Builder
 public record CreatePermissionReq(
         String name,
+        String scopeType,
         String description
 ) {
 }

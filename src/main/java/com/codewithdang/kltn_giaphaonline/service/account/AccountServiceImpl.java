@@ -10,7 +10,6 @@ import com.codewithdang.kltn_giaphaonline.entity.AccountRole;
 import com.codewithdang.kltn_giaphaonline.entity.AccountRoleId;
 import com.codewithdang.kltn_giaphaonline.entity.Role;
 import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
-import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.AccountMapper;
@@ -19,7 +18,7 @@ import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
 import com.codewithdang.kltn_giaphaonline.repo.RoleRepo;
 import com.codewithdang.kltn_giaphaonline.service.minio.MinioService;
-import com.codewithdang.kltn_giaphaonline.utils.Constant;
+import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -62,7 +61,7 @@ public class AccountServiceImpl implements AccountService {
         accountRepo.save(account);
 
         // check role
-        Role role = roleRepo.findById(Constant.FAMILY_ADMIN)
+        Role role = roleRepo.findById(ConstantUtils.FAMILY_ADMIN)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
 
@@ -124,12 +123,29 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public void deleteAccount(Long accountId) {
+    public void softDeleteAccount(Long accountId) {
         Account account = accountRepo.findById(accountId).
                 orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
 
         account.setAccountStatus(AccountStatus.DELETED);
         accountRepo.save(account);
+    }
+
+    // Only delete accounts that have a delete status
+    @Override
+    @Transactional
+    public void hardDeleteAccount(Long accountId) {
+        Account account = accountRepo.findById(accountId).
+                orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+
+        if (account.getAccountStatus() != AccountStatus.DELETED)
+            throw new AppException(ErrorCode.ACCOUNT_STATUS_IS_NOT_DELETE);
+
+
+        accountRoleRepo.deleteByAccount(account);
+        accountRepo.delete(account);
+
+        log.info("=== Hard Deleted Account Successfully | ID: {} ===", accountId);
     }
 
     @Override
@@ -189,7 +205,7 @@ public class AccountServiceImpl implements AccountService {
         }
 
         // upload new file
-        String objectName = minioService.uploadImage(avatarFile, Constant.Avatar);
+        String objectName = minioService.uploadImage(avatarFile, ConstantUtils.Avatar);
 
         // save object name
         account.setAvatarPath(objectName);

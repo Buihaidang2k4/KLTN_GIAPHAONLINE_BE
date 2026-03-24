@@ -1,6 +1,8 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
-import com.codewithdang.kltn_giaphaonline.dto.request.EmailTestReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailOTP;
+import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailWelcome;
+import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.event.producer.EmailProducer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +21,19 @@ public class EmailController {
 
     EmailProducer producer;
 
-    @PostMapping
-    public ResponseEntity<String> send(@RequestBody EmailTestReq request) {
+    @PostMapping("/otp")
+    public ResponseEntity<ApiResponse<String>> send(@RequestBody EmailOTP request) {
         producer.sendEmail(request);
-        return ResponseEntity.ok("Queued");
+        return ResponseEntity.ok(
+                ApiResponse.success("email sent successfully")
+        );
+    }
+
+    @PostMapping("/welcome")
+    public ResponseEntity<ApiResponse<String>> send(@RequestBody EmailWelcome request) {
+        producer.sendEmail(request);
+        return ResponseEntity.ok(
+                ApiResponse.success("email sent successfully")
+        );
     }
 }

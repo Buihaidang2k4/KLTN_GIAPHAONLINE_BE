@@ -52,7 +52,7 @@ public class AppInitConfig {
                     permissionService.createPermission(
                             CreatePermissionReq.builder()
                                     .name(permissionEnums.name())
-                                    .description(permissionEnums.getDescription())
+                                    .description(permissionEnums.name())
                                     .build()
                     );
                 }
@@ -68,6 +68,7 @@ public class AppInitConfig {
                     roleService.createRole(
                             CreateRoleReq.builder()
                                     .name(roleEnums.name())
+                                    .scopeType(String.valueOf(roleEnums.getScopeType()))
                                     .description(roleEnums.getDescription())
                                     .build()
                     );
@@ -116,7 +117,7 @@ public class AppInitConfig {
                 Account account = Account.builder()
                         .fullName("ADMIN")
                         .email("admin@gmail.com")
-                        .passwordHash(passwordEncoder.encode("admin@123"))
+                        .passwordHash(passwordEncoder.encode("Admin@123"))
                         .accountStatus(AccountStatus.ACTIVE)
                         .build();
 
