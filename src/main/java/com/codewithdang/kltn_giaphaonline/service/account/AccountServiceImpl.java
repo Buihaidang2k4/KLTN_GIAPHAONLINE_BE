@@ -3,6 +3,7 @@ package com.codewithdang.kltn_giaphaonline.service.account;
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangePasswordAccountReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangeStatusLockReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAccountReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.AccountDetailsRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
@@ -25,6 +26,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -190,7 +192,6 @@ public class AccountServiceImpl implements AccountService {
         if (account.getAccountRoles() != null)
             account.getAccountRoles().remove(accountRole);
 
-//        accountRepo.save(account);
     }
 
     @Override
@@ -245,7 +246,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountRes getMyInfo(Long accountId) {
-        return null;
+    public AccountDetailsRes getMyInfo() {
+        var context = SecurityContextHolder.getContext();
+        String username = context.getAuthentication().getName();
+        Account account = accountRepo.findByEmail(username)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+        return accountMapper.toDetailsRes(account);
     }
 }

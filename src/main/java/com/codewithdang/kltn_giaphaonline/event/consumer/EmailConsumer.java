@@ -3,9 +3,11 @@ package com.codewithdang.kltn_giaphaonline.event.consumer;
 import com.codewithdang.kltn_giaphaonline.config.rabbitmq.RabbitMQConfig;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailBase;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailOTP;
+import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailVerifyAccount;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailWelcome;
 import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailHandler;
 import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailOTPHandler;
+import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailVerifyAccountHandler;
 import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailWelcomeHandler;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
@@ -30,10 +32,10 @@ public class EmailConsumer {
 
     EmailWelcomeHandler emailWelcomeHandler;
     EmailOTPHandler emailOTPHandler;
+    EmailVerifyAccountHandler emailVerifyAccountHandler;
 
     @RabbitHandler
-    public void handleEmail(EmailOTP email) throws Exception
-    {
+    public void handleEmail(EmailOTP email) throws Exception {
         log.info("Received OTP email for {}", email.getToEmail());
         emailOTPHandler.handle(email);
     }
@@ -42,6 +44,12 @@ public class EmailConsumer {
     public void handle(EmailWelcome email) throws Exception {
         log.info("Received welcome email for {}", email.getToEmail());
         emailWelcomeHandler.handle(email);
+    }
+    
+    @RabbitHandler
+    public void handleEmailVerifyAccount(EmailVerifyAccount verifyAccount) throws Exception {
+        log.info("Received verify account email for {}", verifyAccount.getToEmail());
+        emailVerifyAccountHandler.handle(verifyAccount);
     }
 
     @RabbitHandler(isDefault = true)

@@ -1,6 +1,5 @@
 package com.codewithdang.kltn_giaphaonline.event.consumer.handler;
 
-import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailBase;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailOTP;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;

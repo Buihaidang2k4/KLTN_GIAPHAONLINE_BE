@@ -186,6 +186,14 @@
             <version>8.10.1</version>
         </dependency>
 
+        <!--   JSOUP clean harmful content     -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.15.3</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>

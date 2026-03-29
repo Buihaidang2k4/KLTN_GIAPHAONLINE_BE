@@ -2,33 +2,48 @@ package com.codewithdang.kltn_giaphaonline.mapper;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangePasswordAccountReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAccountReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.AccountDetailsRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.RoleRes;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.AccountRole;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring",uses = RoleMapper.class)
-public interface AccountMapper {
+@Mapper(componentModel = "spring")
+public abstract class AccountMapper {
 
-    Account toEntity(CreateAccountReq req);
+    @Autowired
+    protected RoleMapper roleMapper;
 
-    @Mapping(target = "roles",source = "accountRoles")
-    AccountRes toRes(Account account);
+    public abstract Account toEntity(CreateAccountReq req);
 
-    void updateEntity(@MappingTarget Account account, ChangePasswordAccountReq req);
+    @Mapping(target = "roles", source = "accountRoles")
+    public abstract AccountRes toRes(Account account);
 
-    default List<String> mapRoles(Set<AccountRole> accountRoles) {
-        if(accountRoles==null){
-            return null;
+    @Mapping(target = "roles", source = "accountRoles")
+    public abstract AccountDetailsRes toDetailsRes(Account account);
+
+    public abstract void updateEntity(@MappingTarget Account account, ChangePasswordAccountReq req);
+
+    protected Set<RoleRes> mapAccountRoles(Set<AccountRole> accountRoles) {
+        if (accountRoles == null || accountRoles.isEmpty()) {
+            return Collections.emptySet();
         }
 
         return accountRoles.stream()
-                .map(accountRole -> accountRole.getRole().getName())
-                .toList();
+                .map(AccountRole::getRole)
+                .filter(Objects::nonNull)
+                .map(roleMapper::toRes)
+                .collect(Collectors.toSet());
     }
 }

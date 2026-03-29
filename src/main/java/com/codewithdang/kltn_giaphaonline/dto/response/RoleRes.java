@@ -4,6 +4,7 @@ import java.util.Set;
 
 public record RoleRes(
         String name,
+        String scopeType,
         String description,
         Set<PermissionRes> permissions
 ) {

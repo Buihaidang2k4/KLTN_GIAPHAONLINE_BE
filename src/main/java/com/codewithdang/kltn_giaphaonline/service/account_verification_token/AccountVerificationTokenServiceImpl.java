@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -24,6 +25,7 @@ public class AccountVerificationTokenServiceImpl implements AccountVerificationT
     AccountRepo accountRepo;
 
     @Override
+    @Transactional
     public AccountVerificationToken createVerificationToken(Account account, String requestedIp, String userAgent) {
         String token = UUID.randomUUID().toString();
 
@@ -42,6 +44,7 @@ public class AccountVerificationTokenServiceImpl implements AccountVerificationT
     }
 
     @Override
+    @Transactional
     public void verifyAccount(String tokenVerify) {
         AccountVerificationToken accountVerificationToken = accountVerificationTokenRepo.findByToken(tokenVerify)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_VERIFICATION_TOKEN_NOT_FOUND));

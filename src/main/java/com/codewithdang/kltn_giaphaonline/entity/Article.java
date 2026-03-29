@@ -1,14 +1,23 @@
 package com.codewithdang.kltn_giaphaonline.entity;
 
+import com.codewithdang.kltn_giaphaonline.enums.ArticleContentFormat;
 import com.codewithdang.kltn_giaphaonline.enums.ArticleStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
 @Entity
-@Table(name = "articles")
+@Table(name = "articles",
+        indexes = {
+                @Index(name = "idx_article_slug", columnList = "slug"),
+                @Index(name = "idx_article_status", columnList = "status"),
+                @Index(name = "idx_article_published_at", columnList = "published_at"),
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,14 +44,26 @@ public class Article {
     String thumbnailUrl;
 
     @Lob
-    @Column(name = "content")
+    @Column(name = "content", columnDefinition = "TEXT")
     String content;
 
+    @Builder.Default
     @Column(name = "view_count")
-    Integer viewCount;
+    Integer viewCount = 0;
 
+    @Builder.Default
     @Column(name = "is_featured")
-    Boolean isFeatured;
+    Boolean isFeatured = false;
+
+    @Column(name = "meta_title", length = 255)
+    String metaTitle;
+
+    @Column(name = "meta_description", length = 500)
+    String metaDescription;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "content_format", nullable = false, length = 20)
+    ArticleContentFormat contentFormat;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
@@ -51,9 +72,11 @@ public class Article {
     @Column(name = "published_at")
     Instant publishedAt;
 
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     Instant createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     Instant updatedAt;
 
@@ -67,8 +90,4 @@ public class Article {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_account_id")
     Account createdByAccount;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "update_by_account_id")
-    Account updatedByAccount;
 }

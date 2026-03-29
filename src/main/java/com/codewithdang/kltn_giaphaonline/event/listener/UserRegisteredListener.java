@@ -1,8 +1,9 @@
-package com.codewithdang.kltn_giaphaonline.event.producer;
+package com.codewithdang.kltn_giaphaonline.event.listener;
 
 import com.codewithdang.kltn_giaphaonline.config.fe.FrontendProperties;
 import com.codewithdang.kltn_giaphaonline.dto.event.UserRegisteredEvent;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailVerifyAccount;
+import com.codewithdang.kltn_giaphaonline.event.producer.EmailProducer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

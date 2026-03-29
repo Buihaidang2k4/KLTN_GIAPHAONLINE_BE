@@ -6,6 +6,8 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "article_categories")
@@ -28,7 +30,14 @@ public class ArticleCategory {
     @Column(name = "slug", unique = true, length = 150)
     String slug;
 
+    @Column(name = "display_order")
+    Integer displayOrder;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     Instant createdAt;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "articleCategory")
+    List<Article> articles = new ArrayList<>();
 }

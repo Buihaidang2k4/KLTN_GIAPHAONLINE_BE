@@ -4,6 +4,7 @@ import com.codewithdang.kltn_giaphaonline.dto.request.AuthReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.AuthRes;
+import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
 import com.codewithdang.kltn_giaphaonline.service.auth.AuthService;
 import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,10 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 
@@ -30,6 +28,7 @@ import java.text.ParseException;
 @Tag(name = "Auth Management")
 public class AuthController {
     AuthService authService;
+    AccountVerificationTokenService verificationTokenService;
 
     @PostMapping("/login")
     ResponseEntity<ApiResponse<AuthRes>> login(@Valid @RequestBody AuthReq authReq,
@@ -45,7 +44,6 @@ public class AuthController {
         authService.register(registerReq, requestIp, userAgent);
         return ResponseEntity.ok(new ApiResponse<>(200, "Register success", null));
     }
-
 
     @PostMapping("/refresh-token")
     ResponseEntity<ApiResponse<?>> refreshToken(HttpServletRequest request,
@@ -71,5 +69,11 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("LOGOUT SUCCESS"));
     }
 
-
+    @PatchMapping("/verify-account")
+    ResponseEntity<ApiResponse<?>> verifyAccount(
+            @RequestParam("token") String token
+    ) {
+        verificationTokenService.verifyAccount(token);
+        return ResponseEntity.ok(new ApiResponse<>(200, "VERIFY TOKEN ACCOUNT", null));
+    }
 }

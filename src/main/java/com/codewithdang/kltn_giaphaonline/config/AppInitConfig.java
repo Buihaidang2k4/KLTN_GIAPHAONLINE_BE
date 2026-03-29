@@ -52,6 +52,7 @@ public class AppInitConfig {
                     permissionService.createPermission(
                             CreatePermissionReq.builder()
                                     .name(permissionEnums.name())
+                                    .scopeType(permissionEnums.getScopeType().name())
                                     .description(permissionEnums.name())
                                     .build()
                     );

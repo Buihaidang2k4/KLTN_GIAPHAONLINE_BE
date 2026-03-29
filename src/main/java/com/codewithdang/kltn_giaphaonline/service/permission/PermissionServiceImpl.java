@@ -30,9 +30,13 @@ public class PermissionServiceImpl implements PermissionService {
         if (permissionRepo.existsById(req.name()))
             throw new AppException(ErrorCode.PERMISSION_EXISTED);
 
+        // check scope
+        RoleScopeType scopeType = RoleScopeType.fromString(req.scopeType())
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_PERMISSION_SCOPE_MISMATCH));
+
         Permission permission = Permission.builder()
                 .name(req.name())
-                .scopeType(RoleScopeType.valueOf(req.scopeType().trim().toUpperCase()))
+                .scopeType(scopeType)
                 .description(req.description())
                 .build();
 

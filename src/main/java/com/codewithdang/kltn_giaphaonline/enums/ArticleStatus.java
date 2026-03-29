@@ -9,7 +9,7 @@ public enum ArticleStatus implements BaseEnum {
     PUBLISHED("Đã xuất bản"),
     ARCHIVED("Lưu trữ"),
     HIDDEN("Bị ẩn");
-
+    
     private final String label;
 
     @Override

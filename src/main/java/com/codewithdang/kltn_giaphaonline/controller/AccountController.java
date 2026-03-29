@@ -4,6 +4,7 @@ package com.codewithdang.kltn_giaphaonline.controller;
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangePasswordAccountReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangeStatusLockReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAccountReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.AccountDetailsRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
@@ -36,6 +37,11 @@ public class AccountController {
     @GetMapping("/{accountId}")
     ResponseEntity<ApiResponse<AccountRes>> getAccountById(@PathVariable Long accountId) {
         return ResponseEntity.ok(new ApiResponse<>(200, "ACCOUNT", accountService.getAccountById(accountId)));
+    }
+
+    @GetMapping("/MyInfo")
+    ResponseEntity<ApiResponse<AccountDetailsRes>> getMyInfo() {
+        return ResponseEntity.ok(new ApiResponse<>(200, "ACCOUNT INFO", accountService.getMyInfo()));
     }
 
     @PostMapping

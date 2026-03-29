@@ -20,6 +20,9 @@ public enum PermissionEnums implements BaseEnum {
     FAM_MEMBER_MANAGE("Quản lý thành viên", RoleScopeType.FAMILY),
     FAM_SUBSCRIPTION_MANAGE("Quản lý gói cước dòng họ", RoleScopeType.FAMILY),
     FAM_EXPORT("Xuất dữ liệu gia phả", RoleScopeType.FAMILY),
+    FAM_SUBSCRIPTION_VIEW("Xem gói hiện tại, dung lượng, hạn dùng", RoleScopeType.FAMILY),
+    FAM_SUBSCRIPTION_UPGRADE_REQUEST("Gửi yêu cầu nâng cấp cho manager", RoleScopeType.FAMILY),
+    FAM_PAYMENT_VIEW("xem lịch sử thanh toán", RoleScopeType.FAMILY),
 
     // ================= DATA =================
     NODE_WRITE("Thêm/Sửa thành viên cây", RoleScopeType.FAMILY),

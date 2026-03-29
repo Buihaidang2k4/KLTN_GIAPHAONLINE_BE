@@ -1,0 +1,30 @@
+<div th:fragment="main-content" style="text-align: center; padding: 10px 0;">
+    <h2 style="color: #2c3e50; font-size: 24px; margin-bottom: 10px;">
+        Xác thực tài khoản, <span th:text="${fullName}" style="color: #4A6FA5;"></span>! 🛡️
+    </h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+        Cảm ơn bạn đã đăng ký tham gia hệ thống <strong>Gia Phả Online</strong>. <br>
+        Vui lòng nhấn vào nút bên dưới để xác nhận địa chỉ email và kích hoạt tài khoản của bạn:
+    </p>
+
+    <div style="margin: 30px 0;">
+        <a th:href="${verifyUrl}"
+           style="background-color: #27ae60;
+                  color: #ffffff;
+                  padding: 15px 35px;
+                  text-decoration: none;
+                  border-radius: 5px;
+                  font-weight: bold;
+                  display: inline-block;
+                  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                  font-size: 18px;">
+            Kích Hoạt Tài Khoản
+        </a>
+    </div>
+
+    <p style="color: #888888; font-size: 13px; margin-top: 20px;">
+        Lưu ý: Liên kết này sẽ hết hạn sau 24 giờ. <br>
+        Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email.
+    </p>
+</div>

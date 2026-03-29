@@ -4,6 +4,7 @@ import com.codewithdang.kltn_giaphaonline.dto.request.CreatePermissionReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.PermissionRes;
 import com.codewithdang.kltn_giaphaonline.entity.Permission;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface PermissionMapper {
@@ -11,6 +12,4 @@ public interface PermissionMapper {
     Permission toEntity(CreatePermissionReq req);
 
     PermissionRes toResponse(Permission permission);
-
-
 }
