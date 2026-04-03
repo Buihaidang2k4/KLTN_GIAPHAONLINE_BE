@@ -1,6 +1,5 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
-
 import com.codewithdang.kltn_giaphaonline.dto.request.CreatePermissionReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.PermissionRes;
@@ -30,36 +29,45 @@ public class PermissionController {
 
     @GetMapping
     ResponseEntity<ApiResponse<List<PermissionRes>>> getAllPermissions() {
-        List<Permission> permissions = permissionService.getPermissions();
-        List<PermissionRes> permissionRes = permissions.stream().map(permissionMapper::toResponse).toList();
+        List<PermissionRes> permissions = permissionService.getPermissions()
+                .stream()
+                .map(permissionMapper::toResponse)
+                .toList();
 
-        return ResponseEntity.ok(new ApiResponse<>(200, "permissions", permissionRes));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "GET_ALL_PERMISSIONS_SUCCESS", permissions)
+        );
     }
 
     @GetMapping("/{permissionName}")
     ResponseEntity<ApiResponse<PermissionRes>> getPermission(@PathVariable String permissionName) {
-
-        return ResponseEntity.ok(new ApiResponse<>(200, "permission", permissionMapper.toResponse(permissionService.getPermission(permissionName))));
+        PermissionRes res = permissionMapper.toResponse(permissionService.getPermission(permissionName));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "GET_PERMISSION_SUCCESS", res)
+        );
     }
 
     @PostMapping
-    ResponseEntity<ApiResponse<PermissionRes>> createPermission(@Valid  @RequestBody CreatePermissionReq req) {
-        return ResponseEntity.ok(new ApiResponse<>(201, "permission", permissionMapper.toResponse(permissionService.createPermission(req))));
+    ResponseEntity<ApiResponse<PermissionRes>> createPermission(@Valid @RequestBody CreatePermissionReq req) {
+        PermissionRes res = permissionMapper.toResponse(permissionService.createPermission(req));
+        return ResponseEntity.status(201).body(
+                ApiResponse.success(201, "CREATE_PERMISSION_SUCCESS", res)
+        );
     }
 
     @PutMapping
     ResponseEntity<ApiResponse<PermissionRes>> updatePermission(@Valid @RequestBody CreatePermissionReq req) {
-        return ResponseEntity
-                .ok(new ApiResponse<>(200,
-                        "update desc successfully",
-                        permissionMapper.toResponse(permissionService.updatePermission(req))));
+        PermissionRes res = permissionMapper.toResponse(permissionService.updatePermission(req));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "UPDATE_PERMISSION_SUCCESS", res)
+        );
     }
 
     @DeleteMapping("/{permissionName}")
-    ResponseEntity<ApiResponse<?>> deletePermission(@PathVariable String permissionName) {
+    ResponseEntity<ApiResponse<Void>> deletePermission(@PathVariable String permissionName) {
         permissionService.deletePermission(permissionName);
-        return ResponseEntity.ok(new ApiResponse<>(204, "Deleted permissionName: " + permissionName, null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "DELETE_PERMISSION_SUCCESS", null)
+        );
     }
-
-
 }

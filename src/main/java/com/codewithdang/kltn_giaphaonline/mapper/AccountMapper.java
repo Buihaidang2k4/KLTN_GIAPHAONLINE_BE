@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {RoleMapper.class})
 public abstract class AccountMapper {
 
     @Autowired
@@ -27,14 +27,15 @@ public abstract class AccountMapper {
 
     public abstract Account toEntity(CreateAccountReq req);
 
-    @Mapping(target = "roles", source = "accountRoles")
+    @Mapping(target = "roles", source = "accountRoles", qualifiedByName = "mapAccountRoleToString")
     public abstract AccountRes toRes(Account account);
 
-    @Mapping(target = "roles", source = "accountRoles")
+    @Mapping(target = "roles", source = "accountRoles", qualifiedByName = "mapAccountRoles")
     public abstract AccountDetailsRes toDetailsRes(Account account);
 
     public abstract void updateEntity(@MappingTarget Account account, ChangePasswordAccountReq req);
 
+    @Named("mapAccountRoles")
     protected Set<RoleRes> mapAccountRoles(Set<AccountRole> accountRoles) {
         if (accountRoles == null || accountRoles.isEmpty()) {
             return Collections.emptySet();
@@ -45,5 +46,18 @@ public abstract class AccountMapper {
                 .filter(Objects::nonNull)
                 .map(roleMapper::toRes)
                 .collect(Collectors.toSet());
+    }
+
+    @Named("mapAccountRoleToString")
+    protected List<String> mapAccountRoleToString(Set<AccountRole> accountRoles) {
+        if (accountRoles == null || accountRoles.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return accountRoles.stream()
+                .map(AccountRole::getRole)
+                .filter(Objects::nonNull)
+                .map(role -> role.getName())
+                .collect(Collectors.toList());
     }
 }

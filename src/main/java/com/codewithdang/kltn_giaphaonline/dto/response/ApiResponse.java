@@ -36,8 +36,8 @@ public class ApiResponse<T> implements Serializable {
         this.timestamp = LocalDateTime.now();
     }
 
-    public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(200, "OK", data, LocalDateTime.now());
+    public static <T> ApiResponse<T> success(int code, String message, T data) {
+        return new ApiResponse<>(code, message, data, LocalDateTime.now());
     }
 
     public static <T> ApiResponse<T> error(int code, String message) {

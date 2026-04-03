@@ -30,7 +30,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             throw new AppException(ErrorCode.ACTION_IS_EMPTY, "Audit action must not be blank");
 
         if (req.entityType() == null || req.entityType().isBlank())
-            throw new AppException(ErrorCode.ENTITYTYPE_IS_EMPTY, "Audit entityType must not be blank");
+            throw new AppException(ErrorCode.ENTITY_TYPE_IS_EMPTY, "Audit entityType must not be blank");
 
         try {
             AuditLog auditLog = auditLogMapper.toEntity(req);

@@ -2,7 +2,6 @@ package com.codewithdang.kltn_giaphaonline.exception;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -22,7 +21,6 @@ public enum ErrorCode {
     ROLE_NOT_ALLOWED(9005, "Role is not allowed for this action", HttpStatus.FORBIDDEN),
     DATABASE_ERROR(9006, "Database failed toEmail check backlist for token ", INTERNAL_SERVER_ERROR),
     REFRESH_TOKEN_NOT_EXIST_IN_COOKIES(9007, "Refresh token is null when get from cookies ", BAD_REQUEST),
-
 
     // account
     ACCOUNT_EXISTED(1001, "Account existed", HttpStatus.BAD_REQUEST),
@@ -49,7 +47,7 @@ public enum ErrorCode {
 
     // permission
     PERMISSION_EXISTED(1200, "Permission existed", HttpStatus.BAD_REQUEST),
-    PERMISSION_NOT_EXISTED(1201, "Permission not  existed", HttpStatus.BAD_REQUEST),
+    PERMISSION_NOT_EXISTED(1201, "Permission not  existed", HttpStatus.NOT_FOUND),
     PERMISSION_IS_ALREADY_USED(1202, "Permission is used by role", HttpStatus.CONFLICT),
 
     // minio
@@ -64,8 +62,13 @@ public enum ErrorCode {
 
     // audit
     ACTION_IS_EMPTY(1500, "Audit action must not be blank", HttpStatus.BAD_REQUEST),
-    ENTITYTYPE_IS_EMPTY(1501, "Audit entityType must not be blank", HttpStatus.BAD_REQUEST),
+    ENTITY_TYPE_IS_EMPTY(1501, "Audit entityType must not be blank", HttpStatus.BAD_REQUEST),
 
+    // article
+    ARTICLE_NOT_EXISTED(1600, "Article is not found", HttpStatus.NOT_FOUND),
+    ARTICLE_CATEGORY_EXISTED(1601, "Article existed", BAD_REQUEST),
+    ARTICLE_CATEGORY_SLUG_EXISTED(1602, "Article slug existed", BAD_REQUEST),
+    ARTICLE_CATEGORY_ALREADY_HAS_ARTICLES(1603, "Article category already has articles cannot deleted", BAD_REQUEST),
     ;
 
     final int code;

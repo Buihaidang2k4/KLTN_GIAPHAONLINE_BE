@@ -221,6 +221,7 @@ public class AccountServiceImpl implements AccountService {
 
         return pageMapper.toPageResponse(accountPage, account ->
                 {
+                    
                     AccountRes res = accountMapper.toRes(account);
 
                     if (account.getAvatarPath() != null && !account.getAvatarPath().isBlank()) {

@@ -34,46 +34,55 @@ public class AuthController {
     ResponseEntity<ApiResponse<AuthRes>> login(@Valid @RequestBody AuthReq authReq,
                                                HttpServletResponse response
     ) throws ParseException {
-        return ResponseEntity.ok(new ApiResponse<>(200, "LOGIN SUCCESS", authService.authenticate(authReq, response)));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "LOGIN_SUCCESS", authService.authenticate(authReq, response))
+        );
     }
 
     @PostMapping("/register")
-    ResponseEntity<ApiResponse<AuthRes>> register(@Valid @RequestBody RegisterReq registerReq, HttpServletRequest request) {
+    ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterReq registerReq, HttpServletRequest request) {
         String requestIp = request.getRemoteAddr();
         String userAgent = request.getHeader("User-Agent");
         authService.register(registerReq, requestIp, userAgent);
-        return ResponseEntity.ok(new ApiResponse<>(200, "Register success", null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "REGISTER_SUCCESS", null)
+        );
     }
 
     @PostMapping("/refresh-token")
-    ResponseEntity<ApiResponse<?>> refreshToken(HttpServletRequest request,
-                                                HttpServletResponse response
+    ResponseEntity<ApiResponse<Void>> refreshToken(HttpServletRequest request,
+                                                   HttpServletResponse response
     ) throws ParseException, JOSEException {
         authService.refreshToken(request, response);
-        return ResponseEntity.ok(ApiResponse.success("REFRESH TOKEN SUCCESS"));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "REFRESH_TOKEN_SUCCESS", null)
+        );
     }
 
     @PostMapping("/introspect")
     ResponseEntity<ApiResponse<?>> introspect(HttpServletRequest request
     ) throws ParseException, JOSEException {
-
         var intro = authService.introspect(authService.getTokenFromCookie(request, "access_token"));
-        return ResponseEntity.ok(new ApiResponse<>(200, "INTROSPECT", intro));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "INTROSPECT_SUCCESS", intro)
+        );
     }
 
     @PostMapping("/logout")
-    ResponseEntity<ApiResponse<?>> logout(HttpServletRequest request,
-                                          HttpServletResponse response
+    ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request,
+                                             HttpServletResponse response
     ) throws ParseException {
         authService.logout(request, response);
-        return ResponseEntity.ok(ApiResponse.success("LOGOUT SUCCESS"));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "LOGOUT_SUCCESS", null)
+        );
     }
 
     @PatchMapping("/verify-account")
-    ResponseEntity<ApiResponse<?>> verifyAccount(
-            @RequestParam("token") String token
-    ) {
+    ResponseEntity<ApiResponse<Void>> verifyAccount(@RequestParam("token") String token) {
         verificationTokenService.verifyAccount(token);
-        return ResponseEntity.ok(new ApiResponse<>(200, "VERIFY TOKEN ACCOUNT", null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "VERIFY_ACCOUNT_SUCCESS", null)
+        );
     }
 }

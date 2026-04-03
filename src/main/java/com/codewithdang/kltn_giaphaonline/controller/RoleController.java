@@ -1,11 +1,9 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
-
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateRoleReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateRoleReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.RoleRes;
-import com.codewithdang.kltn_giaphaonline.entity.Role;
 import com.codewithdang.kltn_giaphaonline.mapper.RoleMapper;
 import com.codewithdang.kltn_giaphaonline.service.role.RoleService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,30 +27,44 @@ public class RoleController {
 
     @GetMapping
     ResponseEntity<ApiResponse<List<RoleRes>>> getRoles() {
-        List<Role> roles = roleService.getAllRoles();
-        List<RoleRes> roleRes = roles.stream().map(roleMapper::toRes).toList();
-        return ResponseEntity.ok(new ApiResponse<>(200, "ROLE", roleRes));
+        List<RoleRes> roleRes = roleService.getAllRoles()
+                .stream()
+                .map(roleMapper::toRes)
+                .toList();
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "GET_ROLES_SUCCESS", roleRes)
+        );
     }
 
     @PostMapping
     ResponseEntity<ApiResponse<RoleRes>> createRole(@Valid @RequestBody CreateRoleReq req) {
-        return ResponseEntity.ok(new ApiResponse<>(201, "CREATE ROLE SUCCESSFULLY", roleMapper.toRes(roleService.createRole(req))));
+        RoleRes res = roleMapper.toRes(roleService.createRole(req));
+        return ResponseEntity.status(201).body(
+                ApiResponse.success(201, "CREATE_ROLE_SUCCESS", res)
+        );
     }
 
     @PutMapping("/add-permission/{roleName}")
-    ResponseEntity<ApiResponse<RoleRes>> addPermission(@PathVariable String roleName,@Valid @RequestBody UpdateRoleReq req) {
-        return ResponseEntity.ok(new ApiResponse<>(200, "ADD PERMISSION", roleMapper.toRes(roleService.addPermissionToRole(roleName, req))));
+    ResponseEntity<ApiResponse<RoleRes>> addPermission(@PathVariable String roleName, @Valid @RequestBody UpdateRoleReq req) {
+        RoleRes res = roleMapper.toRes(roleService.addPermissionToRole(roleName, req));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "ADD_PERMISSION_TO_ROLE_SUCCESS", res)
+        );
     }
 
     @DeleteMapping("/remove-permission/{roleName}")
-    ResponseEntity<ApiResponse<?>> removePermissions(@PathVariable String roleName,@Valid @RequestBody UpdateRoleReq req) {
+    ResponseEntity<ApiResponse<Void>> removePermissions(@PathVariable String roleName, @Valid @RequestBody UpdateRoleReq req) {
         roleService.removePermissionFromRole(roleName, req);
-        return ResponseEntity.ok(new ApiResponse<>(204, "DELETE PERMISSION" + req.permissions() + " FROM ROLE: " + roleName, null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "REMOVE_PERMISSION_FROM_ROLE_SUCCESS", null)
+        );
     }
 
     @DeleteMapping("/{roleName}")
-    ResponseEntity<ApiResponse<?>> deleteRole(@PathVariable String roleName) {
+    ResponseEntity<ApiResponse<Void>> deleteRole(@PathVariable String roleName) {
         roleService.deleteRole(roleName);
-        return ResponseEntity.ok(new ApiResponse<>(204, "DELETE ROLE: " + roleName, null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "DELETE_ROLE_SUCCESS", null)
+        );
     }
 }

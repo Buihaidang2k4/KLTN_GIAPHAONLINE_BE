@@ -1,6 +1,5 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
-
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangePasswordAccountReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangeStatusLockReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAccountReq;
@@ -31,65 +30,85 @@ public class AccountController {
 
     @GetMapping
     ResponseEntity<ApiResponse<PageResponse<AccountRes>>> getAccounts(Pageable pageable) {
-        return ResponseEntity.ok(new ApiResponse<>(200, "ACCOUNTS", accountService.getAccounts(pageable)));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "GET_ACCOUNTS_SUCCESS", accountService.getAccounts(pageable))
+        );
     }
 
     @GetMapping("/{accountId}")
     ResponseEntity<ApiResponse<AccountRes>> getAccountById(@PathVariable Long accountId) {
-        return ResponseEntity.ok(new ApiResponse<>(200, "ACCOUNT", accountService.getAccountById(accountId)));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "GET_ACCOUNT_SUCCESS", accountService.getAccountById(accountId))
+        );
     }
 
     @GetMapping("/MyInfo")
     ResponseEntity<ApiResponse<AccountDetailsRes>> getMyInfo() {
-        return ResponseEntity.ok(new ApiResponse<>(200, "ACCOUNT INFO", accountService.getMyInfo()));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "GET_MY_INFO_SUCCESS", accountService.getMyInfo())
+        );
     }
 
     @PostMapping
     ResponseEntity<ApiResponse<AccountRes>> createAccount(@Valid @RequestBody CreateAccountReq req) {
-        return ResponseEntity.ok(new ApiResponse<>(201, "ACCOUNT", accountService.createAccount(req)));
+        return ResponseEntity.status(201).body(
+                ApiResponse.success(201, "CREATE_ACCOUNT_SUCCESS", accountService.createAccount(req))
+        );
     }
 
     @PutMapping("/change-pass/{accountId}")
-    ResponseEntity<ApiResponse<?>> changePass(@PathVariable Long accountId, @Valid @RequestBody ChangePasswordAccountReq req) {
+    ResponseEntity<ApiResponse<Void>> changePass(@PathVariable Long accountId, @Valid @RequestBody ChangePasswordAccountReq req) {
         accountService.changePassword(accountId, req);
-        return ResponseEntity.ok(new ApiResponse<>(200, "CHANGE PASS ACCOUNT SUCCESS", null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "CHANGE_PASSWORD_SUCCESS", null)
+        );
     }
 
     @PutMapping("/change-status-lock/{accountId}")
-    ResponseEntity<ApiResponse<?>> changeStatusLock(@PathVariable Long accountId, @Valid @RequestBody ChangeStatusLockReq req) {
-        return ResponseEntity.ok(new ApiResponse<>(200, "CHANGE STATUS LOCK ACCOUNT SUCCESS", accountService.updateAccountStatus(accountId, req)));
+    ResponseEntity<ApiResponse<AccountRes>> changeStatusLock(@PathVariable Long accountId, @Valid @RequestBody ChangeStatusLockReq req) {
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "UPDATE_ACCOUNT_STATUS_SUCCESS", accountService.updateAccountStatus(accountId, req))
+        );
     }
 
     @PutMapping("/change-avatar")
-    ResponseEntity<ApiResponse<?>> changeStatusLock(@RequestParam Long accountId,
-                                                    @RequestPart("file") MultipartFile file) {
+    ResponseEntity<ApiResponse<Void>> changeAvatar(@RequestParam Long accountId,
+                                                   @RequestPart("file") MultipartFile file) {
         accountService.changeAvatar(accountId, file);
-        return ResponseEntity.ok(new ApiResponse<>(200, "CHANGE AVATAR ACCOUNT SUCCESS", null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "UPDATE_AVATAR_SUCCESS", null)
+        );
     }
 
     @PostMapping("/add-role-to-account")
-    ResponseEntity<ApiResponse<?>> addRole(@RequestParam Long accountId, @RequestParam String roleName) {
+    ResponseEntity<ApiResponse<Void>> addRole(@RequestParam Long accountId, @RequestParam String roleName) {
         accountService.addRole(accountId, roleName);
-        return ResponseEntity.ok(new ApiResponse(200, "ADD ROLE SUCCESS", null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "ADD_ROLE_SUCCESS", null)
+        );
     }
 
     @DeleteMapping("/remove-role-from-account")
-    ResponseEntity<ApiResponse<?>> removeRoleFromAccount(@RequestParam Long accountId, @RequestParam String roleName) {
+    ResponseEntity<ApiResponse<Void>> removeRoleFromAccount(@RequestParam Long accountId, @RequestParam String roleName) {
         accountService.removeRole(accountId, roleName);
-        return ResponseEntity.ok(new ApiResponse(200, "REMOVE ROLE SUCCESS", null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "REMOVE_ROLE_SUCCESS", null)
+        );
     }
 
     @DeleteMapping("/soft-delete/{accountId}")
-    ResponseEntity<ApiResponse<?>> softDeleteAccount(@PathVariable Long accountId) {
+    ResponseEntity<ApiResponse<Void>> softDeleteAccount(@PathVariable Long accountId) {
         accountService.softDeleteAccount(accountId);
-        return ResponseEntity.ok(new ApiResponse(200, "DELETE ACCOUNT SUCCESS", null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "SOFT_DELETE_ACCOUNT_SUCCESS", null)
+        );
     }
 
     @DeleteMapping("/hard-delete/{accountId}")
-    ResponseEntity<ApiResponse<?>> hardDeleteAccount(@PathVariable Long accountId) {
+    ResponseEntity<ApiResponse<Void>> hardDeleteAccount(@PathVariable Long accountId) {
         accountService.hardDeleteAccount(accountId);
-        return ResponseEntity.ok(new ApiResponse(200, "DELETE ACCOUNT SUCCESS", null));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "HARD_DELETE_ACCOUNT_SUCCESS", null)
+        );
     }
-
-
 }

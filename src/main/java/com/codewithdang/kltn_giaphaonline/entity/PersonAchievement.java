@@ -35,6 +35,8 @@ public class PersonAchievement {
     @Column(name = "name", nullable = false, length = 255)
     String name;
 
+    String rank; // Hạng/Bậc (VD: Giải nhất, Xuất sắc)
+
     @Column(name = "organization", length = 255)
     String organization;
 
