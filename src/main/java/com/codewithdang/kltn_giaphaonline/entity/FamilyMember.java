@@ -4,6 +4,8 @@ import com.codewithdang.kltn_giaphaonline.enums.FamilyMemberStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -44,9 +46,11 @@ public class FamilyMember {
     @Column(name = "removed_at")
     Instant removedAt;
 
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     Instant createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     Instant updatedAt;
 }

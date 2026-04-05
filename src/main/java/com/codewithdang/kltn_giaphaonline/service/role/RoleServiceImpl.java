@@ -2,10 +2,8 @@ package com.codewithdang.kltn_giaphaonline.service.role;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateRoleReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateRoleReq;
-import com.codewithdang.kltn_giaphaonline.entity.Permission;
-import com.codewithdang.kltn_giaphaonline.entity.Role;
-import com.codewithdang.kltn_giaphaonline.entity.RolePermission;
-import com.codewithdang.kltn_giaphaonline.entity.RolePermissionId;
+import com.codewithdang.kltn_giaphaonline.entity.*;
+import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.enums.RoleScopeType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
@@ -20,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,7 +29,7 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RoleServiceImpl implements RoleService {
     RoleRepo roleRepository;
-    AccountRoleRepo accountRoleRepository;
+    AccountRoleRepo accountRoleRepo;
     PermissionRepo permissionRepo;
     RolePermissionRepo rolePermissionRepo;
 
@@ -51,6 +50,24 @@ public class RoleServiceImpl implements RoleService {
                 .build();
 
         return roleRepository.save(role);
+    }
+
+    @Override
+    public void assignRoleToAccount(Account account, RoleEnums roleEnums) {
+        Role role = roleRepository.findById(roleEnums.name())
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+
+        AccountRole accountRole = AccountRole.builder()
+                .id(
+                        new AccountRoleId(account.getAccountId(), role.getName())
+                )
+                .account(account)
+                .role(role)
+                .build();
+
+        accountRoleRepo.save(accountRole);
+        account.setAccountRoles(new HashSet<>(Set.of(accountRole)));
+        account.getAccountRoles().add(accountRole);
     }
 
     @Override
@@ -119,7 +136,7 @@ public class RoleServiceImpl implements RoleService {
         Role role = roleRepository.findById(roleName)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
-        boolean roleUsed = accountRoleRepository.countByRole_Name(role.getName()) > 0;
+        boolean roleUsed = accountRoleRepo.countByRole_Name(role.getName()) > 0;
         if (roleUsed)
             throw new AppException(ErrorCode.ROLE_IS_ALREADY_USED);
 

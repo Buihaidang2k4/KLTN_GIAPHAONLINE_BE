@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.service.article_ategory;
+package com.codewithdang.kltn_giaphaonline.service.article_category;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateArticleCategoryReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateArticleCategoryReq;
@@ -90,7 +90,6 @@ public class ArticleCategoryServiceImpl implements ArticleCategoryService {
     @Transactional(readOnly = true)
     public PageResponse<ArticleCategoryRes> getAll(Pageable pageable) {
         Page<ArticleCategory> articleCategories = articleCategoryRepo.findAll(pageable);
-
         return pageMapper.toPageResponse(articleCategories, articleCategoryMapper::toRes);
     }
 }

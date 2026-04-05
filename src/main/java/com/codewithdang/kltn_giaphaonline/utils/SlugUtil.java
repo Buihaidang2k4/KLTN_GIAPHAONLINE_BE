@@ -1,7 +1,10 @@
 package com.codewithdang.kltn_giaphaonline.utils;
 
+import org.springframework.util.AlternativeJdkIdGenerator;
+
 import java.text.Normalizer;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class SlugUtil {
@@ -29,5 +32,23 @@ public class SlugUtil {
         slug = slug.replaceAll("-{2,}", "-");
 
         return slug.toLowerCase(Locale.ROOT);
+    }
+
+    public static String toSlugFamily(String input) {
+        if (input == null || input.isBlank())
+            return null;
+
+        String shortId = UUID.randomUUID().toString().substring(0, 6);
+
+        String noAccent = Normalizer.normalize(input, Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replace('đ', 'd')
+                .replace('Đ', 'D');
+
+        String slug = WHITESPACE.matcher(noAccent.trim()).replaceAll("-");
+        slug = NONLATIN.matcher(slug).replaceAll("");
+
+        String finalSlug = slug.toLowerCase(Locale.ROOT) + "-" + shortId;
+        return finalSlug.replaceAll("-{2,}", "-").replaceAll("^-|-$", "");
     }
 }

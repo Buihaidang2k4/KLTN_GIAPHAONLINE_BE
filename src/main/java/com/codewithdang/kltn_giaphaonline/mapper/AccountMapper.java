@@ -30,6 +30,7 @@ public abstract class AccountMapper {
     @Mapping(target = "roles", source = "accountRoles", qualifiedByName = "mapAccountRoleToString")
     public abstract AccountRes toRes(Account account);
 
+    @Mapping(target = "families", source = "ownedFamilies")
     @Mapping(target = "roles", source = "accountRoles", qualifiedByName = "mapAccountRoles")
     public abstract AccountDetailsRes toDetailsRes(Account account);
 

@@ -2,6 +2,7 @@ package com.codewithdang.kltn_giaphaonline.service.auth;
 
 import com.codewithdang.kltn_giaphaonline.dto.event.UserRegisteredEvent;
 import com.codewithdang.kltn_giaphaonline.dto.request.AuthReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.FamilyReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AuthRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.IntrospectRes;
@@ -14,7 +15,9 @@ import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
 import com.codewithdang.kltn_giaphaonline.repo.RoleRepo;
 import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
+import com.codewithdang.kltn_giaphaonline.service.family.FamilyService;
 import com.codewithdang.kltn_giaphaonline.service.revoked_token.RevokedTokenService;
+import com.codewithdang.kltn_giaphaonline.service.role.RoleService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -57,12 +60,12 @@ public class AuthServiceImpl implements AuthService {
     AccountRepo accountRepo;
     PasswordEncoder passwordEncoder;
     RevokedTokenService revokedTokenService;
-    // data transfer intermediate station
     ApplicationEventPublisher eventPublisher;
     RoleRepo roleRepo;
     AccountVerificationTokenService verificationTokenService;
     AccountRoleRepo accountRoleRepo;
-
+    RoleService roleService;
+    FamilyService familyService;
 
     @NonFinal
     @Value("${jwt.secret}")
@@ -116,6 +119,7 @@ public class AuthServiceImpl implements AuthService {
 
         Account account = Account.builder()
                 .email(email)
+                .phoneNumber(req.phoneNumber())
                 .passwordHash(passwordEncoder.encode(req.password()))
                 .fullName(req.fullName())
                 .accountStatus(AccountStatus.PENDING)
@@ -123,16 +127,13 @@ public class AuthServiceImpl implements AuthService {
 
         accountRepo.save(account);
 
-        Role userRole = roleRepo.findById(RoleEnums.FAMILY_USERS.name())
-                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        roleService.assignRoleToAccount(account, RoleEnums.FAMILY_USERS);
 
-        AccountRole accountRole = AccountRole.builder()
-                .id(new AccountRoleId(account.getAccountId(), userRole.getName()))
-                .account(account)
-                .role(userRole)
-                .build();
-
-        accountRoleRepo.save(accountRole);
+        // tao dong ho
+        familyService.createFamily(FamilyReq.builder()
+                .ownerAccountId(account.getAccountId())
+                .familyName(req.familyName())
+                .build());
 
         // verification email
         AccountVerificationToken verificationToken =

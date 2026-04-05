@@ -27,8 +27,8 @@ public class Person {
     Long personId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "family_id")
-    Family family;
+    @JoinColumn(name = "family_category_id")
+    FamilyCategory familyCategory;
 
     @Column(name = "generation")
     Long generation;

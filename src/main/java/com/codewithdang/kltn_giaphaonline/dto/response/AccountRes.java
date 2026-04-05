@@ -11,6 +11,7 @@ import java.util.List;
 public class AccountRes {
     Long accountId;
     String email;
+    String phoneNumber;
     String fullName;
     String avatarPath;
     String avatarUrl;

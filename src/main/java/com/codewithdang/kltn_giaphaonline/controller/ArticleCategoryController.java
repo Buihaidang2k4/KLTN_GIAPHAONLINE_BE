@@ -5,7 +5,7 @@ import com.codewithdang.kltn_giaphaonline.dto.request.UpdateArticleCategoryReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.ArticleCategoryRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
-import com.codewithdang.kltn_giaphaonline.service.article_ategory.ArticleCategoryService;
+import com.codewithdang.kltn_giaphaonline.service.article_category.ArticleCategoryService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;

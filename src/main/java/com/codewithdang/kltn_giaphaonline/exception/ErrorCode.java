@@ -69,6 +69,15 @@ public enum ErrorCode {
     ARTICLE_CATEGORY_EXISTED(1601, "Article existed", BAD_REQUEST),
     ARTICLE_CATEGORY_SLUG_EXISTED(1602, "Article slug existed", BAD_REQUEST),
     ARTICLE_CATEGORY_ALREADY_HAS_ARTICLES(1603, "Article category already has articles cannot deleted", BAD_REQUEST),
+
+
+    // family
+    FAMILY_NOT_EXISTED(1700, "Family is not found", HttpStatus.NOT_FOUND),
+
+    // ceremony
+    CEREMONY_NOT_EXISTED(1800, "Ceremony is not found", HttpStatus.NOT_FOUND),
+
+
     ;
 
     final int code;
@@ -80,6 +89,5 @@ public enum ErrorCode {
         this.message = message;
         this.statusCode = statusCode;
     }
-
 
 }

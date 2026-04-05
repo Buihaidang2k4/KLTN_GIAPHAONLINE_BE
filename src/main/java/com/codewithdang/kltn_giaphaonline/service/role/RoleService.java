@@ -2,12 +2,16 @@ package com.codewithdang.kltn_giaphaonline.service.role;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateRoleReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateRoleReq;
+import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Role;
+import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 
 import java.util.List;
 
 public interface RoleService {
     Role createRole(CreateRoleReq request);
+
+    void assignRoleToAccount(Account account, RoleEnums roleEnums);
 
     Role addPermissionToRole(String roleName, UpdateRoleReq req);
 

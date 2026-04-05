@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -32,6 +33,9 @@ public class Account {
     @Column(name = "full_name", nullable = false)
     String fullName;
 
+    @Column(name = "phone_number", unique = true, length = 20)
+    String phoneNumber;
+    
     @Column(name = "avatar_path")
     String avatarPath;
 
@@ -51,11 +55,16 @@ public class Account {
     @Column(name = "locked_at")
     LocalDateTime lockedAt;
 
+    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    LocalDateTime deletedAt;
 
     @Builder.Default
     @OneToMany(mappedBy = "account", fetch = FetchType.LAZY)
@@ -68,15 +77,4 @@ public class Account {
     @Builder.Default
     @OneToMany(mappedBy = "account")
     Set<FamilyMember> familyMemberships = new LinkedHashSet<>();
-
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
 }

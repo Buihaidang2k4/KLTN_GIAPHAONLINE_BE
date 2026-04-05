@@ -7,22 +7,20 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @Entity
-@Table(name = "family_categories")  // Thay đổi tên bảng thành "family_categories"
+@Table(name = "family_categories")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class FamilyCategory {  // Đổi tên class từ Family thành FamilyCategory
+public class FamilyCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "family_category_id")  // Đổi tên trường thành "family_category_id"
-    Long familyCategoryId;  // Đổi tên ID thành "familyCategoryId"
+    @Column(name = "family_category_id")
+    Long familyCategoryId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
@@ -55,13 +53,9 @@ public class FamilyCategory {  // Đổi tên class từ Family thành FamilyCat
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    protected Instant updatedAt;
+    Instant updatedAt;
 
-    @Builder.Default
-    @OneToMany(mappedBy = "familyCategory", cascade = CascadeType.ALL, orphanRemoval = true)
-    Set<FamilyMember> members = new LinkedHashSet<>();
-
-    @Builder.Default
-    @OneToMany(mappedBy = "familyCategory")
-    Set<FamilyInvitation> invitations = new LinkedHashSet<>();
+    @ManyToOne
+    @JoinColumn(name = "family_id", referencedColumnName = "family_id")
+    Family family;
 }

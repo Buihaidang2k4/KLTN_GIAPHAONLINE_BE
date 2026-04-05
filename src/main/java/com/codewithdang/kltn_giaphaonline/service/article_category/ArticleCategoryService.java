@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.service.article_ategory;
+package com.codewithdang.kltn_giaphaonline.service.article_category;
 
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateArticleCategoryReq;

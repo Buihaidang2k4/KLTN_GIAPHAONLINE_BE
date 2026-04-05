@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.dto.response;
 
+import com.codewithdang.kltn_giaphaonline.entity.Family;
 import lombok.Builder;
 import lombok.Data;
 
@@ -21,4 +22,5 @@ public class AccountDetailsRes {
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
     Set<RoleRes> roles;
+    Set<FamilyRes> families;
 }

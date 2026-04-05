@@ -3,6 +3,7 @@ package com.codewithdang.kltn_giaphaonline.service.account;
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangePasswordAccountReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangeStatusLockReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAccountReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.FamilyReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountDetailsRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
@@ -11,6 +12,7 @@ import com.codewithdang.kltn_giaphaonline.entity.AccountRole;
 import com.codewithdang.kltn_giaphaonline.entity.AccountRoleId;
 import com.codewithdang.kltn_giaphaonline.entity.Role;
 import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
+import com.codewithdang.kltn_giaphaonline.enums.RoleScopeType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.AccountMapper;
@@ -18,7 +20,9 @@ import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
 import com.codewithdang.kltn_giaphaonline.repo.RoleRepo;
+import com.codewithdang.kltn_giaphaonline.service.family.FamilyService;
 import com.codewithdang.kltn_giaphaonline.service.minio.MinioService;
+import com.codewithdang.kltn_giaphaonline.service.role.RoleService;
 import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +52,8 @@ public class AccountServiceImpl implements AccountService {
     MinioService minioService;
     AccountRoleRepo accountRoleRepo;
     PageMapper pageMapper;
+    FamilyService familyService;
+    RoleService roleService;
 
     @Override
     public AccountRes createAccount(CreateAccountReq req) {
@@ -62,19 +68,15 @@ public class AccountServiceImpl implements AccountService {
         account.setAccountStatus(AccountStatus.ACTIVE);
         accountRepo.save(account);
 
-        // check role
-        Role role = roleRepo.findById(ConstantUtils.FAMILY_ADMIN)
-                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        roleService.assignRoleToAccount(account, req.roleEnums());
 
-
-        AccountRole accountRole = AccountRole.builder()
-                .id(new AccountRoleId(account.getAccountId(), role.getName()))
-                .account(account)
-                .role(role)
-                .build();
-
-        accountRoleRepo.save(accountRole);
-        account.setAccountRoles(new HashSet<>(Set.of(accountRole)));
+        if (req.roleEnums().getScopeType() == RoleScopeType.FAMILY) {
+            // tao dong ho
+            familyService.createFamily(FamilyReq.builder()
+                    .ownerAccountId(account.getAccountId())
+                    .familyName(req.familyName())
+                    .build());
+        }
 
         return accountMapper.toRes(account);
     }
@@ -221,7 +223,7 @@ public class AccountServiceImpl implements AccountService {
 
         return pageMapper.toPageResponse(accountPage, account ->
                 {
-                    
+
                     AccountRes res = accountMapper.toRes(account);
 
                     if (account.getAvatarPath() != null && !account.getAvatarPath().isBlank()) {
