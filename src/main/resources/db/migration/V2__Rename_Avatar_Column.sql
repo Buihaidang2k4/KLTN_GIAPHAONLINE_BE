@@ -1,2 +1,0 @@
--- Đổi tên cột từ avatar_url sang avatar_path
--- ALTER TABLE accounts RENAME COLUMN avatar_url TO avatar_path;
