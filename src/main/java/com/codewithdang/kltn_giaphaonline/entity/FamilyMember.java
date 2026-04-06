@@ -37,7 +37,7 @@ public class FamilyMember {
     Role role;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20)
+    @Column(name = "status", nullable = false, length = 20)
     FamilyMemberStatus status;
 
     @Column(name = "joined_at")

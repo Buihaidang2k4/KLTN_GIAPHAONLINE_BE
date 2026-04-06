@@ -43,7 +43,7 @@ public enum ErrorCode {
     PERMISSION_NOT_ASSIGNED_TO_ROLE(1105, "The specified permission is not assigned toEmail this role", HttpStatus.BAD_REQUEST),
     SCOPE_TYPE_IS_NULL(1106, "Scope Type is null", HttpStatus.BAD_REQUEST),
     ROLE_PERMISSION_SCOPE_MISMATCH(1107, "ROLE mis match with PERMISSION by SCOPE_TYPE", HttpStatus.BAD_REQUEST),
-
+    ROLE_IS_NOT_WITHIN_THE_SCOPE_OF_THE_GENEALOGY(1108, "Role is not within THE_SCOPE", HttpStatus.BAD_REQUEST),
 
     // permission
     PERMISSION_EXISTED(1200, "Permission existed", HttpStatus.BAD_REQUEST),
@@ -73,9 +73,20 @@ public enum ErrorCode {
 
     // family
     FAMILY_NOT_EXISTED(1700, "Family is not found", HttpStatus.NOT_FOUND),
+    ACCOUNT_ACCESS_DENIED(1701, "Account is not owner family", BAD_REQUEST),
+    YOU_ARE_NOT_A_MEMBER_OF_THE_FAMILY(1702, "You are not a member of this Family", HttpStatus.BAD_REQUEST),
+    FAMILY_ROLE_IS_NOT_AUTHORITY(1703, "Family role is not authority", HttpStatus.BAD_REQUEST),
+
 
     // ceremony
     CEREMONY_NOT_EXISTED(1800, "Ceremony is not found", HttpStatus.NOT_FOUND),
+
+    // family_invitation
+    THIS_MEMBER_HAS_ALREADY_RECEIVED_AN_INVITATION(1900, "This member has already received an invitation", BAD_REQUEST),
+
+    // family_member
+    THIS_ACCOUNT_IS_ALREADY_A_MEMBER_OF_THE_FAMILY(2000, "This account is already a member of the family", BAD_REQUEST),
+    FAMILY_MEMBER_STATUS_NOT_ACTIVE(2001, "Family member status is not active", HttpStatus.BAD_REQUEST),
 
 
     ;

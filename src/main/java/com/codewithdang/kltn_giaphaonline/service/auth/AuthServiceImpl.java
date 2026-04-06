@@ -61,9 +61,7 @@ public class AuthServiceImpl implements AuthService {
     PasswordEncoder passwordEncoder;
     RevokedTokenService revokedTokenService;
     ApplicationEventPublisher eventPublisher;
-    RoleRepo roleRepo;
     AccountVerificationTokenService verificationTokenService;
-    AccountRoleRepo accountRoleRepo;
     RoleService roleService;
     FamilyService familyService;
 
