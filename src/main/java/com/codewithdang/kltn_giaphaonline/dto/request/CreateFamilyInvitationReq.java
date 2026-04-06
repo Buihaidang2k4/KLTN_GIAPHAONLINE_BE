@@ -10,7 +10,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class InviteMemberReq {
     Long familyId;
-    String email;
-    String role;
+    String invitedEmail;
+    String roleName;
     String message;
 }
