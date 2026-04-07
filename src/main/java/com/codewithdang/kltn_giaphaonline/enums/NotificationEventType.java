@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum NotificationType implements BaseEnum {
+public enum NotificationEventType implements BaseEnum {
     NONE("Không thông báo"),
     DAY_1("Trước 1 ngày"),
     DAY_3("Trước 3 ngày"),

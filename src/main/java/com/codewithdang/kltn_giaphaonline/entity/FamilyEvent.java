@@ -2,7 +2,7 @@ package com.codewithdang.kltn_giaphaonline.entity;
 
 import com.codewithdang.kltn_giaphaonline.enums.CalendarType;
 import com.codewithdang.kltn_giaphaonline.enums.FamilyEventStatus;
-import com.codewithdang.kltn_giaphaonline.enums.NotificationType;
+import com.codewithdang.kltn_giaphaonline.enums.NotificationEventType;
 import com.codewithdang.kltn_giaphaonline.enums.RepeatType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -53,7 +53,7 @@ public class FamilyEvent {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "notification_type", length = 20)
-    NotificationType notificationType;
+    NotificationEventType notificationEventType;
 
     @Column(name = "location", length = 255)
     String location;

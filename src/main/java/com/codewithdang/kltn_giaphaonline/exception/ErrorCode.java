@@ -33,6 +33,7 @@ public enum ErrorCode {
     ACCOUNT_VERIFICATION_TOKEN_EXPIRED(1008, "Verification token has expired.", HttpStatus.GONE),
     ACCOUNT_ALREADY_VERIFIED(1009, "Account is already verified. Please login.", HttpStatus.BAD_REQUEST),
     ACCOUNT_STATUS_IS_NOT_DELETE(1010, "The account status is not DELETED.", HttpStatus.BAD_REQUEST),
+    ACCOUNT_STATUS_IS_NOT_ACTIVE(1011, "The account status is not ACTIVE.", HttpStatus.BAD_REQUEST),
 
     // role
     ROLE_EXISTED(1100, "Role existed", HttpStatus.BAD_REQUEST),
@@ -83,11 +84,15 @@ public enum ErrorCode {
 
     // family_invitation
     THIS_MEMBER_HAS_ALREADY_RECEIVED_AN_INVITATION(1900, "This member has already received an invitation", BAD_REQUEST),
+    CANNOT_INVITE_YOURSELF(1901, "You cannot invite yourself", BAD_REQUEST),
 
     // family_member
     THIS_ACCOUNT_IS_ALREADY_A_MEMBER_OF_THE_FAMILY(2000, "This account is already a member of the family", BAD_REQUEST),
     FAMILY_MEMBER_STATUS_NOT_ACTIVE(2001, "Family member status is not active", HttpStatus.BAD_REQUEST),
 
+    // notification
+    NOTIFICATION_NOT_EXISTED(2100, "Notification is not found", HttpStatus.NOT_FOUND),
+    NOTIFICATION_IS_EXISTED(2100, "Notification is existed", BAD_REQUEST),
 
     ;
 

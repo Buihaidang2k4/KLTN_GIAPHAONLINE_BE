@@ -1,15 +1,10 @@
 package com.codewithdang.kltn_giaphaonline.event.consumer;
 
 import com.codewithdang.kltn_giaphaonline.config.rabbitmq.RabbitMQConfig;
-import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailBase;
-import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailOTP;
-import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailVerifyAccount;
-import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailWelcome;
-import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailHandler;
+import com.codewithdang.kltn_giaphaonline.dto.request.email.*;
 import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailOTPHandler;
 import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailVerifyAccountHandler;
 import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailWelcomeHandler;
-import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -18,10 +13,6 @@ import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -41,15 +32,21 @@ public class EmailConsumer {
     }
 
     @RabbitHandler
-    public void handle(EmailWelcome email) throws Exception {
+    public void handleWelcome(EmailWelcome email) throws Exception {
         log.info("Received welcome email for {}", email.getToEmail());
         emailWelcomeHandler.handle(email);
     }
-    
+
     @RabbitHandler
     public void handleEmailVerifyAccount(EmailVerifyAccount verifyAccount) throws Exception {
         log.info("Received verify account email for {}", verifyAccount.getToEmail());
         emailVerifyAccountHandler.handle(verifyAccount);
+    }
+
+    @RabbitHandler
+    public void handleInvitationMemberEmail(EmailInvitationAccount invitationAccount) {
+        log.info("Received  an email inviting me to join the family. {} ", invitationAccount.getToEmail());
+
     }
 
     @RabbitHandler(isDefault = true)

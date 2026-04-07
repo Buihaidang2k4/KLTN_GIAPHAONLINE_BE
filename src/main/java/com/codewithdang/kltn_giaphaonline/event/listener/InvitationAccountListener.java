@@ -1,8 +1,7 @@
 package com.codewithdang.kltn_giaphaonline.event.listener;
 
 import com.codewithdang.kltn_giaphaonline.config.fe.FrontendProperties;
-import com.codewithdang.kltn_giaphaonline.dto.event.UserRegisteredEvent;
-import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailVerifyAccount;
+import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailInvitationAccount;
 import com.codewithdang.kltn_giaphaonline.event.producer.EmailProducer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -15,29 +14,29 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Component
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class IntivationAccountListener {
+public class InvitationAccountListener {
 
     EmailProducer emailProducer;
     FrontendProperties frontendProperties;
 
     // The event only begins after the transaction is complete.
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(UserRegisteredEvent event) {
-
-        String verifyUrl = UriComponentsBuilder
+    public void handle(EmailInvitationAccount event) {
+        String invitationLink = UriComponentsBuilder
                 .fromHttpUrl(frontendProperties.getBaseUrl()) // url
                 .path(frontendProperties.getVerifyEndpoint())
-                .queryParam("token", event.verificationToken())
+                .queryParam("token", event.getInvitationToken())
                 .toUriString();
 
-        EmailVerifyAccount emailVerifyAccount =
-                EmailVerifyAccount.builder()
-                        .toEmail(event.email())
-                        .fullName(event.fullName())
-                        .subject("XÁC THỰC TÀI KHOẢN CỦA BẠN")
-                        .verifyUrl(verifyUrl)
-                        .build();
+        EmailInvitationAccount invitationAccount = EmailInvitationAccount.builder()
+                .toEmail(event.getToEmail())
+                .invitationToken(invitationLink)
+                .senderFullName(event.getSenderFullName())
+                .familyName(event.getFamilyName())
+                .personalMessage(event.getPersonalMessage())
+                .expiryHours(event.getExpiryHours())
+                .build();
 
-        emailProducer.sendEmail(emailVerifyAccount);
+        emailProducer.sendEmail(invitationAccount);
     }
 }

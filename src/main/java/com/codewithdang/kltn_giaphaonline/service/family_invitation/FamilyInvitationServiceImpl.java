@@ -1,19 +1,17 @@
 package com.codewithdang.kltn_giaphaonline.service.family_invitation;
 
 
-import com.codewithdang.kltn_giaphaonline.dto.event.SendInvitationEmailEvent;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateFamilyInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateFamilyMemberRoleReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailInvitationAccount;
 import com.codewithdang.kltn_giaphaonline.dto.response.InviteMemberRes;
 import com.codewithdang.kltn_giaphaonline.entity.*;
-import com.codewithdang.kltn_giaphaonline.enums.FamilyInvitationStatus;
-import com.codewithdang.kltn_giaphaonline.enums.FamilyMemberStatus;
-import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
-import com.codewithdang.kltn_giaphaonline.enums.RoleScopeType;
+import com.codewithdang.kltn_giaphaonline.enums.*;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyInvitationMapper;
 import com.codewithdang.kltn_giaphaonline.repo.*;
+import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -38,7 +36,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     FamilyInvitationMapper familyInvitationMapper;
     AccountRepo accountRepo;
     ApplicationEventPublisher eventPublisher;
-
+    NotificationService notificationService;
 
     @Override
     @Transactional
@@ -63,58 +61,55 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         validateFamilyRole(role);
 
         String invitedEmail = invitationReq.getInvitedEmail().trim().toLowerCase();
-
-        // check xem có lời mời chưa
-        boolean hasPendingInvitation =
-                invitationRepo.existsByFamily_FamilyIdAndInvitedEmailAndInvitationStatus(
-                        familyId, invitedEmail, FamilyInvitationStatus.PENDING
-                );
-
-        if (hasPendingInvitation)
-            throw new AppException(ErrorCode.THIS_MEMBER_HAS_ALREADY_RECEIVED_AN_INVITATION);
-
-        // check account if existed Then you won't be an active member.
-        Account invitedAccount = accountRepo.findByEmail(invitedEmail).orElse(null);
-        if (invitedAccount != null) {
-            boolean alreadyMember = familyMemberRepo.existsByFamily_FamilyIdAndAccount_AccountIdAndStatus(
-                    familyId,
-                    invitedAccount.getAccountId(),
-                    FamilyMemberStatus.ACTIVE
-            );
-
-            if (alreadyMember) throw new AppException(ErrorCode.THIS_ACCOUNT_IS_ALREADY_A_MEMBER_OF_THE_FAMILY);
-        }
-
+        String invitationToken = UUID.randomUUID().toString();
+        Instant expiryTime = Instant.now().plus(1, ChronoUnit.DAYS);
         // build entity
         FamilyInvitation familyInvitation = FamilyInvitation.builder()
                 .family(family)
                 .invitedEmail(invitedEmail)
                 .role(role)
-                .inviteToken(UUID.randomUUID().toString())
+                .inviteToken(invitationToken)
                 .invitedByAccount(inviter)
                 .invitationStatus(FamilyInvitationStatus.PENDING)
                 .message(invitationReq.getMessage())
-                .expiredAt(Instant.now().plus(24, ChronoUnit.HOURS))
+                .expiredAt(expiryTime)
                 .build();
 
         // check account
-        accountRepo.findByEmail(invitationReq.getInvitedEmail()).ifPresent(familyInvitation::setInvitedAccount);
+        Account invitedAccount = accountRepo.findByEmail(invitedEmail).orElse(null);
+        checkAccountValid(family.getFamilyId(), inviter, invitedEmail, invitedAccount);
+        if (invitedAccount != null) familyInvitation.setInvitedAccount(invitedAccount);
 
-        // send notification
+        familyInvitation = invitationRepo.save(familyInvitation);
+
+        // send action
         if (invitedAccount != null) {
-            // send In-app
-            
+            // push notification In-app
+            notificationService.createNotification(
+                    invitedAccount.getAccountId(),
+                    inviter.getAccountId(),
+                    NotificationType.FAMILY_INVITATION,
+                    "Lời mời tham gia gia phả",
+                    "Bạn đã được mời tham gia gia phả " + family.getFamilyName()
+                            + " với vai trò " + role.getName(),
+                    familyInvitation.getFamilyInvitationId(),
+                    "FAMILY_INVITATION",
+                    "/family-invitations/" + familyInvitation.getFamilyInvitationId()
+            );
+
         } else {
-            // send link register account
+            // send link register account email
             eventPublisher.publishEvent(
-                    new SendInvitationEmailEvent(
-                            invitedEmail,
-                            familyInvitation.getInviteToken()
+                    new EmailInvitationAccount(
+                            inviter.getFullName(),
+                            family.getFamilyName(),
+                            invitationToken,
+                            expiryTime,
+                            invitationReq.getMessage()
                     )
             );
         }
 
-        familyInvitation = invitationRepo.save(familyInvitation);
         return familyInvitationMapper.toRes(familyInvitation);
     }
 
@@ -153,5 +148,35 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     private void validateFamilyRole(Role role) {
         if (role.getScopeType() != RoleScopeType.FAMILY)
             throw new AppException(ErrorCode.ROLE_IS_NOT_WITHIN_THE_SCOPE_OF_THE_GENEALOGY);
+    }
+
+    private void checkAccountValid(Long familyId, Account inviter, String invitedEmail, Account invitedAccount) {
+        boolean hasPendingInvitation =
+                invitationRepo.existsByFamily_FamilyIdAndInvitedEmailAndInvitationStatus(
+                        familyId, invitedEmail, FamilyInvitationStatus.PENDING
+                );
+
+        if (hasPendingInvitation)
+            throw new AppException(ErrorCode.THIS_MEMBER_HAS_ALREADY_RECEIVED_AN_INVITATION);
+
+        // check account if existed Then you won't be an active member.
+        if (invitedAccount != null) {
+            boolean alreadyMember = familyMemberRepo.existsByFamily_FamilyIdAndAccount_AccountIdAndStatus(
+                    familyId,
+                    invitedAccount.getAccountId(),
+                    FamilyMemberStatus.ACTIVE
+            );
+
+            if (alreadyMember) throw new AppException(ErrorCode.THIS_ACCOUNT_IS_ALREADY_A_MEMBER_OF_THE_FAMILY);
+            // check account status
+            if (invitedAccount.getAccountStatus() != AccountStatus.ACTIVE)
+                throw new AppException(ErrorCode.ACCOUNT_STATUS_IS_NOT_ACTIVE);
+        }
+
+        // check invite yourself
+        if (inviter.getEmail().equalsIgnoreCase(invitedEmail))
+            throw new AppException(ErrorCode.CANNOT_INVITE_YOURSELF);
+
+
     }
 }
