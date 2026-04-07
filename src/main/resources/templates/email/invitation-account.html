@@ -1,0 +1,32 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
+    <h2 style="color: #2c3e50; text-align: center;">Lời Mời Gia Nhập Dòng Họ</h2>
+
+    <p>Xin chào,</p>
+
+    <p>Bạn nhận được lời mời từ <strong><span th:text="${senderFullName}">Nguyễn Văn A</span></strong> để tham gia vào
+        cây gia phả của dòng họ <strong><span th:text="${familyName}">Họ Nguyễn Lâm</span></strong> trên hệ thống
+        <strong>Gia Phả Online</strong>.</p>
+
+    <div th:if="${message}"
+         style="background-color: #f9f9f9; border-left: 4px solid #3498db; padding: 15px; margin: 20px 0;">
+        <p style="margin: 0; font-style: italic; color: #555;">"[[${message}]]"</p>
+    </div>
+
+    <p>Khi tham gia, bạn có thể xem cây phả hệ, cập nhật thông tin thành viên và nhận thông báo về các ngày lễ cúng, giỗ
+        chạp trong dòng họ.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+        <p>Vui lòng nhấn vào nút bên dưới để tạo tài khoản và chấp nhận lời mời:</p>
+        <a th:href="${invitationLink}"
+           style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+            Tham Gia Dòng Họ
+        </a>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+    <p style="font-size: 12px; color: #7f8c8d; text-align: center;">
+        Link này sẽ hết hạn vào lúc: <strong th:text="${expiryTime}">20:30 15/10/2026</strong><br>
+        Nếu bạn không biết người gửi hoặc không liên quan đến dòng họ này, vui lòng bỏ qua email này.
+    </p>
+</div>
