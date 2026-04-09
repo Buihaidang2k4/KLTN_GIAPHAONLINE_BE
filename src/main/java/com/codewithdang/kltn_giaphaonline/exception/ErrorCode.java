@@ -6,8 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.*;
 
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -45,6 +44,8 @@ public enum ErrorCode {
     SCOPE_TYPE_IS_NULL(1106, "Scope Type is null", HttpStatus.BAD_REQUEST),
     ROLE_PERMISSION_SCOPE_MISMATCH(1107, "ROLE mis match with PERMISSION by SCOPE_TYPE", HttpStatus.BAD_REQUEST),
     ROLE_IS_NOT_WITHIN_THE_SCOPE_OF_THE_GENEALOGY(1108, "Role is not within THE_SCOPE", HttpStatus.BAD_REQUEST),
+    CANNOT_UPDATE_YOUR_OWN_ROLE(1109, "Cannot update your own role", HttpStatus.BAD_REQUEST),
+
 
     // permission
     PERMISSION_EXISTED(1200, "Permission existed", HttpStatus.BAD_REQUEST),
@@ -77,7 +78,7 @@ public enum ErrorCode {
     ACCOUNT_ACCESS_DENIED(1701, "Account is not owner family", BAD_REQUEST),
     YOU_ARE_NOT_A_MEMBER_OF_THE_FAMILY(1702, "You are not a member of this Family", HttpStatus.BAD_REQUEST),
     FAMILY_ROLE_IS_NOT_AUTHORITY(1703, "Family role is not authority", HttpStatus.BAD_REQUEST),
-
+    ROLE_ALREADY_ASSIGNED_TO_MEMBER(1704, "Role is already assigned to member", HttpStatus.BAD_REQUEST),
 
     // ceremony
     CEREMONY_NOT_EXISTED(1800, "Ceremony is not found", HttpStatus.NOT_FOUND),
@@ -85,10 +86,16 @@ public enum ErrorCode {
     // family_invitation
     THIS_MEMBER_HAS_ALREADY_RECEIVED_AN_INVITATION(1900, "This member has already received an invitation", BAD_REQUEST),
     CANNOT_INVITE_YOURSELF(1901, "You cannot invite yourself", BAD_REQUEST),
+    FAMILY_INVITATION_NOT_EXISTED(1902, "", NOT_FOUND),
+    INVITATION_ALREADY_HANDLED(1903, "Invitation already handled and status is not PENDING", BAD_REQUEST),
+    INVITATION_EXPIRED(1904, "Invitation expired", HttpStatus.BAD_REQUEST),
+    INVALID_INVITATION_RECIPIENT(1905, "The current account's email does not match the invitation's recipient email.", HttpStatus.BAD_REQUEST),
 
     // family_member
     THIS_ACCOUNT_IS_ALREADY_A_MEMBER_OF_THE_FAMILY(2000, "This account is already a member of the family", BAD_REQUEST),
     FAMILY_MEMBER_STATUS_NOT_ACTIVE(2001, "Family member status is not active", HttpStatus.BAD_REQUEST),
+    FAMILY_MEMBER_NOT_EXISTED(2002, "Family member is not existed", HttpStatus.NOT_FOUND),
+    CANNOT_REMOVE_YOURSELF(2003, "You cannot remove yourself", HttpStatus.BAD_REQUEST),
 
     // notification
     NOTIFICATION_NOT_EXISTED(2100, "Notification is not found", HttpStatus.NOT_FOUND),
