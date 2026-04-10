@@ -30,6 +30,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,15 @@ public class AccountServiceImpl implements AccountService {
     PageMapper pageMapper;
     FamilyService familyService;
     RoleService roleService;
+
+    @Override
+    @Transactional(readOnly = true)
+    public Account getCurrentAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return accountRepo.findByEmail(currentUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+    }
 
     @Override
     public AccountRes createAccount(CreateAccountReq req) {
@@ -223,7 +233,6 @@ public class AccountServiceImpl implements AccountService {
 
         return pageMapper.toPageResponse(accountPage, account ->
                 {
-
                     AccountRes res = accountMapper.toRes(account);
 
                     if (account.getAvatarPath() != null && !account.getAvatarPath().isBlank()) {

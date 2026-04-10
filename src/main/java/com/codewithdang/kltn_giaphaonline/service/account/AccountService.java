@@ -6,11 +6,13 @@ import com.codewithdang.kltn_giaphaonline.dto.request.ChangePasswordAccountReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountDetailsRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
+import com.codewithdang.kltn_giaphaonline.entity.Account;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 
 public interface AccountService {
+    Account getCurrentAccount();
 
     AccountRes createAccount(CreateAccountReq req);
 

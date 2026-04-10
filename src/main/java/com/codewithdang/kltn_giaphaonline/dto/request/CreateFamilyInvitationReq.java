@@ -19,5 +19,7 @@ public class CreateFamilyInvitationReq {
 
     @NotBlank(message = "Role không được để trống")
     String roleName;
+
+    @NotBlank
     String message;
 }

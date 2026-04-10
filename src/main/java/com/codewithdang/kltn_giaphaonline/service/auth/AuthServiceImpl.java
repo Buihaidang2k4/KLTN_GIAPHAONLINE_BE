@@ -3,19 +3,23 @@ package com.codewithdang.kltn_giaphaonline.service.auth;
 import com.codewithdang.kltn_giaphaonline.dto.event.UserRegisteredEvent;
 import com.codewithdang.kltn_giaphaonline.dto.request.AuthReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.FamilyReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.RegisterByInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AuthRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.IntrospectRes;
 import com.codewithdang.kltn_giaphaonline.entity.*;
 import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
+import com.codewithdang.kltn_giaphaonline.enums.FamilyInvitationStatus;
 import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
+import com.codewithdang.kltn_giaphaonline.repo.FamilyInvitationRepo;
 import com.codewithdang.kltn_giaphaonline.repo.RoleRepo;
 import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
 import com.codewithdang.kltn_giaphaonline.service.family.FamilyService;
+import com.codewithdang.kltn_giaphaonline.service.family_invitation.FamilyInvitationService;
 import com.codewithdang.kltn_giaphaonline.service.revoked_token.RevokedTokenService;
 import com.codewithdang.kltn_giaphaonline.service.role.RoleService;
 import com.nimbusds.jose.JOSEException;
@@ -64,6 +68,8 @@ public class AuthServiceImpl implements AuthService {
     AccountVerificationTokenService verificationTokenService;
     RoleService roleService;
     FamilyService familyService;
+    FamilyInvitationRepo familyInvitationRepo;
+    FamilyInvitationService familyInvitationService;
 
     @NonFinal
     @Value("${jwt.secret}")
@@ -77,6 +83,13 @@ public class AuthServiceImpl implements AuthService {
 
     private static final Duration REFRESH_COOKIES_EXPIRATION = Duration.ofDays(7);
 
+    /***
+     * Login
+     * @param authReq
+     * @param httpRes
+     * @return {@link AuthRes}
+     * @throws ParseException
+     */
     @Override
     @Transactional(readOnly = true)
     public AuthRes authenticate(AuthReq authReq, HttpServletResponse httpRes) throws ParseException {
@@ -104,6 +117,12 @@ public class AuthServiceImpl implements AuthService {
         return new AuthRes(expiresAt);
     }
 
+    /***
+     * Register By New Account
+     * @param req
+     * @param requestedIp
+     * @param userAgent
+     */
     @Override
     @Transactional
     public void register(RegisterReq req, String requestedIp, String userAgent) {
@@ -134,6 +153,61 @@ public class AuthServiceImpl implements AuthService {
                 .build());
 
         // verification email
+        AccountVerificationToken verificationToken =
+                verificationTokenService.createVerificationToken(account, requestedIp, userAgent);
+
+        eventPublisher.publishEvent(new UserRegisteredEvent(
+                account.getAccountId(),
+                account.getEmail(),
+                account.getFullName(),
+                verificationToken.getToken()
+        ));
+    }
+
+    /***
+     * Register By Invitation
+     * @param req
+     * @param requestedIp
+     * @param userAgent
+     */
+    @Override
+    @Transactional
+    public void registerByInvitation(RegisterByInvitationReq req, String requestedIp, String userAgent) {
+        String email = req.email().trim().toLowerCase();
+        String invitationToken = req.invitationToken();
+
+        FamilyInvitation invitation = familyInvitationRepo.findByInviteToken(invitationToken)
+                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
+
+        if (invitation.getInvitationStatus() != FamilyInvitationStatus.PENDING)
+            throw new AppException(ErrorCode.INVITATION_ALREADY_HANDLED);
+
+        if (invitation.getExpiredAt() != null && invitation.getExpiredAt().isBefore(Instant.now()))
+            throw new AppException(ErrorCode.INVITATION_EXPIRED);
+
+        if (!invitation.getInvitedEmail().equalsIgnoreCase(email))
+            throw new AppException(ErrorCode.INVALID_INVITATION_RECIPIENT);
+
+        if (accountRepo.existsByEmail(email)) throw new AppException(ErrorCode.ACCOUNT_EXISTED);
+
+        if (!req.password().equals(req.confirmPassword())) throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+
+        Account account = Account.builder()
+                .email(email)
+                .phoneNumber(req.phoneNumber())
+                .passwordHash(passwordEncoder.encode(req.password()))
+                .fullName(req.fullName())
+                .accountStatus(AccountStatus.PENDING)
+                .build();
+
+        accountRepo.save(account);
+
+        roleService.assignRoleToAccount(account, RoleEnums.FAMILY_USERS);
+
+        // chấp nhận lời mời và add vào family member
+        familyInvitationService.acceptInvitation(invitationToken, account.getAccountId());
+
+        // tạo token xác thực email như luồng register thường
         AccountVerificationToken verificationToken =
                 verificationTokenService.createVerificationToken(account, requestedIp, userAgent);
 

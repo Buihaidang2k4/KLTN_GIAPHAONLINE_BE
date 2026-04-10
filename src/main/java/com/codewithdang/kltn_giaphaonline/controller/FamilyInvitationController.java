@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,14 +23,14 @@ public class FamilyInvitationController {
     @PostMapping("/{familyId}/invitations")
     public ResponseEntity<ApiResponse<InviteMemberRes>> inviteMember(
             @PathVariable Long familyId,
-            @RequestParam Long inviterAccountId,
             @RequestBody @Valid CreateFamilyInvitationReq request
     ) {
+
         return ResponseEntity.ok(
                 ApiResponse.success(
                         200,
                         "INVITE_MEMBER_SUCCESS",
-                        familyInvitationService.inviteMember(familyId, inviterAccountId, request)
+                        familyInvitationService.inviteMember(familyId, request)
                 )
         );
     }

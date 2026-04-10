@@ -1,6 +1,7 @@
 package com.codewithdang.kltn_giaphaonline.service.auth;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.AuthReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.RegisterByInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AuthRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.IntrospectRes;
@@ -14,6 +15,8 @@ public interface AuthService {
     AuthRes authenticate(AuthReq authReq, HttpServletResponse response) throws ParseException;
 
     void register(RegisterReq registerReq, String requestedIp, String userAgent);
+
+    void registerByInvitation(RegisterByInvitationReq req, String requestedIp, String userAgent);
 
     void refreshToken(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException;
 

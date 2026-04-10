@@ -1,6 +1,7 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.AuthReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.RegisterByInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.AuthRes;
@@ -49,6 +50,24 @@ public class AuthController {
         );
     }
 
+    @PostMapping("/register-by-invitation")
+    public ResponseEntity<ApiResponse<Void>> registerByInvitation(
+            @RequestBody @Valid RegisterByInvitationReq request,
+            HttpServletRequest httpServletRequest
+    ) {
+        String remoteAddr = httpServletRequest.getRemoteAddr();
+        String userAgent = httpServletRequest.getHeader("User-Agent");
+
+        authService.registerByInvitation(request, remoteAddr, userAgent);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200,
+                        "Đăng ký tài khoản thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
+                        null)
+        );
+    }
+
+
     @PostMapping("/refresh-token")
     ResponseEntity<ApiResponse<Void>> refreshToken(HttpServletRequest request,
                                                    HttpServletResponse response
@@ -78,11 +97,12 @@ public class AuthController {
         );
     }
 
-    @PatchMapping("/verify-account")
-    ResponseEntity<ApiResponse<Void>> verifyAccount(@RequestParam("token") String token) {
+    @PatchMapping("/verify-account/{token-verify}")
+    ResponseEntity<ApiResponse<Void>> verifyAccount(@PathVariable("token-verify") String token) {
         verificationTokenService.verifyAccount(token);
         return ResponseEntity.ok(
                 ApiResponse.success(200, "VERIFY_ACCOUNT_SUCCESS", null)
         );
     }
+
 }

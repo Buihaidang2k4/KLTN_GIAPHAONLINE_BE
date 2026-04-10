@@ -6,12 +6,14 @@ import com.codewithdang.kltn_giaphaonline.dto.response.FamilyRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Family;
+import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
+import com.codewithdang.kltn_giaphaonline.service.family_member.FamilyMemberService;
 import com.codewithdang.kltn_giaphaonline.utils.SlugUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class FamilyServiceImpl implements FamilyService {
     FamilyRepo familyRepo;
     FamilyMapper familyMapper;
     PageMapper pageMapper;
+    FamilyMemberService familyMemberService;
     AccountRepo accountRepo;
 
     @Override
@@ -42,8 +45,16 @@ public class FamilyServiceImpl implements FamilyService {
         String slug = SlugUtil.toSlugFamily(req.getFamilyName());
         family.setSlug(slug);
         family.setOwner(account);
+        
+        family = familyRepo.save(family);
+        // create role member admin
+        familyMemberService.addMember(
+                family.getFamilyId(),
+                account.getAccountId(),
+                RoleEnums.FAMILY_ADMIN.name()
+        );
 
-        return familyMapper.toRes(familyRepo.save(family));
+        return familyMapper.toRes(family);
     }
 
     @Override

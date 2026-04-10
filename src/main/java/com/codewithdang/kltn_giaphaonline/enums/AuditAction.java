@@ -6,6 +6,11 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum AuditAction implements BaseEnum {
+    // family inviter
+    INVITE_MEMBER("Mời thành viên"),
+    ACCEPT_INVITATION("Chấp nhận lời mời"),
+    REJECT_INVITATION("Từ chối lời mời"),
+
     // Hệ thống & Tài khoản
     ACCOUNT_CREATE("Tạo tài khoản"),
     ACCOUNT_UPDATE("Cập nhật tài khoản"),
@@ -14,10 +19,9 @@ public enum AuditAction implements BaseEnum {
     AUTH_LOGOUT("Đăng xuất"),
 
     // Quản lý thành viên trong dòng họ (Family Membership)
-    MEMBER_INVITE("Mời thành viên vào họ"),
-    MEMBER_ACCEPT("Chấp nhận vào họ"),
-    MEMBER_REMOVE("Loại khỏi dòng họ"),
-    MEMBER_ROLE_CHANGE("Thay đổi vai trò thành viên"),
+    ADD_FAMILY_MEMBER("Thêm thành viên gia phả"),
+    UPDATE_FAMILY_MEMBER_ROLE("Cập nhật vai trò thành viên"),
+    REMOVE_FAMILY_MEMBER("Xóa thành viên gia phả"),
 
     // Quản lý thông tin dòng họ (Family Management)
     FAMILY_CREATE("Tạo dòng họ mới"),

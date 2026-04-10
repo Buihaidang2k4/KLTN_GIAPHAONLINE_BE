@@ -1,11 +1,13 @@
 package com.codewithdang.kltn_giaphaonline.dto.request;
 
+import com.codewithdang.kltn_giaphaonline.enums.AuditAction;
+
 import java.util.Map;
 
 public record CreateAuditLogReq(
         Long actorAccountId,
         Long familyId,
-        String action,
+        AuditAction action,
         String entityType,
         String entityId,
         Map<String, Object> oldData,

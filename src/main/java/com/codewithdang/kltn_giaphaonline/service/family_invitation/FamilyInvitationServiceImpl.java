@@ -1,6 +1,7 @@
 package com.codewithdang.kltn_giaphaonline.service.family_invitation;
 
 
+import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateFamilyInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailInvitationAccount;
 import com.codewithdang.kltn_giaphaonline.dto.response.InviteMemberRes;
@@ -10,6 +11,8 @@ import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyInvitationMapper;
 import com.codewithdang.kltn_giaphaonline.repo.*;
+import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
+import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import com.codewithdang.kltn_giaphaonline.service.family_member.FamilyMemberService;
 import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
 import lombok.AccessLevel;
@@ -22,7 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Objects;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -39,24 +43,24 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     ApplicationEventPublisher eventPublisher;
     NotificationService notificationService;
     FamilyMemberService familyMemberService;
+    AccountService accountService;
+    AuditLogService auditLogService;
 
     @Override
     @Transactional
     public InviteMemberRes inviteMember(
-            Long familyId, Long inviterAccountId, CreateFamilyInvitationReq invitationReq
+            Long familyId, CreateFamilyInvitationReq invitationReq
     ) {
+        Account inviterAccount = accountService.getCurrentAccount();
+
         Family family = familyRepo.findById(familyId).orElseThrow(
                 () -> new AppException(ErrorCode.FAMILY_NOT_EXISTED)
         );
 
-        Account inviter = accountRepo.findById(inviterAccountId).orElseThrow(
-                () -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED)
-        );
-
         // check owner family role account
-        validateFamilyAdmin(familyId, inviterAccountId);
+        validateFamilyAdmin(familyId, inviterAccount.getAccountId());
 
-        //check role
+        // check role
         Role role = roleRepo.findByName(invitationReq.getRoleName())
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
@@ -66,60 +70,62 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         String invitationToken = UUID.randomUUID().toString();
         Instant expiryTime = Instant.now().plus(1, ChronoUnit.DAYS);
 
+        // check account
+        Account invitedAccount = accountRepo.findByEmail(invitedEmail).orElse(null);
+        checkInvitationEligibility(family.getFamilyId(), inviterAccount, invitedEmail, invitedAccount);
+
         // build entity
         FamilyInvitation familyInvitation = FamilyInvitation.builder()
                 .family(family)
                 .invitedEmail(invitedEmail)
                 .role(role)
                 .inviteToken(invitationToken)
-                .invitedByAccount(inviter)
+                .invitedByAccount(inviterAccount)
                 .invitationStatus(FamilyInvitationStatus.PENDING)
                 .message(invitationReq.getMessage())
                 .expiredAt(expiryTime)
                 .build();
 
-        // check account
-        Account invitedAccount = accountRepo.findByEmail(invitedEmail).orElse(null);
-        checkAccountValid(family.getFamilyId(), inviter, invitedEmail, invitedAccount);
         if (invitedAccount != null) familyInvitation.setInvitedAccount(invitedAccount);
 
         familyInvitation = invitationRepo.save(familyInvitation);
 
-        // send action
-        if (invitedAccount != null) {
-            // push notification In-app
-            notificationService.createNotification(
-                    invitedAccount.getAccountId(),
-                    inviter.getAccountId(),
-                    NotificationType.FAMILY_INVITATION,
-                    "Lời mời tham gia gia phả",
-                    "Bạn đã được mời tham gia gia phả " + family.getFamilyName()
-                            + " với vai trò " + role.getName(),
-                    familyInvitation.getFamilyInvitationId(),
-                    "FAMILY_INVITATION",
-                    "/family-invitations/" + familyInvitation.getFamilyInvitationId()
-            );
 
-        } else {
-            // send link register account email
-            eventPublisher.publishEvent(
-                    new EmailInvitationAccount(
-                            inviter.getFullName(),
-                            family.getFamilyName(),
-                            invitationToken,
-                            expiryTime,
-                            invitationReq.getMessage()
-                    )
-            );
-        }
+        // 5. Gửi thông báo
+        handleNotificationDispatch(family, inviterAccount, invitedAccount, familyInvitation);
+
+        // audit log inviter member
+        auditLogService.log(
+                new CreateAuditLogReq(
+                        inviterAccount.getAccountId(),
+                        family.getFamilyId(),
+                        AuditAction.INVITE_MEMBER,
+                        "FamilyInvitation",
+                        String.valueOf(familyInvitation.getFamilyInvitationId()),
+                        null,
+                        buildInvitationDataMap(familyInvitation),
+                        null,
+                        null
+                )
+
+        );
 
         return familyInvitationMapper.toRes(familyInvitation);
     }
 
     @Override
+    @Transactional
     public void acceptInvitation(String token, Long accountId) {
         FamilyInvitation familyInvitation = invitationRepo.findByInviteToken(token)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
+        Account account = accountRepo.findById(accountId).orElseThrow(
+                () -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED)
+        );
+
+        // Email token phải khớp với email account đang login
+        if (!account.getEmail().equalsIgnoreCase(familyInvitation.getInvitedEmail()))
+            throw new AppException(ErrorCode.INVALID_INVITATION_RECIPIENT);
+
 
         if (familyInvitation.getInvitationStatus() != FamilyInvitationStatus.PENDING)
             throw new AppException(ErrorCode.INVITATION_ALREADY_HANDLED);
@@ -127,81 +133,118 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         if (familyInvitation.getExpiredAt() != null && familyInvitation.getExpiredAt().isBefore(Instant.now()))
             throw new AppException(ErrorCode.INVITATION_EXPIRED);
 
-        // get account dang thuc hien
-        Account account = accountRepo.findById(accountId).orElseThrow(
-                () -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED)
-        );
+        Map<String, Object> oldData = buildInvitationDataMap(familyInvitation);
 
-        if (!account.getEmail().equalsIgnoreCase(familyInvitation.getInvitedEmail()))
-            throw new AppException(ErrorCode.INVALID_INVITATION_RECIPIENT);
-
-        // check duplicate account family
-        boolean alreadyMember = familyMemberRepo.existsByFamily_FamilyIdAndAccount_AccountIdAndStatus(
-                familyInvitation.getFamily().getFamilyId(),
-                accountId,
-                FamilyMemberStatus.ACTIVE
-        );
-
-        if (alreadyMember) {
-            // set success
-            completeInvitation(familyInvitation, account);
-            return;
-        }
-
-        if (!familyMemberService.isActiveMember(familyInvitation.getFamily().getFamilyId(), accountId)) {
+        // check da la thanh vien chua
+        boolean isAlreadyMember = familyMemberService.isActiveMember(familyInvitation.getFamily().getFamilyId(), accountId);
+        if (!isAlreadyMember) {
             familyMemberService.addMember(
                     familyInvitation.getFamily().getFamilyId(),
                     accountId,
                     familyInvitation.getRole().getName()
             );
         }
-        completeInvitation(familyInvitation, account);
+        updateInvitationStatus(familyInvitation, account, FamilyInvitationStatus.ACCEPTED);
+
+        // them audit log inviter member accept
+        auditLogService.log(
+                new CreateAuditLogReq(
+                        account.getAccountId(),
+                        familyInvitation.getFamily().getFamilyId(),
+                        AuditAction.ACCEPT_INVITATION,
+                        "FamilyInvitation",
+                        String.valueOf(familyInvitation.getFamilyInvitationId()),
+                        oldData,
+                        buildInvitationDataMap(familyInvitation),
+                        null,
+                        null
+                )
+        );
+
     }
 
     @Override
+    @Transactional
     public void rejectInvitation(String inviteToken, Long currentAccountId) {
         FamilyInvitation invitation = invitationRepo.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
 
-        if (invitation.getInvitationStatus() != FamilyInvitationStatus.PENDING) {
-            throw new AppException(ErrorCode.INVITATION_ALREADY_HANDLED);
-        }
-
-        if (invitation.getExpiredAt() != null && invitation.getExpiredAt().isBefore(Instant.now())) {
-            throw new AppException(ErrorCode.INVITATION_EXPIRED);
-        }
 
         Account currentAccount = accountRepo.findById(currentAccountId)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
 
-        if (!currentAccount.getEmail().equalsIgnoreCase(invitation.getInvitedEmail())) {
+        if (!currentAccount.getEmail().equalsIgnoreCase(invitation.getInvitedEmail()))
             throw new AppException(ErrorCode.INVALID_INVITATION_RECIPIENT);
+
+
+        if (invitation.getInvitationStatus() != FamilyInvitationStatus.PENDING)
+            throw new AppException(ErrorCode.INVITATION_ALREADY_HANDLED);
+
+        if (invitation.getExpiredAt() != null && invitation.getExpiredAt().isBefore(Instant.now()))
+            throw new AppException(ErrorCode.INVITATION_EXPIRED);
+
+        Map<String, Object> oldData = buildInvitationDataMap(invitation);
+
+        updateInvitationStatus(invitation, currentAccount, FamilyInvitationStatus.DECLINED);
+
+        auditLogService.log(new CreateAuditLogReq(
+                currentAccount.getAccountId(),
+                invitation.getFamily().getFamilyId(),
+                AuditAction.REJECT_INVITATION,
+                "FamilyInvitation",
+                String.valueOf(invitation.getFamilyInvitationId()),
+                oldData,
+                buildInvitationDataMap(invitation),
+                null,
+                null
+        ));
+    }
+
+    private void handleNotificationDispatch(Family family, Account inviter, Account invited, FamilyInvitation invitation) {
+        if (invited != null) {
+            notificationService.createNotification(
+                    invited.getAccountId(),
+                    inviter.getAccountId(),
+                    NotificationType.FAMILY_INVITATION,
+                    "Lời mời gia nhập dòng họ",
+                    String.format("Bạn được mời tham gia %s bởi %s", family.getFamilyName(), inviter.getFullName()),
+                    invitation.getFamilyInvitationId(),
+                    "FAMILY_INVITATION",
+                    "/family-invitations/" + invitation.getFamilyInvitationId()
+            );
+        } else {
+            eventPublisher.publishEvent(new EmailInvitationAccount(
+                    inviter.getFullName(),
+                    family.getFamilyName(),
+                    invitation.getInviteToken(),
+                    invitation.getExpiredAt(),
+                    invitation.getMessage()
+            ));
         }
-
-        invitation.setInvitedAccount(currentAccount);
-        invitation.setInvitationStatus(FamilyInvitationStatus.DECLINED);
-        invitation.setHandledAt(Instant.now());
-        invitationRepo.save(invitation);
-
     }
 
-    private void completeInvitation(FamilyInvitation invitation, Account account) {
+    private void updateInvitationStatus(FamilyInvitation invitation, Account account, FamilyInvitationStatus status) {
         invitation.setInvitedAccount(account);
-        invitation.setInvitationStatus(FamilyInvitationStatus.ACCEPTED);
+        invitation.setInvitationStatus(status);
         invitation.setHandledAt(Instant.now());
         invitationRepo.save(invitation);
     }
+
 
     private void validateFamilyAdmin(Long familyId, Long accountId) {
-        FamilyMember actor = familyMemberRepo.findByFamily_FamilyIdAndAccount_AccountId(familyId, accountId).
-                orElseThrow(() -> new AppException(ErrorCode.YOU_ARE_NOT_A_MEMBER_OF_THE_FAMILY));
+        log.info("==================  accountId inviter : {} , familyId : {}", accountId, familyId);
+        FamilyMember actor = familyMemberRepo
+                .findByFamily_FamilyIdAndAccount_AccountId(familyId, accountId)
+                .orElseThrow(() -> new AppException(ErrorCode.YOU_ARE_NOT_A_MEMBER_OF_THE_FAMILY));
 
-        if (actor.getStatus() != FamilyMemberStatus.ACTIVE)
+        if (actor.getStatus() != FamilyMemberStatus.ACTIVE) {
             throw new AppException(ErrorCode.FAMILY_MEMBER_STATUS_NOT_ACTIVE);
+        }
 
-        if (actor.getRole() == null || !RoleEnums.FAMILY_ADMIN.name().equals(actor.getRole().getName()))
+        if (actor.getRole() == null
+                || !RoleEnums.FAMILY_ADMIN.name().equals(actor.getRole().getName())) {
             throw new AppException(ErrorCode.FAMILY_ROLE_IS_NOT_AUTHORITY);
-
+        }
     }
 
     private void validateFamilyRole(Role role) {
@@ -209,33 +252,40 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
             throw new AppException(ErrorCode.ROLE_IS_NOT_WITHIN_THE_SCOPE_OF_THE_GENEALOGY);
     }
 
-    private void checkAccountValid(Long familyId, Account inviter, String invitedEmail, Account invitedAccount) {
-        boolean hasPendingInvitation =
-                invitationRepo.existsByFamily_FamilyIdAndInvitedEmailAndInvitationStatus(
-                        familyId, invitedEmail, FamilyInvitationStatus.PENDING
-                );
-
-        if (hasPendingInvitation)
-            throw new AppException(ErrorCode.THIS_MEMBER_HAS_ALREADY_RECEIVED_AN_INVITATION);
-
-        // check account if existed Then you won't be an active member.
-        if (invitedAccount != null) {
-            boolean alreadyMember = familyMemberRepo.existsByFamily_FamilyIdAndAccount_AccountIdAndStatus(
-                    familyId,
-                    invitedAccount.getAccountId(),
-                    FamilyMemberStatus.ACTIVE
-            );
-
-            if (alreadyMember) throw new AppException(ErrorCode.THIS_ACCOUNT_IS_ALREADY_A_MEMBER_OF_THE_FAMILY);
-            // check account status
-            if (invitedAccount.getAccountStatus() != AccountStatus.ACTIVE)
-                throw new AppException(ErrorCode.ACCOUNT_STATUS_IS_NOT_ACTIVE);
-        }
-
-        // check invite yourself
+    private void checkInvitationEligibility(Long familyId, Account inviter, String invitedEmail, Account invitedAccount) {
+        // 1. Không tự mời chính mình
         if (inviter.getEmail().equalsIgnoreCase(invitedEmail))
             throw new AppException(ErrorCode.CANNOT_INVITE_YOURSELF);
 
+        // 2. Check xem đã có lời mời nào đang chờ không
+        if (invitationRepo.existsByFamily_FamilyIdAndInvitedEmailAndInvitationStatus(
+                familyId, invitedEmail, FamilyInvitationStatus.PENDING))
+            throw new AppException(ErrorCode.THIS_MEMBER_HAS_ALREADY_RECEIVED_AN_INVITATION);
 
+        // 3. Nếu account đã tồn tại, check xem đã là thành viên chưa
+        if (invitedAccount != null) {
+            if (familyMemberRepo.existsByFamily_FamilyIdAndAccount_AccountIdAndStatus(
+                    familyId, invitedAccount.getAccountId(), FamilyMemberStatus.ACTIVE))
+                throw new AppException(ErrorCode.THIS_ACCOUNT_IS_ALREADY_A_MEMBER_OF_THE_FAMILY);
+
+            if (invitedAccount.getAccountStatus() != AccountStatus.ACTIVE)
+                throw new AppException(ErrorCode.ACCOUNT_STATUS_IS_NOT_ACTIVE);
+        }
+    }
+
+    private Map<String, Object> buildInvitationDataMap(FamilyInvitation invitation) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("invitationId", invitation.getFamilyInvitationId());
+        data.put("familyId", invitation.getFamily().getFamilyId());
+        data.put("familyName", invitation.getFamily().getFamilyName());
+        data.put("message", invitation.getMessage());
+        data.put("invitedAccountId", invitation.getInvitedAccount() != null ? invitation.getInvitedAccount().getAccountId() : null);
+        data.put("invitedEmail", invitation.getInvitedEmail());
+        data.put("status", invitation.getInvitationStatus().name());
+        data.put("role", invitation.getRole().getName());
+        data.put("invitedBy", invitation.getInvitedByAccount().getAccountId());
+        data.put("expiredAt", invitation.getExpiredAt());
+        if (invitation.getHandledAt() != null) data.put("handledAt", invitation.getHandledAt());
+        return data;
     }
 }

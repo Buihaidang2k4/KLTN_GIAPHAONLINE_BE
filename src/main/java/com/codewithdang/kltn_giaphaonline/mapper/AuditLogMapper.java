@@ -11,8 +11,9 @@ import org.mapstruct.Named;
 public interface AuditLogMapper {
 
     @Mapping(target = "auditId", ignore = true)
-    @Mapping(target = "actor", source = "actorAccountId", qualifiedByName = "mapActor")
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "actor", source = "actorAccountId", qualifiedByName = "mapActor")
+    @Mapping(target = "action", expression = "java(req.action() != null ? req.action().name() : null)")
     AuditLog toEntity(CreateAuditLogReq req);
 
     @Named("mapActor")

@@ -4,7 +4,7 @@ import com.codewithdang.kltn_giaphaonline.dto.request.CreateFamilyInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.InviteMemberRes;
 
 public interface FamilyInvitationService {
-    InviteMemberRes inviteMember(Long familyId, Long inviterAccountId, CreateFamilyInvitationReq createFamilyInvitationReq);
+    InviteMemberRes inviteMember(Long familyId, CreateFamilyInvitationReq createFamilyInvitationReq);
 
     void acceptInvitation(String token, Long accountId);
 

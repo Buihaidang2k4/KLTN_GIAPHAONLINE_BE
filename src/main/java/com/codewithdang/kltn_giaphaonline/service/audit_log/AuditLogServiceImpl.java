@@ -2,6 +2,7 @@ package com.codewithdang.kltn_giaphaonline.service.audit_log;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
 import com.codewithdang.kltn_giaphaonline.entity.AuditLog;
+import com.codewithdang.kltn_giaphaonline.enums.AuditAction;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.AuditLogMapper;
@@ -12,6 +13,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -26,8 +29,8 @@ public class AuditLogServiceImpl implements AuditLogService {
     public void log(CreateAuditLogReq req) {
         if (req == null) return;
 
-        if (req.action() == null || req.action().isBlank())
-            throw new AppException(ErrorCode.ACTION_IS_EMPTY, "Audit action must not be blank");
+        if (req.action() == null)
+            throw new AppException(ErrorCode.ACTION_IS_EMPTY, "Audit action must not be null");
 
         if (req.entityType() == null || req.entityType().isBlank())
             throw new AppException(ErrorCode.ENTITY_TYPE_IS_EMPTY, "Audit entityType must not be blank");
@@ -41,7 +44,6 @@ public class AuditLogServiceImpl implements AuditLogService {
         } catch (Exception e) {
             log.error("Failed to write audit log. action={}, entityType={}, entityId={}",
                     req.action(), req.entityType(), req.entityId(), e);
-            throw e;
         }
     }
 }
