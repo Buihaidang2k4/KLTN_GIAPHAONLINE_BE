@@ -4,12 +4,14 @@ package com.codewithdang.kltn_giaphaonline.service.family_invitation;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateFamilyInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailInvitationAccount;
-import com.codewithdang.kltn_giaphaonline.dto.response.InviteMemberRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.InviteInvitationMemberRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.*;
 import com.codewithdang.kltn_giaphaonline.enums.*;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyInvitationMapper;
+import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.*;
 import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
 import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
@@ -20,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,10 +49,46 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     FamilyMemberService familyMemberService;
     AccountService accountService;
     AuditLogService auditLogService;
+    PageMapper pageMapper;
 
+    /***
+     * list of invitations sent by the current user.
+     * @param pageable
+     * @return
+     */
+    @Override
+    public PageResponse<InviteInvitationMemberRes> getMyInvitationsSent(Pageable pageable) {
+        Account currentAccount = accountService.getCurrentAccount();
+
+        Page<FamilyInvitation> invitationsSentPage = invitationRepo.findByInvitedByAccount_AccountId(currentAccount.getAccountId(), pageable);
+        return pageMapper.toPageResponse(
+                invitationsSentPage,
+                familyInvitationMapper::toRes
+        );
+    }
+
+    /***
+     * list of invitations received by the current user's email.
+     * @param pageable
+     * @return
+     */
+    @Override
+    public PageResponse<InviteInvitationMemberRes> getMyInvitationsReceived(Pageable pageable) {
+        Account currentAccount = accountService.getCurrentAccount();
+        Page<FamilyInvitation> invitationReceivedPage = invitationRepo.findByInvitedEmailIgnoreCase(currentAccount.getEmail(), pageable);
+
+        return pageMapper.toPageResponse(invitationReceivedPage, familyInvitationMapper::toRes);
+    }
+
+    /***
+     * Create and send a new family invitation (own admin family)
+     * @param familyId
+     * @param invitationReq
+     * @return
+     */
     @Override
     @Transactional
-    public InviteMemberRes inviteMember(
+    public InviteInvitationMemberRes inviteMember(
             Long familyId, CreateFamilyInvitationReq invitationReq
     ) {
         Account inviterAccount = accountService.getCurrentAccount();
@@ -113,19 +153,22 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         return familyInvitationMapper.toRes(familyInvitation);
     }
 
+    /***
+     * Accept a family invitation and add the user as an active family member.
+     * @param token
+     */
     @Override
     @Transactional
-    public void acceptInvitation(String token, Long accountId) {
+    public void acceptInvitation(String token) {
+        Account currentAccount = accountService.getCurrentAccount();
+
+
         FamilyInvitation familyInvitation = invitationRepo.findByInviteToken(token)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
-        Account account = accountRepo.findById(accountId).orElseThrow(
-                () -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED)
-        );
 
         // Email token phải khớp với email account đang login
-        if (!account.getEmail().equalsIgnoreCase(familyInvitation.getInvitedEmail()))
+        if (!currentAccount.getEmail().equalsIgnoreCase(familyInvitation.getInvitedEmail()))
             throw new AppException(ErrorCode.INVALID_INVITATION_RECIPIENT);
-
 
         if (familyInvitation.getInvitationStatus() != FamilyInvitationStatus.PENDING)
             throw new AppException(ErrorCode.INVITATION_ALREADY_HANDLED);
@@ -136,20 +179,20 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         Map<String, Object> oldData = buildInvitationDataMap(familyInvitation);
 
         // check da la thanh vien chua
-        boolean isAlreadyMember = familyMemberService.isActiveMember(familyInvitation.getFamily().getFamilyId(), accountId);
+        boolean isAlreadyMember = familyMemberService.isActiveMember(familyInvitation.getFamily().getFamilyId(), currentAccount.getAccountId());
         if (!isAlreadyMember) {
             familyMemberService.addMember(
                     familyInvitation.getFamily().getFamilyId(),
-                    accountId,
+                    currentAccount.getAccountId(),
                     familyInvitation.getRole().getName()
             );
         }
-        updateInvitationStatus(familyInvitation, account, FamilyInvitationStatus.ACCEPTED);
+        updateInvitationStatus(familyInvitation, currentAccount, FamilyInvitationStatus.ACCEPTED);
 
         // them audit log inviter member accept
         auditLogService.log(
                 new CreateAuditLogReq(
-                        account.getAccountId(),
+                        currentAccount.getAccountId(),
                         familyInvitation.getFamily().getFamilyId(),
                         AuditAction.ACCEPT_INVITATION,
                         "FamilyInvitation",
@@ -163,15 +206,17 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
 
     }
 
+    /***
+     * Reject a received family invitation
+     * @param inviteToken
+     */
     @Override
     @Transactional
-    public void rejectInvitation(String inviteToken, Long currentAccountId) {
+    public void rejectInvitation(String inviteToken) {
+        Account currentAccount = accountService.getCurrentAccount();
+
         FamilyInvitation invitation = invitationRepo.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
-
-
-        Account currentAccount = accountRepo.findById(currentAccountId)
-                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
 
         if (!currentAccount.getEmail().equalsIgnoreCase(invitation.getInvitedEmail()))
             throw new AppException(ErrorCode.INVALID_INVITATION_RECIPIENT);
@@ -191,6 +236,45 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
                 currentAccount.getAccountId(),
                 invitation.getFamily().getFamilyId(),
                 AuditAction.REJECT_INVITATION,
+                "FamilyInvitation",
+                String.valueOf(invitation.getFamilyInvitationId()),
+                oldData,
+                buildInvitationDataMap(invitation),
+                null,
+                null
+        ));
+    }
+
+    /***
+     * Cancel/Revoke a pending invitation previously sent by the admin.
+     * @param invitationId
+     */
+    @Override
+    @Transactional
+    public void cancelInvitation(Long invitationId) {
+        Account currentAccount = accountService.getCurrentAccount();
+
+        FamilyInvitation invitation = invitationRepo.findById(invitationId).orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
+
+        // check own sent
+        if (!invitation.getInvitedByAccount().getAccountId().equals(currentAccount.getAccountId()))
+            throw new AppException(ErrorCode.ACCOUNT_FAMILY_NO_PERMISSION);
+
+        // check status
+        if (invitation.getInvitationStatus() != FamilyInvitationStatus.PENDING)
+            throw new AppException(ErrorCode.INVITATION_ALREADY_HANDLED);
+
+        Map<String, Object> oldData = buildInvitationDataMap(invitation);
+
+        // update status
+        invitation.setInvitationStatus(FamilyInvitationStatus.DECLINED);
+        invitation.setHandledAt(Instant.now());
+        invitationRepo.save(invitation);
+
+        auditLogService.log(new CreateAuditLogReq(
+                currentAccount.getAccountId(),
+                invitation.getFamily().getFamilyId(),
+                AuditAction.CANCEL_INVITATION,
                 "FamilyInvitation",
                 String.valueOf(invitation.getFamilyInvitationId()),
                 oldData,
@@ -229,7 +313,6 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         invitation.setHandledAt(Instant.now());
         invitationRepo.save(invitation);
     }
-
 
     private void validateFamilyAdmin(Long familyId, Long accountId) {
         log.info("==================  accountId inviter : {} , familyId : {}", accountId, familyId);
@@ -273,6 +356,11 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         }
     }
 
+    /***
+     * build data audit
+     * @param invitation
+     * @return
+     */
     private Map<String, Object> buildInvitationDataMap(FamilyInvitation invitation) {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("invitationId", invitation.getFamilyInvitationId());

@@ -2,30 +2,46 @@ package com.codewithdang.kltn_giaphaonline.controller;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateFamilyInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
-import com.codewithdang.kltn_giaphaonline.dto.response.InviteMemberRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.InviteInvitationMemberRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.service.family_invitation.FamilyInvitationService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/families-invitations")
+@RequestMapping("/family-invitations")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FamilyInvitationController {
 
     FamilyInvitationService familyInvitationService;
 
+    @GetMapping("/sent")
+    public ResponseEntity<ApiResponse<PageResponse<InviteInvitationMemberRes>>> getSentInvitations(Pageable pageable) {
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "GET_MY_INVITATION_SENT_SUCCESS",
+                        familyInvitationService.getMyInvitationsSent(pageable)));
+    }
+
+
+    @GetMapping("/received")
+    public ResponseEntity<ApiResponse<PageResponse<InviteInvitationMemberRes>>> receivedInvitation(Pageable pageable) {
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "GET_MY_INVITATION_RECEIVED_SUCCESS",
+                        familyInvitationService.getMyInvitationsReceived(pageable)));
+    }
+
+
     @PostMapping("/{familyId}/invitations")
-    public ResponseEntity<ApiResponse<InviteMemberRes>> inviteMember(
+    public ResponseEntity<ApiResponse<InviteInvitationMemberRes>> inviteMember(
             @PathVariable Long familyId,
             @RequestBody @Valid CreateFamilyInvitationReq request
     ) {
-
         return ResponseEntity.ok(
                 ApiResponse.success(
                         200,
@@ -35,27 +51,39 @@ public class FamilyInvitationController {
         );
     }
 
-    @PostMapping("/invitations/{token}/accept")
+    @PostMapping("/{token}/accept")
     public ResponseEntity<ApiResponse<Void>> acceptInvitation(
-            @PathVariable String token,
-            @RequestParam Long accountId
+            @PathVariable String token
     ) {
-        familyInvitationService.acceptInvitation(token, accountId);
+        familyInvitationService.acceptInvitation(token);
 
         return ResponseEntity.ok(
                 ApiResponse.success(200, "ACCEPT_INVITATION_SUCCESS", null)
         );
     }
 
-    @PostMapping("/invitations/{token}/reject")
+    @PostMapping("/{token}/reject")
     public ResponseEntity<ApiResponse<Void>> rejectInvitation(
-            @PathVariable String token,
-            @RequestParam Long accountId
+            @PathVariable String token
     ) {
-        familyInvitationService.rejectInvitation(token, accountId);
+        familyInvitationService.rejectInvitation(token);
 
         return ResponseEntity.ok(
                 ApiResponse.success(200, "REJECT_INVITATION_SUCCESS", null)
         );
     }
+
+
+    @PostMapping("/{invitationId}/cancel-invitation")
+    public ResponseEntity<ApiResponse<Void>> cancelInvitation(
+            @PathVariable Long invitationId
+    ) {
+        familyInvitationService.cancelInvitation(invitationId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "CANCEL_INVITATION_SUCCESS", null)
+        );
+    }
+
+
 }

@@ -10,7 +10,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class InviteMemberRes {
+public class InviteInvitationMemberRes {
     Long familyInvitationId;
     String familyName;
     String invitedEmail;

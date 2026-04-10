@@ -10,6 +10,7 @@ public enum AuditAction implements BaseEnum {
     INVITE_MEMBER("Mời thành viên"),
     ACCEPT_INVITATION("Chấp nhận lời mời"),
     REJECT_INVITATION("Từ chối lời mời"),
+    CANCEL_INVITATION("Hủy lời mời"),
 
     // Hệ thống & Tài khoản
     ACCOUNT_CREATE("Tạo tài khoản"),

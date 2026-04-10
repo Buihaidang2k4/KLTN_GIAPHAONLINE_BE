@@ -79,7 +79,7 @@ public enum ErrorCode {
     YOU_ARE_NOT_A_MEMBER_OF_THE_FAMILY(1702, "You are not a member of this Family", HttpStatus.BAD_REQUEST),
     FAMILY_ROLE_IS_NOT_AUTHORITY(1703, "Family role is not authority", HttpStatus.BAD_REQUEST),
     ROLE_ALREADY_ASSIGNED_TO_MEMBER(1704, "Role is already assigned to member", HttpStatus.BAD_REQUEST),
-
+    ACCOUNT_FAMILY_NO_PERMISSION(1705, "Acount", BAD_REQUEST),
     // ceremony
     CEREMONY_NOT_EXISTED(1800, "Ceremony is not found", HttpStatus.NOT_FOUND),
 

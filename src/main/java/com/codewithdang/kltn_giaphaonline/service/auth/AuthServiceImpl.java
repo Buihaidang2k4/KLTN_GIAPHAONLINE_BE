@@ -205,7 +205,7 @@ public class AuthServiceImpl implements AuthService {
         roleService.assignRoleToAccount(account, RoleEnums.FAMILY_USERS);
 
         // chấp nhận lời mời và add vào family member
-        familyInvitationService.acceptInvitation(invitationToken, account.getAccountId());
+        familyInvitationService.acceptInvitation(invitationToken);
 
         // tạo token xác thực email như luồng register thường
         AccountVerificationToken verificationToken =
