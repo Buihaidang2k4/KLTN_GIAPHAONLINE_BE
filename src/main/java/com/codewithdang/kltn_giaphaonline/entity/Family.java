@@ -36,7 +36,7 @@ public class Family {
 
     @Column(name = "slug", nullable = false, unique = true)
     String slug;
-    
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     Instant createdAt;
@@ -50,6 +50,6 @@ public class Family {
     Set<FamilyMember> members = new LinkedHashSet<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "family")
+    @OneToMany(mappedBy = "family", cascade = CascadeType.ALL, orphanRemoval = true)
     Set<FamilyInvitation> invitations = new LinkedHashSet<>();
 }

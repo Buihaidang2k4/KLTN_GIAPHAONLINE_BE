@@ -74,7 +74,7 @@ public class FamilyInvitationController {
     }
 
 
-    @PostMapping("/{invitationId}/cancel-invitation")
+    @PostMapping("/{invitationId}/cancel")
     public ResponseEntity<ApiResponse<Void>> cancelInvitation(
             @PathVariable Long invitationId
     ) {

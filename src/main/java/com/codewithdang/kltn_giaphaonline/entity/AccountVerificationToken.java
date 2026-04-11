@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 
+// verify account register
 @Entity
 @Table(
         name = "account_verification_tokens",
@@ -48,7 +49,7 @@ public class AccountVerificationToken {
 
     @Column(name = "is_used", nullable = false)
     Boolean isUsed;
-    
+
     @Column(name = "requested_ip", length = 45)
     String requestedIp;
 

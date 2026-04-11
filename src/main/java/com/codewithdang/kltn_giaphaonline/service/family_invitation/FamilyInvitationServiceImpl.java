@@ -130,7 +130,6 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
 
         familyInvitation = invitationRepo.save(familyInvitation);
 
-
         // 5. Gửi thông báo
         handleNotificationDispatch(family, inviterAccount, invitedAccount, familyInvitation);
 
@@ -320,9 +319,8 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
                 .findByFamily_FamilyIdAndAccount_AccountId(familyId, accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.YOU_ARE_NOT_A_MEMBER_OF_THE_FAMILY));
 
-        if (actor.getStatus() != FamilyMemberStatus.ACTIVE) {
+        if (actor.getStatus() != FamilyMemberStatus.ACTIVE)
             throw new AppException(ErrorCode.FAMILY_MEMBER_STATUS_NOT_ACTIVE);
-        }
 
         if (actor.getRole() == null
                 || !RoleEnums.FAMILY_ADMIN.name().equals(actor.getRole().getName())) {

@@ -164,6 +164,7 @@ public class AuthServiceImpl implements AuthService {
         ));
     }
 
+
     /***
      * Register By Invitation
      * @param req
@@ -220,6 +221,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
+    /***
+     * Refresh token for auth
+     * @param request
+     * @param response
+     * @throws ParseException
+     * @throws JOSEException
+     */
     @Override
     @Transactional
     public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException {
@@ -252,6 +260,14 @@ public class AuthServiceImpl implements AuthService {
         response.addHeader(HttpHeaders.SET_COOKIE, cookieRefresh.toString());
     }
 
+
+    /***
+     * Check token expiredAt
+     * @param token
+     * @return
+     * @throws ParseException
+     * @throws JOSEException
+     */
     @Override
     @Transactional
     public IntrospectRes introspect(String token) throws ParseException, JOSEException {
@@ -281,6 +297,12 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    /***
+     * Logout session
+     * @param request
+     * @param response
+     * @throws ParseException
+     */
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response) throws ParseException {
         String refreshToken = getTokenFromCookie(request, REFRESH_TOKEN);

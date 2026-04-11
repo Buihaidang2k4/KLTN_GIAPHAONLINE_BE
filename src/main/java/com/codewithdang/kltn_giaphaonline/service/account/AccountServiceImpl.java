@@ -17,9 +17,7 @@ import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.AccountMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
-import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
-import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
-import com.codewithdang.kltn_giaphaonline.repo.RoleRepo;
+import com.codewithdang.kltn_giaphaonline.repo.*;
 import com.codewithdang.kltn_giaphaonline.service.family.FamilyService;
 import com.codewithdang.kltn_giaphaonline.service.minio.MinioService;
 import com.codewithdang.kltn_giaphaonline.service.role.RoleService;
@@ -55,6 +53,10 @@ public class AccountServiceImpl implements AccountService {
     PageMapper pageMapper;
     FamilyService familyService;
     RoleService roleService;
+    AccountVerificationTokenRepo verificationTokenRepo;
+    AuditLogRepo auditLogRepo;
+    FamilyRepo familyRepo;
+
 
     @Override
     @Transactional(readOnly = true)
@@ -145,7 +147,10 @@ public class AccountServiceImpl implements AccountService {
         accountRepo.save(account);
     }
 
-    // Only delete accounts that have a delete status
+    /***
+     * Only delete accounts that have a delete status
+     * @param accountId
+     */
     @Override
     @Transactional
     public void hardDeleteAccount(Long accountId) {
@@ -156,6 +161,13 @@ public class AccountServiceImpl implements AccountService {
             throw new AppException(ErrorCode.ACCOUNT_STATUS_IS_NOT_DELETE);
 
 
+        // delete verify token
+        verificationTokenRepo.deleteByAccount(account);
+        // delete audit log
+        auditLogRepo.deleteByActor(account);
+        // delete family
+        familyRepo.deleteByOwner(account);
+        // delete account
         accountRoleRepo.deleteByAccount(account);
         accountRepo.delete(account);
 
@@ -228,7 +240,6 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AccountRes> getAccounts(Pageable pageable) {
-
         Page<Account> accountPage = accountRepo.findAll(pageable);
 
         return pageMapper.toPageResponse(accountPage, account ->

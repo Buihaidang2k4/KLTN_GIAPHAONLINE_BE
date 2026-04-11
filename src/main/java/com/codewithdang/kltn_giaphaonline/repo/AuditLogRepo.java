@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.repo;
 
+import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.AuditLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,5 +12,13 @@ public interface AuditLogRepo extends JpaRepository<AuditLog, Long> {
 
     Page<AuditLog> findByFamilyIdOrderByCreatedAtDesc(Long familyId, Pageable pageable);
 
-    Page<AuditLog> findByActor_AccountIdOrderByCreatedAtDesc(Long actor_accountId, Pageable pageable);
+    Page<AuditLog> findByEntityTypeAndEntityIdOrderByCreatedAtDesc(
+            String entityType,
+            String entityId,
+            Pageable pageable
+    );
+
+    Page<AuditLog> findByActor_AccountIdOrderByCreatedAtDesc(Long actorAccountId, Pageable pageable);
+
+    void deleteByActor(Account account);
 }

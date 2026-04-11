@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.repo;
 
+import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.AccountVerificationToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,4 +13,6 @@ public interface AccountVerificationTokenRepo extends JpaRepository<AccountVerif
     Optional<AccountVerificationToken> findByToken(String token);
 
     boolean existsByToken(String token);
+
+    void deleteByAccount(Account account);
 }

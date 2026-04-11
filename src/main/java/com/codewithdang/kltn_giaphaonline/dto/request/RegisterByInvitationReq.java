@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record RegisterByInvitationReq(
+        @NotBlank(message = "TOKEN_INVITATION_REQUIRED")
+        String tokenInvitation,
+
         @NotBlank(message = "FULL_NAME_REQUIRED")
         String fullName,
 

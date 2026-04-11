@@ -1,6 +1,7 @@
 package com.codewithdang.kltn_giaphaonline.mapper;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.AuditLogRes;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.AuditLog;
 import org.mapstruct.Mapper;
@@ -15,6 +16,10 @@ public interface AuditLogMapper {
     @Mapping(target = "actor", source = "actorAccountId", qualifiedByName = "mapActor")
     @Mapping(target = "action", expression = "java(req.action() != null ? req.action().name() : null)")
     AuditLog toEntity(CreateAuditLogReq req);
+
+    @Mapping(target = "actorAccountId", source = "actor.accountId")
+    @Mapping(target = "actorName", source = "actor.fullName")
+    AuditLogRes toRes(AuditLog auditLog);
 
     @Named("mapActor")
     default Account mapActor(Long accountId) {
