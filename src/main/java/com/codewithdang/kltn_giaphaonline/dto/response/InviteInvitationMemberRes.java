@@ -14,7 +14,7 @@ public class InviteInvitationMemberRes {
     Long familyInvitationId;
     String familyName;
     String invitedEmail;
-    String invitedBy;
+    Long invitedByAccountId;
     String invitationStatus;
     String inviteToken;
     Instant createdAt;

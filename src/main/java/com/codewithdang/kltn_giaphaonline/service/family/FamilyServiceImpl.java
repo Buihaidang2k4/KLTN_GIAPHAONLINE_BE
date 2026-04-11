@@ -45,13 +45,12 @@ public class FamilyServiceImpl implements FamilyService {
         String slug = SlugUtil.toSlugFamily(req.getFamilyName());
         family.setSlug(slug);
         family.setOwner(account);
-        
+
         family = familyRepo.save(family);
         // create role member admin
-        familyMemberService.addMember(
+        familyMemberService.assignFamilyAdmin(
                 family.getFamilyId(),
-                account.getAccountId(),
-                RoleEnums.FAMILY_ADMIN.name()
+                account.getAccountId()
         );
 
         return familyMapper.toRes(family);

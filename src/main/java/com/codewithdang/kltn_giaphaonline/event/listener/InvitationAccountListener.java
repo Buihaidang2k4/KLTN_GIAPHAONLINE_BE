@@ -6,12 +6,14 @@ import com.codewithdang.kltn_giaphaonline.event.producer.EmailProducer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
+@Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InvitationAccountListener {
@@ -37,6 +39,7 @@ public class InvitationAccountListener {
                 .expiryHours(event.getExpiryHours())
                 .build();
 
+        log.info("================ Invitation account received: {}", invitationAccount.getFamilyName());
         emailProducer.sendEmail(invitationAccount);
     }
 }

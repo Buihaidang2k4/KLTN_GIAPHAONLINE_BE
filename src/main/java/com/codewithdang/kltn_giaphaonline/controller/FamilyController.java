@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/families")
+@RequestMapping("${api.prefix}/families")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FamilyController {
     FamilyService familyService;

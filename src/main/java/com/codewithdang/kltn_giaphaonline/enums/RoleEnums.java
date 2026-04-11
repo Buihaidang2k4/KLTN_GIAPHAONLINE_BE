@@ -31,12 +31,6 @@ public enum RoleEnums {
     ),
 
     // ================= FAMILY =================
-    FAMILY_USERS(
-            "Tài khoản user mặc định mới tạo",
-            RoleScopeType.FAMILY,
-            Set.of()
-    ),
-
     FAMILY_ADMIN(
             "Quản trị viên dòng họ",
             RoleScopeType.FAMILY,

@@ -68,6 +68,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public AccountRes createAccount(CreateAccountReq req) {
         if (accountRepo.existsByEmail(req.email()))
             throw new AppException(ErrorCode.ACCOUNT_EXISTED);
@@ -159,7 +160,6 @@ public class AccountServiceImpl implements AccountService {
 
         if (account.getAccountStatus() != AccountStatus.DELETED)
             throw new AppException(ErrorCode.ACCOUNT_STATUS_IS_NOT_DELETE);
-
 
         // delete verify token
         verificationTokenRepo.deleteByAccount(account);

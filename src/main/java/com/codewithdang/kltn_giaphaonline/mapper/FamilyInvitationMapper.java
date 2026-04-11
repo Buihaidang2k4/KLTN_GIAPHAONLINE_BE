@@ -4,10 +4,13 @@ import com.codewithdang.kltn_giaphaonline.dto.request.CreateFamilyInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.InviteInvitationMemberRes;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyInvitation;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface FamilyInvitationMapper {
     FamilyInvitation toEntity(CreateFamilyInvitationReq createFamilyInvitationReq);
 
+    @Mapping(target = "familyName", source = "family.familyName")
+    @Mapping(target = "invitedByAccountId", source = "invitedByAccount.accountId")
     InviteInvitationMemberRes toRes(FamilyInvitation familyInvitation);
 }

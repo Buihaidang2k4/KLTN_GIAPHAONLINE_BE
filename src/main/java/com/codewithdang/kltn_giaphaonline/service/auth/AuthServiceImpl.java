@@ -131,6 +131,9 @@ public class AuthServiceImpl implements AuthService {
         if (accountRepo.existsByEmail(email))
             throw new AppException(ErrorCode.ACCOUNT_EXISTED);
 
+        if (accountRepo.existsByPhoneNumber(req.phoneNumber()))
+            throw new AppException(ErrorCode.PHONE_NUMBER_ALREADY_EXISTS);
+
         if (!req.password().equals(req.confirmPassword()))
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
 
@@ -144,12 +147,13 @@ public class AuthServiceImpl implements AuthService {
 
         accountRepo.save(account);
 
-        roleService.assignRoleToAccount(account, RoleEnums.FAMILY_USERS);
+        roleService.assignRoleToAccount(account, RoleEnums.FAMILY_ADMIN);
 
         // tao dong ho
         familyService.createFamily(FamilyReq.builder()
                 .ownerAccountId(account.getAccountId())
                 .familyName(req.familyName())
+                .description("Dòng họ " + req.familyName().toUpperCase())
                 .build());
 
         // verification email
@@ -203,7 +207,7 @@ public class AuthServiceImpl implements AuthService {
 
         accountRepo.save(account);
 
-        roleService.assignRoleToAccount(account, RoleEnums.FAMILY_USERS);
+        roleService.assignRoleToAccount(account, RoleEnums.FAMILY_ADMIN);
 
         // chấp nhận lời mời và add vào family member
         familyInvitationService.acceptInvitation(invitationToken);

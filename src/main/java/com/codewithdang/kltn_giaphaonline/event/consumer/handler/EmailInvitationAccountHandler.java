@@ -21,8 +21,7 @@ public class EmailInvitationAccountHandler extends AbstractEmailHandler<EmailInv
         context.setVariable("invitationLink", email.getInvitationToken());
         context.setVariable("expiryHours", email.getExpiryHours());
         context.setVariable("personalMessage", email.getPersonalMessage());
-
-
+        
         sendHtml(
                 email.getToEmail(),
                 email.getSubject(),

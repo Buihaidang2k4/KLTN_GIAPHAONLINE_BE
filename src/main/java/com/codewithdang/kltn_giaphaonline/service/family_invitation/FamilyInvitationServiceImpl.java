@@ -161,7 +161,6 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     public void acceptInvitation(String token) {
         Account currentAccount = accountService.getCurrentAccount();
 
-
         FamilyInvitation familyInvitation = invitationRepo.findByInviteToken(token)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
 
@@ -202,7 +201,6 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
                         null
                 )
         );
-
     }
 
     /***

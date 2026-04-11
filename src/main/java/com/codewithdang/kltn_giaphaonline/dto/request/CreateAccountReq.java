@@ -2,15 +2,12 @@ package com.codewithdang.kltn_giaphaonline.dto.request;
 
 
 import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
 
 @Builder
 public record CreateAccountReq(
-
+        @NotNull
         RoleEnums roleEnums,
 
         @NotBlank(message = "Họ tên không được để trống")
