@@ -17,6 +17,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class ArticleCategoryServiceImpl implements ArticleCategoryService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
     public ArticleCategoryRes createCategory(CreateArticleCategoryReq req) {
 
         if (articleCategoryRepo.existsByName(req.name()))
@@ -46,6 +48,7 @@ public class ArticleCategoryServiceImpl implements ArticleCategoryService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
     public ArticleCategoryRes updateCategory(Long articleCategoryId, UpdateArticleCategoryReq req) {
         ArticleCategory articleCategory = articleCategoryRepo.findById(articleCategoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.ARTICLE_NOT_EXISTED));
@@ -68,6 +71,7 @@ public class ArticleCategoryServiceImpl implements ArticleCategoryService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
     public void deleteCategory(Long articleCategoryId) {
         ArticleCategory articleCategory = articleCategoryRepo.findById(articleCategoryId).orElseThrow(() -> new AppException(ErrorCode.ARTICLE_NOT_EXISTED));
 

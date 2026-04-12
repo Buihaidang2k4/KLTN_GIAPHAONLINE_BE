@@ -2,6 +2,7 @@ package com.codewithdang.kltn_giaphaonline.event.consumer;
 
 import com.codewithdang.kltn_giaphaonline.config.rabbitmq.RabbitMQConfig;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.*;
+import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailInvitationAccountHandler;
 import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailOTPHandler;
 import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailVerifyAccountHandler;
 import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailWelcomeHandler;
@@ -24,6 +25,7 @@ public class EmailConsumer {
     EmailWelcomeHandler emailWelcomeHandler;
     EmailOTPHandler emailOTPHandler;
     EmailVerifyAccountHandler emailVerifyAccountHandler;
+    EmailInvitationAccountHandler emailInvitationAccountHandler;
 
     @RabbitHandler
     public void handleEmail(EmailOTP email) throws Exception {
@@ -44,9 +46,9 @@ public class EmailConsumer {
     }
 
     @RabbitHandler
-    public void handleInvitationMemberEmail(EmailInvitationAccount invitationAccount) {
-        log.info("Received  an email inviting me to join the family. {} ", invitationAccount.getToEmail());
-
+    public void handleInvitationMemberEmail(EmailInvitationAccount invitationAccount) throws Exception {
+        log.info("Received invitation email for {}", invitationAccount.getToEmail());
+        emailInvitationAccountHandler.handle(invitationAccount);
     }
 
     @RabbitHandler(isDefault = true)

@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.repo;
 
+import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Notification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,4 +30,8 @@ public interface NotificationRepo extends JpaRepository<Notification, Long> {
     @Query("UPDATE Notification n SET n.isRead = true, n.readAt = :now " +
             "WHERE n.recipient.accountId = :accountId AND n.isRead = false")
     void markAllAsRead(@Param("accountId") Long accountId, @Param("now") Instant now);
+
+    void deleteByRecipient(Account recipient);
+
+    void deleteBySender(Account sender);
 }

@@ -46,11 +46,6 @@ public class CustomJwtDecoder implements JwtDecoder {
     @Override
     public Jwt decode(String token) throws JwtException {
         try {
-//            var res = authService.introspect(token);
-
-//            if (!res.isValid())
-//                throw new AppException(ErrorCode.TOKEN_INVALID);
-            log.info("JWT Token: {}", token);
             return jwtDecoder.decode(token);
 
         } catch (JwtException e) {

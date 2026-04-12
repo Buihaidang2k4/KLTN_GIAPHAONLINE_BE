@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.repo;
 
+import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyInvitation;
 import com.codewithdang.kltn_giaphaonline.enums.FamilyInvitationStatus;
 import org.springframework.data.domain.Page;
@@ -18,4 +19,8 @@ public interface FamilyInvitationRepo extends JpaRepository<FamilyInvitation, Lo
     Page<FamilyInvitation> findByInvitedByAccount_AccountId(Long invitedByAccountAccountId, Pageable pageable);
 
     Page<FamilyInvitation> findByInvitedEmailIgnoreCase(String invitedEmail, Pageable pageable);
+
+    void deleteByInvitedAccount(Account invitedAccount);
+
+    void deleteByInvitedByAccount(Account invitedByAccount);
 }

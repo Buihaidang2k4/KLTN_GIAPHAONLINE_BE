@@ -32,6 +32,7 @@ public class InvitationAccountListener {
 
         EmailInvitationAccount invitationAccount = EmailInvitationAccount.builder()
                 .toEmail(event.getToEmail())
+                .subject(event.getSubject())
                 .invitationToken(invitationLink)
                 .senderFullName(event.getSenderFullName())
                 .familyName(event.getFamilyName())

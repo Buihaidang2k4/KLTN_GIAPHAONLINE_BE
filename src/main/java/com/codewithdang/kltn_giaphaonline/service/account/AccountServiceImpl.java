@@ -28,6 +28,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -56,7 +57,9 @@ public class AccountServiceImpl implements AccountService {
     AccountVerificationTokenRepo verificationTokenRepo;
     AuditLogRepo auditLogRepo;
     FamilyRepo familyRepo;
-
+    FamilyInvitationRepo familyInvitationRepo;
+    FamilyMemberRepo familyMemberRepo;
+    NotificationRepo notificationRepo;
 
     @Override
     @Transactional(readOnly = true)
@@ -69,6 +72,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public AccountRes createAccount(CreateAccountReq req) {
         if (accountRepo.existsByEmail(req.email()))
             throw new AppException(ErrorCode.ACCOUNT_EXISTED);
@@ -115,6 +119,7 @@ public class AccountServiceImpl implements AccountService {
     // lock , unlock
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public AccountRes updateAccountStatus(Long accountId, ChangeStatusLockReq req) {
         Account account = accountRepo.findById(accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
@@ -140,6 +145,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public void softDeleteAccount(Long accountId) {
         Account account = accountRepo.findById(accountId).
                 orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
@@ -154,6 +160,7 @@ public class AccountServiceImpl implements AccountService {
      */
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public void hardDeleteAccount(Long accountId) {
         Account account = accountRepo.findById(accountId).
                 orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
@@ -165,6 +172,14 @@ public class AccountServiceImpl implements AccountService {
         verificationTokenRepo.deleteByAccount(account);
         // delete audit log
         auditLogRepo.deleteByActor(account);
+        // delete family_invitations
+        familyInvitationRepo.deleteByInvitedAccount(account);
+        familyInvitationRepo.deleteByInvitedByAccount(account);
+        // delete family member
+        familyMemberRepo.deleteByAccount(account);
+        // delete notification
+        notificationRepo.deleteByRecipient(account);
+        notificationRepo.deleteBySender(account);
         // delete family
         familyRepo.deleteByOwner(account);
         // delete account
@@ -176,6 +191,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public void addRole(Long accountId, String roleName) {
         Account account = accountRepo.findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
         Role role = roleRepo.findById(roleName).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
@@ -204,6 +220,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public void removeRole(Long accountId, String roleName) {
         Account account = accountRepo.findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
 
@@ -269,11 +286,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AccountDetailsRes getMyInfo() {
         var context = SecurityContextHolder.getContext();
         String username = context.getAuthentication().getName();
         Account account = accountRepo.findByEmail(username)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+
         return accountMapper.toDetailsRes(account);
     }
 }

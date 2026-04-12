@@ -6,11 +6,12 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -115,8 +116,14 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    /***
+     *
+     * @param e
+     * @return
+     */
     @ExceptionHandler(value = AccessDeniedException.class)
-    ResponseEntity<ApiResponse<?>> handlingAccessDeniedException(AccessDeniedException exception) {
+    ResponseEntity<ApiResponse<?>> handlingAccessDeniedException(AccessDeniedException e) {
+        log.error("ACCESS DENIED: ", e);
         ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
 
         return ResponseEntity.status(errorCode.getStatusCode())
@@ -126,4 +133,22 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
+    /***
+     * @PreAuthorize/@PostAuthorize
+     * @param e
+     * @return
+     */
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiResponse<?>> handleAuthorizationDeniedException(AuthorizationDeniedException e) {
+        log.error("Method Authorization Denied: {}", e.getMessage());
+        ErrorCode ec = ErrorCode.UNAUTHORIZED;
+
+        return ResponseEntity
+                .status(ec.getStatusCode())
+                .body(ApiResponse.builder()
+                        .code(ec.getCode())
+                        .message(ec.getMessage())
+                        .timestamp(LocalDateTime.now())
+                        .build());
+    }
 }

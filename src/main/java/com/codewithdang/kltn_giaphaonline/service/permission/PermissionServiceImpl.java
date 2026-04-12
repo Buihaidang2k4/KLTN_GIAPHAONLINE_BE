@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public Permission createPermission(CreatePermissionReq req) {
         if (permissionRepo.existsById(req.name()))
             throw new AppException(ErrorCode.PERMISSION_EXISTED);
@@ -47,6 +49,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public Permission updatePermission(CreatePermissionReq req) {
         Permission permission = permissionRepo.findById(req.name())
                 .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_EXISTED));
@@ -58,6 +61,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public void deletePermission(String permissionName) {
         Permission permission = permissionRepo.findById(permissionName)
                 .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_EXISTED));
@@ -77,6 +81,7 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Permission getPermission(String permissionName) {
         return permissionRepo.findById(permissionName)
                 .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_EXISTED));

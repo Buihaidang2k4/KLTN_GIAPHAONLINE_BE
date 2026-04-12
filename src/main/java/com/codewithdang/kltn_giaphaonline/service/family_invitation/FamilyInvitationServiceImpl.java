@@ -294,13 +294,18 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
                     "/family-invitations/" + invitation.getFamilyInvitationId()
             );
         } else {
-            eventPublisher.publishEvent(new EmailInvitationAccount(
-                    inviter.getFullName(),
-                    family.getFamilyName(),
-                    invitation.getInviteToken(),
-                    invitation.getExpiredAt(),
-                    invitation.getMessage()
-            ));
+            eventPublisher.publishEvent(
+                    EmailInvitationAccount.builder()
+                            .toEmail(invitation.getInvitedEmail())
+                            .subject(invitation.getMessage())
+                            .senderFullName(inviter.getFullName())
+                            .familyName(family.getFamilyName())
+                            .invitationToken(invitation.getInviteToken())
+                            .expiryHours(invitation.getExpiredAt())
+                            .personalMessage(invitation.getMessage())
+                            .build()
+            );
+
         }
     }
 
@@ -312,7 +317,6 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     }
 
     private void validateFamilyAdmin(Long familyId, Long accountId) {
-        log.info("==================  accountId inviter : {} , familyId : {}", accountId, familyId);
         FamilyMember actor = familyMemberRepo
                 .findByFamily_FamilyIdAndAccount_AccountId(familyId, accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.YOU_ARE_NOT_A_MEMBER_OF_THE_FAMILY));

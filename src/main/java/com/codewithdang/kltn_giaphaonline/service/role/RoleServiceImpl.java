@@ -15,6 +15,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public Role createRole(CreateRoleReq request) {
         if (roleRepository.existsRolesByName(request.name()))
             throw new AppException(ErrorCode.ROLE_EXISTED);
@@ -118,6 +120,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public void removePermissionFromRole(String roleName, UpdateRoleReq req) {
         List<RolePermission> toRemove = rolePermissionRepo.findByRole_NameAndPermission_NameIn(roleName, req.permissions());
 
@@ -132,6 +135,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public void deleteRole(String roleName) {
         Role role = roleRepository.findById(roleName)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
