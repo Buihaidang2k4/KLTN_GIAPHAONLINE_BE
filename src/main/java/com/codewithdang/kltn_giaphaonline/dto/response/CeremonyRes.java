@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CeremonyRes {
     Long ceremonyId;
-    String familyId;
+    Long familyId;
     String ceremonyType;
     String ceremonyName;
     String description;

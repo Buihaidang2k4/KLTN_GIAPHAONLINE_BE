@@ -35,6 +35,7 @@ public enum RoleEnums {
             "Quản trị viên dòng họ",
             RoleScopeType.FAMILY,
             Set.of(
+                    FAM_VIEW_PUBLIC,
                     FAM_DELETE,
                     FAM_SETTINGS_EDIT,
                     FAM_MEMBER_MANAGE,
@@ -46,7 +47,7 @@ public enum RoleEnums {
                     POST_MANAGE,
                     EVENT_MANAGE,
                     ALBUM_MANAGE,
-                    FAM_VIEW_PUBLIC
+                    CEREMONY_MANAGE
             )
     ),
 

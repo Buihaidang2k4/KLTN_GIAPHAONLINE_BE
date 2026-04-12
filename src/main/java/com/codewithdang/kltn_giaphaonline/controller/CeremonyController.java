@@ -33,6 +33,17 @@ public class CeremonyController {
                 ceremonyService.getCeremonyById(ceremonyId)));
     }
 
+    @GetMapping("/family/{familyId}")
+    ResponseEntity<ApiResponse<PageResponse<CeremonyRes>>> getByFamilyId(
+            @PathVariable("familyId") Long familyId,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(200,
+                "Lấy thông tin nghi lễ thành công",
+                ceremonyService.getCeremonyByFamilyId(pageable, familyId)));
+    }
+
+
     @GetMapping
     ResponseEntity<ApiResponse<PageResponse<CeremonyRes>>> getCeremony(Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(200,

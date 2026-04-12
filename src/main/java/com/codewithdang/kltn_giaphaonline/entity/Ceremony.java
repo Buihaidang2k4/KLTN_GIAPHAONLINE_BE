@@ -7,9 +7,14 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
+// phong tuc
 @Entity
-@Table(name = "ceremonies") // phong tuc
+@Table(name = "ceremonies")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -43,4 +48,8 @@ public class Ceremony {
     @ManyToOne
     @JoinColumn(name = "family_id", referencedColumnName = "family_id")
     Family family;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "ceremony", cascade = CascadeType.ALL, orphanRemoval = true)
+    Set<CeremonyTimeline> ceremonyTimeline = new LinkedHashSet<>();
 }

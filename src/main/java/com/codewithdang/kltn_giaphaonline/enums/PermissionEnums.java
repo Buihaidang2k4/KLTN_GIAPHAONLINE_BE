@@ -31,6 +31,7 @@ public enum PermissionEnums implements BaseEnum {
     POST_MANAGE("Quản lý bài đăng", RoleScopeType.FAMILY),
     EVENT_MANAGE("Quản lý sự kiện", RoleScopeType.FAMILY),
     ALBUM_MANAGE("Quản lý album ảnh", RoleScopeType.FAMILY),
+    CEREMONY_MANAGE("Quản lý các cách tổ chức các dịp lễ", RoleScopeType.FAMILY),
 
     // ================= PUBLIC =================
     FAM_VIEW_PUBLIC("Xem gia phả", RoleScopeType.FAMILY),

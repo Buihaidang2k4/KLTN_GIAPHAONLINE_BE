@@ -27,7 +27,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+//    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public Permission createPermission(CreatePermissionReq req) {
         if (permissionRepo.existsById(req.name()))
             throw new AppException(ErrorCode.PERMISSION_EXISTED);

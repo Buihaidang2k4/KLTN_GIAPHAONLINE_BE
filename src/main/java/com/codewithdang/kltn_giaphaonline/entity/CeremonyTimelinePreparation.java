@@ -18,10 +18,6 @@ public class CeremonyTimelinePreparation {
     @Column(name = "preparation_id")
     Long preparationId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "timeline_id", nullable = false)
-    CeremonyTimeline timeline;
-
     @Column(name = "item_name", nullable = false)
     String itemName;
 
@@ -39,4 +35,8 @@ public class CeremonyTimelinePreparation {
 
     @Column(name = "required", nullable = false)
     boolean required = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "timeline_id", nullable = false)
+    CeremonyTimeline timeline;
 }

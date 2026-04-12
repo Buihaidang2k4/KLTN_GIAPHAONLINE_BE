@@ -11,6 +11,8 @@ public interface CeremonyService {
 
     PageResponse<CeremonyRes> getCeremonyList(Pageable pageable);
 
+    PageResponse<CeremonyRes> getCeremonyByFamilyId(Pageable pageable, Long familyId);
+
     CeremonyRes updateCeremony(Long ceremonyId, CeremonyUpdateReq req);
 
     CeremonyRes getCeremonyById(Long ceremonyId);

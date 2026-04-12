@@ -7,12 +7,14 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "ceremony_timeline")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -22,10 +24,6 @@ public class CeremonyTimeline {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "timeline_id")
     Long timelineId;
-
-    @ManyToOne
-    @JoinColumn(name = "ceremony_id", referencedColumnName = "ceremony_id")
-    Ceremony ceremony;
 
     @Column(name = "step_order", nullable = false)
     int stepOrder;
@@ -47,6 +45,11 @@ public class CeremonyTimeline {
     @Column(name = "updated_at")
     Timestamp updatedAt;
 
+    @ManyToOne
+    @JoinColumn(name = "ceremony_id", referencedColumnName = "ceremony_id")
+    Ceremony ceremony;
+
+    @Builder.Default
     @OneToMany(mappedBy = "timeline", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<CeremonyTimelinePreparation> preparations;
+    List<CeremonyTimelinePreparation> preparations = new ArrayList<>();
 }

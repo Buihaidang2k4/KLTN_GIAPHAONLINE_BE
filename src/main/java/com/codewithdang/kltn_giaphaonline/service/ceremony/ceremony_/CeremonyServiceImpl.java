@@ -18,6 +18,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,13 +34,13 @@ public class CeremonyServiceImpl implements CeremonyService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('FAMILY_ADMIN') or hasAuthority('CEREMONY_MANAGE')")
     public CeremonyRes createCeremony(CeremonyReq req) {
         Family family = familyRepo.findById(req.getFamilyId())
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
 
         Ceremony ceremony = ceremonyMapper.toEntity(req);
         ceremony.setFamily(family);
-
         return ceremonyMapper.toRes(ceremonyRepo.save(ceremony));
     }
 
@@ -55,7 +56,22 @@ public class CeremonyServiceImpl implements CeremonyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PageResponse<CeremonyRes> getCeremonyByFamilyId(Pageable pageable, Long familyId) {
+        Family family = familyRepo.findById(familyId)
+                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
+
+        Page<Ceremony> ceremonyPage = ceremonyRepo.findAllByFamily(pageable, family);
+
+        return pageMapper.toPageResponse(
+                ceremonyPage,
+                ceremonyMapper::toRes
+        );
+    }
+
+    @Override
     @Transactional
+    @PreAuthorize("hasRole('FAMILY_ADMIN') or hasAuthority('CEREMONY_MANAGE')")
     public CeremonyRes updateCeremony(Long ceremonyId, CeremonyUpdateReq req) {
         Ceremony ceremony = ceremonyRepo.findById(ceremonyId)
                 .orElseThrow(() -> new AppException(ErrorCode.CEREMONY_NOT_EXISTED));
@@ -76,6 +92,7 @@ public class CeremonyServiceImpl implements CeremonyService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('FAMILY_ADMIN') or hasAuthority('CEREMONY_MANAGE')")
     public void deleteCeremonyById(Long ceremonyId) {
         Ceremony ceremony = ceremonyRepo.findById(ceremonyId).orElseThrow(
                 () -> new AppException(ErrorCode.CEREMONY_NOT_EXISTED)

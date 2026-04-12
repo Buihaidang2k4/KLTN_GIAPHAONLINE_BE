@@ -52,4 +52,8 @@ public class Family {
     @Builder.Default
     @OneToMany(mappedBy = "family", cascade = CascadeType.ALL, orphanRemoval = true)
     Set<FamilyInvitation> invitations = new LinkedHashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "family", cascade = CascadeType.ALL, orphanRemoval = true)
+    Set<Ceremony> ceremonies = new LinkedHashSet<>();
 }

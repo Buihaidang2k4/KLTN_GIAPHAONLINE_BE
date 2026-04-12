@@ -4,15 +4,13 @@ import com.codewithdang.kltn_giaphaonline.dto.request.CeremonyReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.CeremonyUpdateReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.CeremonyRes;
 import com.codewithdang.kltn_giaphaonline.entity.Ceremony;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface CeremonyMapper {
     Ceremony toEntity(CeremonyReq req);
 
+    @Mapping(target = "familyId", source = "family.familyId")
     CeremonyRes toRes(Ceremony ceremony);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

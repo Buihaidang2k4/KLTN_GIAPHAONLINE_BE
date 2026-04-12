@@ -36,7 +36,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+//    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
     public Role createRole(CreateRoleReq request) {
         if (roleRepository.existsRolesByName(request.name()))
             throw new AppException(ErrorCode.ROLE_EXISTED);

@@ -102,6 +102,10 @@ public enum ErrorCode {
     NOTIFICATION_NOT_EXISTED(2100, "Notification not found", HttpStatus.NOT_FOUND),
     NOTIFICATION_IS_EXISTED(2101, "Notification is existed", BAD_REQUEST),
 
+
+    // CEREMONY_TIMELINE
+    CEREMONY_TIMELINE_NOT_EXISTED(2200, "The ceremonial milestone does not exist.", NOT_FOUND),
+    CEREMONY_TIMELINE_PREPARATION_NOT_EXISTED(2201, "The prepared item does not exist.", NOT_FOUND),
     ;
 
     final int code;

@@ -7,10 +7,7 @@ import com.codewithdang.kltn_giaphaonline.dto.response.AccountRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.RoleRes;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.AccountRole;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.Named;
+import org.mapstruct.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
@@ -34,6 +31,7 @@ public abstract class AccountMapper {
     @Mapping(target = "roles", source = "accountRoles", qualifiedByName = "mapAccountRoles")
     public abstract AccountDetailsRes toDetailsRes(Account account);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     public abstract void updateEntity(@MappingTarget Account account, ChangePasswordAccountReq req);
 
     @Named("mapAccountRoles")
