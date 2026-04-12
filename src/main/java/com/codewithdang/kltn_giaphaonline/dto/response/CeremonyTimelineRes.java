@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 
 @Data
 public class CeremonyTimelineRes {
+    Long timelineId;
     Long ceremonyId;
     Integer stepOrder;
     String stepName;

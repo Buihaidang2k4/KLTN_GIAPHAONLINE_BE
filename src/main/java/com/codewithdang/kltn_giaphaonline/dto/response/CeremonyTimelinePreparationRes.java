@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class CeremonyTimelinePreparationRes {
+    Long preparationId;
     Long timelineId;
     String itemName;
     String itemType;
