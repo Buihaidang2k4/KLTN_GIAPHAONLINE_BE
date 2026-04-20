@@ -24,18 +24,18 @@ public class UserRegisteredListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(UserRegisteredEvent event) {
 
-        String verifyUrl = UriComponentsBuilder
-                .fromHttpUrl(frontendProperties.getBaseUrl()) // url
-                .path(frontendProperties.getVerifyEndpoint())
-                .queryParam("token", event.verificationToken())
-                .toUriString();
+//        String verifyUrl = UriComponentsBuilder
+//                .fromHttpUrl(frontendProperties.getBaseUrl()) // url
+//                .path(frontendProperties.getVerifyEndpoint())
+//                .queryParam("token", event.verificationToken())
+//                .toUriString();
 
         EmailVerifyAccount emailVerifyAccount =
                 EmailVerifyAccount.builder()
                         .toEmail(event.email())
                         .fullName(event.fullName())
                         .subject("XÁC THỰC TÀI KHOẢN CỦA BẠN")
-                        .verifyUrl(verifyUrl)
+                        .verifyUrl(event.verificationToken())
                         .build();
 
         emailProducer.sendEmail(emailVerifyAccount);

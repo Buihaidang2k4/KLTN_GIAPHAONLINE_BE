@@ -10,6 +10,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +24,13 @@ public class FamilyInvitationController {
     FamilyInvitationService familyInvitationService;
 
     @GetMapping("/sent")
-    public ResponseEntity<ApiResponse<PageResponse<InviteInvitationMemberRes>>> getSentInvitations(Pageable pageable) {
+    public ResponseEntity<ApiResponse<PageResponse<InviteInvitationMemberRes>>> getSentInvitations(
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+
+    ) {
         return ResponseEntity.ok(
                 ApiResponse.success(200, "GET_MY_INVITATION_SENT_SUCCESS",
                         familyInvitationService.getMyInvitationsSent(pageable)));
@@ -30,14 +38,19 @@ public class FamilyInvitationController {
 
 
     @GetMapping("/received")
-    public ResponseEntity<ApiResponse<PageResponse<InviteInvitationMemberRes>>> receivedInvitation(Pageable pageable) {
+    public ResponseEntity<ApiResponse<PageResponse<InviteInvitationMemberRes>>> receivedInvitation(
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
         return ResponseEntity.ok(
                 ApiResponse.success(200, "GET_MY_INVITATION_RECEIVED_SUCCESS",
                         familyInvitationService.getMyInvitationsReceived(pageable)));
     }
 
 
-    @PostMapping("/{familyId}/invitations")
+    @PostMapping("/{familyId}/invite")
     public ResponseEntity<ApiResponse<InviteInvitationMemberRes>> inviteMember(
             @PathVariable Long familyId,
             @RequestBody @Valid CreateFamilyInvitationReq request
@@ -51,7 +64,7 @@ public class FamilyInvitationController {
         );
     }
 
-    @PostMapping("/{token}/accept")
+    @PostMapping("/accept/{token}")
     public ResponseEntity<ApiResponse<Void>> acceptInvitation(
             @PathVariable String token
     ) {
@@ -62,7 +75,7 @@ public class FamilyInvitationController {
         );
     }
 
-    @PostMapping("/{token}/reject")
+    @PostMapping("/reject/{token}")
     public ResponseEntity<ApiResponse<Void>> rejectInvitation(
             @PathVariable String token
     ) {

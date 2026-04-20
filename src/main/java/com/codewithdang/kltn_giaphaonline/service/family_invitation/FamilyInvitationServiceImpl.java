@@ -264,7 +264,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         Map<String, Object> oldData = buildInvitationDataMap(invitation);
 
         // update status
-        invitation.setInvitationStatus(FamilyInvitationStatus.DECLINED);
+        invitation.setInvitationStatus(FamilyInvitationStatus.CANCELED);
         invitation.setHandledAt(Instant.now());
         invitationRepo.save(invitation);
 

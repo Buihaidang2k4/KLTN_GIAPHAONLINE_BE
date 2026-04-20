@@ -9,6 +9,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +27,10 @@ public class AuditLogController {
     @GetMapping("/family/{familyId}")
     public ResponseEntity<ApiResponse<PageResponse<AuditLogRes>>> getByFamily(
             @PathVariable Long familyId,
-            Pageable pageable
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ) {
         return ResponseEntity.ok(ApiResponse.success(200, "GET_LOG_BY_FAMILY_SUCCESS", auditLogService.getByFamilyId(familyId, pageable)));
     }

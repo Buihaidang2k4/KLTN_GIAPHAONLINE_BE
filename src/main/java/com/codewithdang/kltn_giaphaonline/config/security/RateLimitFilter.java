@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -48,15 +49,22 @@ public class RateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // get ip
         String ip = getClientIP(request);
-
         // get bucket, if not found add new
         Bucket bucket = buckets.computeIfAbsent(ip, this::createNewBucket);
 
-        if(bucket.tryConsume(1)) filterChain.doFilter(request, response);
+        if (bucket.tryConsume(1)) filterChain.doFilter(request, response);
         else handleLimitExceeded(response);
 
     }
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        return SecurityWhitelist.SWAGGER_ENDPOINTS.stream().anyMatch(pattern ->
+                new AntPathMatcher().match(pattern, path)) ||
+                SecurityWhitelist.PUBLIC_ENDPOINTS.stream().anyMatch(pattern ->
+                        new AntPathMatcher().match(pattern, path));
+    }
 
     private String getClientIP(HttpServletRequest request) {
         String xfHeader = request.getHeader("X-Forwarded-For");
@@ -66,7 +74,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         return xfHeader.split(",")[0]; // get ip
     }
-
 
     private void handleLimitExceeded(HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());

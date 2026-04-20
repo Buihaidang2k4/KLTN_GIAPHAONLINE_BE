@@ -12,6 +12,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +52,12 @@ public class CeremonyTimelineController {
     }
 
     @GetMapping
-    ResponseEntity<ApiResponse<PageResponse<CeremonyTimelineRes>>> getAll(Pageable pageable) {
+    ResponseEntity<ApiResponse<PageResponse<CeremonyTimelineRes>>> getAll(
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
         return ResponseEntity.ok(ApiResponse.success(200,
                 "GET_ALL_TIMELINE_SUCCESS",
                 timelineService.getCeremonyTimelineList(pageable)));

@@ -13,6 +13,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,13 +38,15 @@ public class CeremonyController {
     @GetMapping("/family/{familyId}")
     ResponseEntity<ApiResponse<PageResponse<CeremonyRes>>> getByFamilyId(
             @PathVariable("familyId") Long familyId,
-            Pageable pageable
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ) {
         return ResponseEntity.ok(ApiResponse.success(200,
                 "Lấy thông tin nghi lễ thành công",
                 ceremonyService.getCeremonyByFamilyId(pageable, familyId)));
     }
-
 
     @GetMapping
     ResponseEntity<ApiResponse<PageResponse<CeremonyRes>>> getCeremony(Pageable pageable) {

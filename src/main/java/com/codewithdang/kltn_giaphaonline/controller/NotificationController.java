@@ -8,6 +8,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,7 +23,10 @@ public class NotificationController {
     @GetMapping
     public ApiResponse<PageResponse<NotificationRes>> getMyNotifications(
             @RequestParam Long recipientAccountId,
-            Pageable pageable
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ) {
         return ApiResponse.success(200, "Lấy danh sách thông báo thành công",
                 notificationService.getNotifications(recipientAccountId, pageable));
@@ -30,7 +35,10 @@ public class NotificationController {
     @GetMapping("/unread")
     public ApiResponse<PageResponse<NotificationRes>> getUnreadNotifications(
             @RequestParam Long recipientAccountId,
-            Pageable pageable
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ) {
         return ApiResponse.success(200, "Lấy danh sách thông báo chưa đọc thành công",
                 notificationService.getUnreadNotifications(recipientAccountId, pageable));

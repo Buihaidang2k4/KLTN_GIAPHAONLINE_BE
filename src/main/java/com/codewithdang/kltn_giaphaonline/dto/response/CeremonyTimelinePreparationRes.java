@@ -2,6 +2,8 @@ package com.codewithdang.kltn_giaphaonline.dto.response;
 
 import lombok.Data;
 
+import java.sql.Timestamp;
+
 @Data
 public class CeremonyTimelinePreparationRes {
     Long preparationId;
@@ -12,4 +14,6 @@ public class CeremonyTimelinePreparationRes {
     String unit;
     String note;
     Boolean required;
+    Timestamp createdAt;
+    Timestamp updatedAt;
 }

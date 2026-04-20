@@ -11,8 +11,6 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateFamilyInvitationReq {
-
-
     @Email(message = "Email không hợp lệ")
     @NotBlank(message = "Email không được để trống")
     String invitedEmail;

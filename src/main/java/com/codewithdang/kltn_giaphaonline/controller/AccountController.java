@@ -3,6 +3,7 @@ package com.codewithdang.kltn_giaphaonline.controller;
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangePasswordAccountReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.ChangeStatusLockReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAccountReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.UpdateAccountReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountDetailsRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
@@ -14,6 +15,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +32,12 @@ public class AccountController {
     AccountService accountService;
 
     @GetMapping
-    ResponseEntity<ApiResponse<PageResponse<AccountRes>>> getAccounts(Pageable pageable) {
+    ResponseEntity<ApiResponse<PageResponse<AccountRes>>> getAccounts(
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
         return ResponseEntity.ok(
                 ApiResponse.success(200, "GET_ACCOUNTS_SUCCESS", accountService.getAccounts(pageable))
         );
@@ -61,6 +69,14 @@ public class AccountController {
         accountService.changePassword(accountId, req);
         return ResponseEntity.ok(
                 ApiResponse.success(200, "CHANGE_PASSWORD_SUCCESS", null)
+        );
+    }
+
+    @PutMapping("/{accountId}")
+    ResponseEntity<ApiResponse<Void>> updateAccount(@PathVariable Long accountId, @Valid @RequestBody UpdateAccountReq req) {
+        accountService.updateAccount(accountId, req);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "UPDATE_ACCOUNT_SUCCESS", null)
         );
     }
 

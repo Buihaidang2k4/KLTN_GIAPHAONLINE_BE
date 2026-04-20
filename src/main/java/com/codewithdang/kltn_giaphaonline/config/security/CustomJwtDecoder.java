@@ -25,9 +25,6 @@ import java.text.ParseException;
 @Slf4j
 public class CustomJwtDecoder implements JwtDecoder {
 
-    @Autowired
-    private AuthService authService;
-
     @Value("${jwt.secret}")
     private String signingKey;
 

@@ -1,9 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.service.account;
 
-import com.codewithdang.kltn_giaphaonline.dto.request.ChangePasswordAccountReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.ChangeStatusLockReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.CreateAccountReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.FamilyReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.*;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountDetailsRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.AccountRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
@@ -114,6 +111,21 @@ public class AccountServiceImpl implements AccountService {
         account.setPasswordHash(passwordEncoder.encode(req.newPassword()));
         accountRepo.save(account);
         log.info("=== Change Password Successfully  Account Id = {} ===", accountId);
+    }
+
+    @Override
+    @Transactional
+    public void updateAccount(Long accountId, UpdateAccountReq accountReq) {
+        Account account = accountRepo.findById(accountId)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+
+        if (accountReq.getFullName() != null)
+            account.setFullName(accountReq.getFullName());
+
+        if (accountReq.getPhoneNumber() != null)
+            account.setPhoneNumber(accountReq.getPhoneNumber());
+
+        accountRepo.save(account);
     }
 
     // lock , unlock

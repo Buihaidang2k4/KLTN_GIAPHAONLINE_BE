@@ -6,5 +6,7 @@ import com.codewithdang.kltn_giaphaonline.entity.AccountVerificationToken;
 public interface AccountVerificationTokenService {
     AccountVerificationToken createVerificationToken(Account account, String requestedIp, String userAgent);
 
+    void reSendVerificationToken(String email, String requestedIp, String userAgent);
+
     void verifyAccount(String tokenVerify);
 }

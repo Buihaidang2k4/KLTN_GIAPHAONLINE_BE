@@ -17,6 +17,7 @@ public class InviteInvitationMemberRes {
     Long invitedByAccountId;
     String invitationStatus;
     String inviteToken;
+    String message;
     Instant createdAt;
     Instant expiredAt;
 }

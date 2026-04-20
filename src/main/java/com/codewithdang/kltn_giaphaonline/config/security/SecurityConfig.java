@@ -81,14 +81,14 @@ public class SecurityConfig {
         // Cho phép Frontend của bạn truy cập
         corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        corsConfiguration.setAllowedHeaders(List.of("*")); // Cho phép tất cả các loại Header
+        corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
     }
-    
+
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {

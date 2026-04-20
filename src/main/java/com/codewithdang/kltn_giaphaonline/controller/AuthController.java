@@ -1,10 +1,11 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
-import com.codewithdang.kltn_giaphaonline.dto.request.AuthReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.LoginReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterByInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
-import com.codewithdang.kltn_giaphaonline.dto.response.AuthRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.LoginRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.RegisterRes;
 import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
 import com.codewithdang.kltn_giaphaonline.service.auth.AuthService;
 import com.nimbusds.jose.JOSEException;
@@ -32,21 +33,20 @@ public class AuthController {
     AccountVerificationTokenService verificationTokenService;
 
     @PostMapping("/login")
-    ResponseEntity<ApiResponse<AuthRes>> login(@Valid @RequestBody AuthReq authReq,
-                                               HttpServletResponse response
+    ResponseEntity<ApiResponse<LoginRes>> login(@Valid @RequestBody LoginReq loginReq,
+                                                HttpServletResponse response
     ) throws ParseException {
         return ResponseEntity.ok(
-                ApiResponse.success(200, "LOGIN_SUCCESS", authService.authenticate(authReq, response))
+                ApiResponse.success(200, "LOGIN_SUCCESS", authService.authenticate(loginReq, response))
         );
     }
 
     @PostMapping("/register")
-    ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterReq registerReq, HttpServletRequest request) {
+    ResponseEntity<ApiResponse<RegisterRes>> register(@Valid @RequestBody RegisterReq registerReq, HttpServletRequest request) {
         String requestIp = request.getRemoteAddr();
         String userAgent = request.getHeader("User-Agent");
-        authService.register(registerReq, requestIp, userAgent);
         return ResponseEntity.ok(
-                ApiResponse.success(200, "REGISTER_SUCCESS", null)
+                ApiResponse.success(200, "REGISTER_SUCCESS", authService.register(registerReq, requestIp, userAgent))
         );
     }
 
@@ -97,11 +97,23 @@ public class AuthController {
         );
     }
 
-    @PatchMapping("/verify-account/{token-verify}")
+    @PostMapping("/verify-account/{token-verify}")
     ResponseEntity<ApiResponse<Void>> verifyAccount(@PathVariable("token-verify") String token) {
         verificationTokenService.verifyAccount(token);
         return ResponseEntity.ok(
                 ApiResponse.success(200, "VERIFY_ACCOUNT_SUCCESS", null)
+        );
+    }
+
+    @PostMapping("/re-send-token-verify/{email}")
+    ResponseEntity<ApiResponse<Void>> reRendTokenVerifyAccount(@PathVariable("eamil") String email,
+                                                               HttpServletRequest request
+    ) {
+        String requestIp = request.getRemoteAddr();
+        String userAgent = request.getHeader("User-Agent");
+        verificationTokenService.reSendVerificationToken(email, requestIp, userAgent);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "RESEND_TOKEN_VERIFY_ACCOUNT_SUCCESS", null)
         );
     }
 

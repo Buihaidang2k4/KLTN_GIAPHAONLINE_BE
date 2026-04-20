@@ -3,7 +3,7 @@ package com.codewithdang.kltn_giaphaonline.dto.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
-public record AuthReq(
+public record LoginReq(
         @NotBlank(message = "Email không được để trống")
         @Pattern(
                 regexp = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)*$",

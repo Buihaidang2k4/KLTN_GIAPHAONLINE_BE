@@ -1,10 +1,12 @@
 package com.codewithdang.kltn_giaphaonline.service.family_member;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateFamilyMemberRoleReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.FamilyMemberRes;
 import com.codewithdang.kltn_giaphaonline.entity.*;
 import com.codewithdang.kltn_giaphaonline.enums.*;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
+import com.codewithdang.kltn_giaphaonline.mapper.FamilyMemberMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyMemberRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -29,6 +32,14 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
     AccountRepo accountRepo;
     RoleRepo roleRepo;
     NotificationService notificationService;
+    FamilyMemberMapper memberMapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FamilyMemberRes> getFamilyMemberByFamilyId(Long familyId) {
+        List<FamilyMember> familyMember = familyMemberRepo.findByFamily_FamilyId(familyId);
+        return familyMember.stream().map(memberMapper::toRes).toList();
+    }
 
     /***
      * Create family default when register new account

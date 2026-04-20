@@ -17,7 +17,7 @@ public class EmailVerifyAccountHandler extends AbstractEmailHandler<EmailVerifyA
     public void handle(EmailVerifyAccount email) throws Exception {
         Context context = new Context();
         context.setVariable("fullName", email.getFullName());
-        context.setVariable("verifyUrl", email.getVerifyUrl());
+        context.setVariable("verifyToken", email.getVerifyUrl());
 
         sendHtml(
                 email.getToEmail(),

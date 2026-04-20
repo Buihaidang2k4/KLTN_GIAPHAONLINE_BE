@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.service.account_verification_token;
 
+import com.codewithdang.kltn_giaphaonline.dto.event.UserRegisteredEvent;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.AccountVerificationToken;
 import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
@@ -10,6 +11,7 @@ import com.codewithdang.kltn_giaphaonline.repo.AccountVerificationTokenRepo;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AccountVerificationTokenServiceImpl implements AccountVerificationTokenService {
     AccountVerificationTokenRepo accountVerificationTokenRepo;
+    ApplicationEventPublisher eventPublisher;
     AccountRepo accountRepo;
 
     @Override
@@ -41,6 +44,36 @@ public class AccountVerificationTokenServiceImpl implements AccountVerificationT
                 .build();
 
         return accountVerificationTokenRepo.save(verificationToken);
+    }
+
+    @Override
+    @Transactional
+    public void reSendVerificationToken(String email, String requestedIp, String userAgent) {
+        Account account = accountRepo.findByEmail(email).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+
+        // verify old token
+        accountVerificationTokenRepo.updateVerificationTokenOldAndIsUsedTrueByAccount(account);
+
+        String token = UUID.randomUUID().toString();
+        AccountVerificationToken verificationToken = AccountVerificationToken.builder()
+                .account(account)
+                .token(token)
+                .otpCode(null)
+                .expiresAt(Instant.now().plus(24, ChronoUnit.HOURS))
+                .verifiedAt(null)
+                .isUsed(false)
+                .requestedIp(requestedIp)
+                .userAgent(userAgent)
+                .build();
+
+        accountVerificationTokenRepo.save(verificationToken);
+
+        eventPublisher.publishEvent(new UserRegisteredEvent(
+                account.getAccountId(),
+                account.getEmail(),
+                account.getFullName(),
+                verificationToken.getToken()
+        ));
     }
 
     @Override

@@ -1,22 +1,22 @@
 package com.codewithdang.kltn_giaphaonline.service.auth;
 
 import com.codewithdang.kltn_giaphaonline.dto.event.UserRegisteredEvent;
-import com.codewithdang.kltn_giaphaonline.dto.request.AuthReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.LoginReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.FamilyReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterByInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
-import com.codewithdang.kltn_giaphaonline.dto.response.AuthRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.LoginRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.IntrospectRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.RegisterRes;
 import com.codewithdang.kltn_giaphaonline.entity.*;
 import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
 import com.codewithdang.kltn_giaphaonline.enums.FamilyInvitationStatus;
 import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
+import com.codewithdang.kltn_giaphaonline.mapper.AccountMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
-import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyInvitationRepo;
-import com.codewithdang.kltn_giaphaonline.repo.RoleRepo;
 import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
 import com.codewithdang.kltn_giaphaonline.service.family.FamilyService;
 import com.codewithdang.kltn_giaphaonline.service.family_invitation.FamilyInvitationService;
@@ -70,6 +70,7 @@ public class AuthServiceImpl implements AuthService {
     FamilyService familyService;
     FamilyInvitationRepo familyInvitationRepo;
     FamilyInvitationService familyInvitationService;
+    AccountMapper accountMapper;
 
     @NonFinal
     @Value("${jwt.secret}")
@@ -85,21 +86,21 @@ public class AuthServiceImpl implements AuthService {
 
     /***
      * Login
-     * @param authReq
+     * @param loginReq
      * @param httpRes
-     * @return {@link AuthRes}
+     * @return {@link LoginRes}
      * @throws ParseException
      */
     @Override
     @Transactional(readOnly = true)
-    public AuthRes authenticate(AuthReq authReq, HttpServletResponse httpRes) throws ParseException {
-        Account account = accountRepo.findByEmail(authReq.email())
+    public LoginRes authenticate(LoginReq loginReq, HttpServletResponse httpRes) throws ParseException {
+        Account account = accountRepo.findByEmail(loginReq.email())
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
 
         if (!account.getAccountStatus().equals(AccountStatus.ACTIVE))
             throw new AppException(ErrorCode.ACCOUNT_NOT_ACTIVE);
 
-        if (!passwordEncoder.matches(authReq.password(), account.getPasswordHash()))
+        if (!passwordEncoder.matches(loginReq.password(), account.getPasswordHash()))
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
 
         String accessToken = buildToken(account, Duration.ofMillis(ACCESS_TOKEN_DURATION), ACCESS_TOKEN);
@@ -114,7 +115,7 @@ public class AuthServiceImpl implements AuthService {
 
         Instant expiresAt = Instant.now().plusMillis(ACCESS_TOKEN_DURATION);
 
-        return new AuthRes(expiresAt);
+        return new LoginRes(expiresAt);
     }
 
     /***
@@ -125,7 +126,7 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     @Transactional
-    public void register(RegisterReq req, String requestedIp, String userAgent) {
+    public RegisterRes register(RegisterReq req, String requestedIp, String userAgent) {
         String email = req.email().trim().toLowerCase();
 
         if (accountRepo.existsByEmail(email))
@@ -166,6 +167,8 @@ public class AuthServiceImpl implements AuthService {
                 account.getFullName(),
                 verificationToken.getToken()
         ));
+
+        return accountMapper.toRegisterRes(account);
     }
 
 

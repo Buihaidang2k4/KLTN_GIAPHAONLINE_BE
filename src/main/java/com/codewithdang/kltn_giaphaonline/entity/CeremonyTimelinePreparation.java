@@ -3,6 +3,10 @@ package com.codewithdang.kltn_giaphaonline.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.sql.Timestamp;
 
 @Entity
 @Table(name = "ceremony_timeline_preparations")
@@ -35,6 +39,16 @@ public class CeremonyTimelinePreparation {
 
     @Column(name = "required", nullable = false)
     boolean required = true;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    Timestamp createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    Timestamp updatedAt;
+
+    String updateAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "timeline_id", nullable = false)

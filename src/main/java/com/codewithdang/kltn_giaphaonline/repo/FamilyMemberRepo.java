@@ -7,6 +7,7 @@ import com.codewithdang.kltn_giaphaonline.enums.FamilyMemberStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -21,4 +22,6 @@ public interface FamilyMemberRepo extends JpaRepository<FamilyMember, Long> {
     boolean existsByFamily_FamilyIdAndAccount_AccountIdAndStatus(Long familyFamilyId, Long accountAccountId, FamilyMemberStatus status);
 
     void deleteByAccount(Account account);
+
+    List<FamilyMember> findByFamily_FamilyId(Long familyFamilyId);
 }

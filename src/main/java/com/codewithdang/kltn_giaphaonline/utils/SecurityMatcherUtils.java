@@ -8,7 +8,16 @@ public class SecurityMatcherUtils {
 
     public static boolean isPublic(String path) {
         return SecurityWhitelist.PUBLIC_ENDPOINTS.stream()
-                .anyMatch(p ->  matcher.match(p, path));
+                .anyMatch(p -> matcher.match(p, path));
+    }
+
+    public static boolean isSwagger(String path) {
+        return SecurityWhitelist.SWAGGER_ENDPOINTS.stream()
+                .anyMatch(p -> matcher.match(p, path));
+    }
+
+    public static boolean isPublicOrSwagger(String path) {
+        return isPublic(path) || isSwagger(path);
     }
 
 }

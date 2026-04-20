@@ -24,8 +24,7 @@ public class CustomCookiesResolver implements BearerTokenResolver {
         String path = request.getRequestURI();
 
         if (request.getCookies() == null) return null;
-
-        if (SecurityMatcherUtils.isPublic(path)) return null;
+        if (SecurityMatcherUtils.isPublicOrSwagger(path)) return null;
 
         return Arrays.stream(request.getCookies())
                 .filter(c -> cookieName.equals(c.getName()))
