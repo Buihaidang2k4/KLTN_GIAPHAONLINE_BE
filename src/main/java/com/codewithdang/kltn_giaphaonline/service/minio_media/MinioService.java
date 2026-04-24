@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.service.minio;
+package com.codewithdang.kltn_giaphaonline.service.minio_media;
 
 import org.springframework.web.multipart.MultipartFile;
 

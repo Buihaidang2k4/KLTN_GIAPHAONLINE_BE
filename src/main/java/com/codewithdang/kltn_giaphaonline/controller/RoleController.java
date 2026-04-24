@@ -51,7 +51,7 @@ public class RoleController {
                 ApiResponse.success(200, "ADD_PERMISSION_TO_ROLE_SUCCESS", res)
         );
     }
-
+    
     @DeleteMapping("/remove-permission/{roleName}")
     ResponseEntity<ApiResponse<Void>> removePermissions(@PathVariable String roleName, @Valid @RequestBody UpdateRoleReq req) {
         roleService.removePermissionFromRole(roleName, req);

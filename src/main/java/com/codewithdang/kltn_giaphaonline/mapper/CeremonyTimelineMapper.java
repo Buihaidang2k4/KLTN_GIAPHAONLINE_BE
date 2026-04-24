@@ -6,12 +6,13 @@ import com.codewithdang.kltn_giaphaonline.dto.response.CeremonyTimelineRes;
 import com.codewithdang.kltn_giaphaonline.entity.CeremonyTimeline;
 import org.mapstruct.*;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {CeremonyTimelinePreparationMapper.class})
 public interface CeremonyTimelineMapper {
     CeremonyTimeline toEntity(CeremonyTimelineReq req);
 
     @Mapping(target = "ceremonyId", source = "ceremony.ceremonyId")
     @Mapping(target = "timelineId", source = "timelineId")
+    @Mapping(target = "timelinePreparations", source = "preparations")
     CeremonyTimelineRes toRes(CeremonyTimeline ceremony);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.sql.Timestamp;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -17,6 +18,7 @@ public class CeremonyRes {
     String ceremonyType;
     String ceremonyName;
     String description;
+    Set<CeremonyTimelineRes> timelines;
     Timestamp createdAt;
     Timestamp updatedAt;
 }

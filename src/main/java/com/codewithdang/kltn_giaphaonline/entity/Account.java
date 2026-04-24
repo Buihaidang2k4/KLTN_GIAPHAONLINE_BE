@@ -13,13 +13,13 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "accounts")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "accounts")
 public class Account {
 
     @Id
@@ -35,7 +35,7 @@ public class Account {
 
     @Column(name = "phone_number", unique = true, length = 20)
     String phoneNumber;
-    
+
     @Column(name = "avatar_path")
     String avatarPath;
 

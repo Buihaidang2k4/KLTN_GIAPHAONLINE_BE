@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.service.minio;
+package com.codewithdang.kltn_giaphaonline.service.minio_media;
 
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;

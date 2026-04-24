@@ -14,13 +14,13 @@ import java.util.Set;
 
 // phong tuc
 @Entity
-@Table(name = "ceremonies")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "ceremonies")
 public class Ceremony {
 
     @Id
@@ -36,6 +36,12 @@ public class Ceremony {
 
     @Column(name = "description")
     String description;
+
+    @Column(name = "ceremony_path")
+    String ceremonyPath;
+
+    @Transient
+    String ceremonyUrl;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

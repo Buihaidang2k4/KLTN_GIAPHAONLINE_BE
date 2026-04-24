@@ -48,8 +48,6 @@ public class CeremonyTimelinePreparation {
     @Column(name = "updated_at")
     Timestamp updatedAt;
 
-    String updateAt;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "timeline_id", nullable = false)
     CeremonyTimeline timeline;

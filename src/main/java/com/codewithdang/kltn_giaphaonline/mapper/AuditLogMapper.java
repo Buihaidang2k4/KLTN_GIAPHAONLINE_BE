@@ -19,6 +19,7 @@ public interface AuditLogMapper {
 
     @Mapping(target = "actorAccountId", source = "actor.accountId")
     @Mapping(target = "actorName", source = "actor.fullName")
+    @Mapping(target = "actorEmail", source = "actor.email")
     AuditLogRes toRes(AuditLog auditLog);
 
     @Named("mapActor")

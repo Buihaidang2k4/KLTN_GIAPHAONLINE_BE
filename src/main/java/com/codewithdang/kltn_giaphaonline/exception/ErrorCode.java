@@ -72,7 +72,7 @@ public enum ErrorCode {
     ARTICLE_CATEGORY_EXISTED(1601, "Article existed", BAD_REQUEST),
     ARTICLE_CATEGORY_SLUG_EXISTED(1602, "Article slug existed", BAD_REQUEST),
     ARTICLE_CATEGORY_ALREADY_HAS_ARTICLES(1603, "Article category already has articles cannot deleted", BAD_REQUEST),
-    
+
     // family
     FAMILY_NOT_EXISTED(1700, "Family not found", HttpStatus.NOT_FOUND),
     ACCOUNT_ACCESS_DENIED(1701, "Account is not owner family", BAD_REQUEST),
@@ -101,12 +101,23 @@ public enum ErrorCode {
     NOTIFICATION_NOT_EXISTED(2100, "Notification not found", HttpStatus.NOT_FOUND),
     NOTIFICATION_IS_EXISTED(2101, "Notification is existed", BAD_REQUEST),
 
-
     // CEREMONY_TIMELINE
     CEREMONY_TIMELINE_NOT_EXISTED(2200, "The ceremonial milestone does not exist.", NOT_FOUND),
     CEREMONY_TIMELINE_PREPARATION_NOT_EXISTED(2201, "The prepared item does not exist.", NOT_FOUND),
-    ;
 
+    // FAMILY_POST_CATEGORY
+    FAMILY_POST_CATEGORY_NOT_EXISTED(2300, "Family post category not existed", NOT_FOUND),
+    FAMILY_POST_CATEGORY_IS_EXISTED(2301, "Family post category is existed", BAD_REQUEST),
+    FAMILY_POST_NOT_IN_FAMILY(2302, "Family post category related to the family", BAD_REQUEST),
+
+    // FAMILY_EVENT
+    FAMILY_EVENT_NOT_EXISTED(2400, "Family event not existed", NOT_FOUND),
+    FAMILY_EVENT_IS_EXISTED(2401, "Family event is existed", BAD_REQUEST),
+    FAMILY_EVENT_NOT_IN_FAMILY(2402, "Family event related to the family", BAD_REQUEST),
+    INVALID_CALENDAR_TYPE(2403, "Invalid calendar type is null", BAD_REQUEST),
+    INVALID_REMINDER_TYPE(2404, "Invalid reminder type is null", BAD_REQUEST),
+    INVALID_DATE_RANGE(2405, "Start date must not be after end date", BAD_REQUEST),
+    FAMILY_ID_IS_REQUIRED(2406, "Family id is required", BAD_REQUEST);
     final int code;
     final String message;
     final HttpStatusCode statusCode;
