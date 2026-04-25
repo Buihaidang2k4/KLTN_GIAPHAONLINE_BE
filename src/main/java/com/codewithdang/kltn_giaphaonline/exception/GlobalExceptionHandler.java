@@ -1,6 +1,7 @@
 package com.codewithdang.kltn_giaphaonline.exception;
 
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestControllerAdvice
 @Slf4j
@@ -101,11 +104,22 @@ public class GlobalExceptionHandler {
 
     /* ==================== INTERNAL ERROR ==================== */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<?>> handleException(Exception e) {
-        log.error("Unhandled exception", e);
+    public ResponseEntity<ApiResponse<?>> handleException(
+            Exception e,
+            HttpServletRequest request
+    ) {
+
 
         ErrorCode ec = ErrorCode.UNCATEGORIZED_EXCEPTION;
 
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("errorType", e.getClass().getSimpleName());
+        attributes.put("errorMessage", e.getMessage());
+        attributes.put("path", request.getRequestURI());
+        attributes.put("method", request.getMethod());
+
+        log.error("Unhandled exception at {} {}", request.getMethod(), request.getRequestURI(), e);
+        log.error("Error details:  {}", attributes);
         return ResponseEntity
                 .status(ec.getStatusCode())
                 .body(new ApiResponse<>(

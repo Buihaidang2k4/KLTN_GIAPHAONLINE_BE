@@ -4,6 +4,7 @@ import com.codewithdang.kltn_giaphaonline.enums.CalendarType;
 import com.codewithdang.kltn_giaphaonline.enums.FamilyEventStatus;
 import com.codewithdang.kltn_giaphaonline.enums.ReminderEventType;
 import com.codewithdang.kltn_giaphaonline.enums.RepeatType;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -41,6 +42,7 @@ public class FamilyEvent {
     String eventName;
 
     @Column(name = "event_time")
+    @JsonFormat(pattern = "HH:mm:ss")
     LocalTime eventTime;
 
     @Column(name = "solar_date")
@@ -67,7 +69,7 @@ public class FamilyEvent {
 
     // Lưu dữ liệu để hiển thị bản đồ.
     @Column(name = "location_map_url", columnDefinition = "TEXT")
-    String LocationMapUrl;
+    String locationMapUrl;
 
     @Column(name = "note", length = 500)
     String note;

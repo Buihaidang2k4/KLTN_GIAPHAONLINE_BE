@@ -13,29 +13,17 @@ import java.time.LocalTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateFamilyEventReq {
     String eventName;
-
     LocalTime eventTime;
-
     LocalDate solarDate;
-
     LocalDate lunarDate;
-
     CalendarType calendarType;
-
     RepeatType repeatType;
-
     ReminderEventType reminderType;
-
-    FamilyEventStatus familyEventStatus;
-    
+    FamilyEventStatus status;
     String LocationMapUrl;
-
     String location;
-
-
     String note;
 }

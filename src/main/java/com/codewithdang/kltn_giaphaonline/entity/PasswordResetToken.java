@@ -12,7 +12,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@FieldNameConstants(level =  AccessLevel.PRIVATE)
+@FieldNameConstants(level = AccessLevel.PRIVATE)
 @Table(name = "password_reset_tokens")
 public class PasswordResetToken {
     @Id
@@ -24,11 +24,11 @@ public class PasswordResetToken {
     @JoinColumn(name = "account_id")
     Account account;
 
+    @Column(name = "otp_hash", length = 10)
+    String otpHash;
+
     @Column(name = "requested_ip", length = 45)
     String requestedIp;
-
-    @Column(name = "otp_code", length = 10)
-    String otpCode;
 
     @Column(name = "expires_at")
     Instant expiresAt;

@@ -12,7 +12,7 @@ import static org.springframework.http.HttpStatus.*;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum ErrorCode {
     // --- SYSTEM & AUTHENTICATION (9000 - 9999) ---
-    UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", INTERNAL_SERVER_ERROR),
+    UNCATEGORIZED_EXCEPTION(9999, "Unexpected system error", INTERNAL_SERVER_ERROR),
     INVALID_KEY(9000, "Invalid message key", BAD_REQUEST),
     UNAUTHENTICATED(9001, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(9002, "You do not have permission to access this resource", FORBIDDEN),

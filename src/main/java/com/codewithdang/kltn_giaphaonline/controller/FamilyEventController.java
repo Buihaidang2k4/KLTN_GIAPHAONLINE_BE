@@ -8,6 +8,7 @@ import com.codewithdang.kltn_giaphaonline.dto.response.FamilyEventRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.service.family_event.FamilyEventService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Pageable;
@@ -25,7 +26,7 @@ public class FamilyEventController {
     private final FamilyEventService familyEventService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<FamilyEventRes>> createEvent(@RequestParam("familyId") Long familyId, @RequestBody FamilyEventReq request) {
+    public ResponseEntity<ApiResponse<FamilyEventRes>> createEvent(@RequestParam("familyId") Long familyId, @Valid @RequestBody FamilyEventReq request) {
         return ResponseEntity.ok(
                 ApiResponse.success(
                         201,
@@ -35,11 +36,11 @@ public class FamilyEventController {
         );
     }
 
-    @PutMapping("/{eventId}")
+    @PutMapping("/family/{familyId}/event/{eventId}")
     public ResponseEntity<ApiResponse<FamilyEventRes>> updateEvent(
             @PathVariable Long eventId,
-            @RequestParam("familyId") Long familyId,
-            @RequestBody UpdateFamilyEventReq request) {
+            @PathVariable("familyId") Long familyId,
+            @Valid @RequestBody UpdateFamilyEventReq request) {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -50,25 +51,14 @@ public class FamilyEventController {
         );
     }
 
-    @DeleteMapping("/{eventId}")
-    public ResponseEntity<ApiResponse<Void>> deleteEvent(@RequestParam Long familyId, @PathVariable Long eventId) {
+    @DeleteMapping("/family/{familyId}/event/{eventId}")
+    public ResponseEntity<ApiResponse<Void>> deleteEvent(@PathVariable Long familyId, @Valid @PathVariable Long eventId) {
         familyEventService.deleteEvent(familyId, eventId);
         return ResponseEntity.ok(
                 ApiResponse.success(
                         200,
                         "DELETE_EVENT_SUCCESS",
                         null
-                )
-        );
-    }
-
-    @GetMapping("/{eventId}")
-    public ResponseEntity<ApiResponse<FamilyEventRes>> getEventById(@PathVariable Long eventId) {
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        200,
-                        "GET_EVENT_SUCCESS",
-                        familyEventService.getEventById(eventId)
                 )
         );
     }
@@ -89,7 +79,7 @@ public class FamilyEventController {
         );
     }
 
-    @PostMapping("/search")
+    @GetMapping("/search")
     public ResponseEntity<ApiResponse<PageResponse<FamilyEventRes>>> searchEvents(
             @RequestBody FamilyEventSearchReq searchReq,
             @PageableDefault(
@@ -102,6 +92,17 @@ public class FamilyEventController {
                         200,
                         "SEARCH_EVENTS_SUCCESS",
                         familyEventService.searchEvents(searchReq, pageable)
+                )
+        );
+    }
+
+    @GetMapping("/{eventId}")
+    public ResponseEntity<ApiResponse<FamilyEventRes>> getEventById(@PathVariable Long eventId) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        200,
+                        "GET_EVENT_SUCCESS",
+                        familyEventService.getEventById(eventId)
                 )
         );
     }

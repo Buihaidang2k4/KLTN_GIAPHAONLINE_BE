@@ -6,12 +6,18 @@ import com.codewithdang.kltn_giaphaonline.enums.FamilyEventStatus;
 import com.codewithdang.kltn_giaphaonline.enums.ReminderEventType;
 import com.codewithdang.kltn_giaphaonline.enums.RepeatType;
 import jakarta.persistence.Column;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class FamilyEventRes {
     Long familyEventId;
     Long familyId;
@@ -25,7 +31,7 @@ public class FamilyEventRes {
     RepeatType repeatType;
     ReminderEventType reminderType;
     String location;
-    String LocationMapUrl;
+    String locationMapUrl;
     String note;
     Instant createdAt;
     Instant updatedAt;

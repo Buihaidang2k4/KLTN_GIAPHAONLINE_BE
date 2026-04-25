@@ -25,6 +25,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.Locale;
+
 
 @Service
 @RequiredArgsConstructor
@@ -45,8 +48,9 @@ public class FamilyEventServiceImpl implements FamilyEventService {
 
         Account account = accountService.getCurrentAccount();
         FamilyEvent event = familyEventMapper.toEntity(req);
-
+        event.setEventName(req.getEventName().toLowerCase(Locale.ROOT));
         event.setFamily(family);
+        event.setLocationMapUrl(req.getLocationMapUrl());
         event.setCreatedByAccount(account);
         event = familyEventRepo.save(event);
         return familyEventMapper.toDto(event);
@@ -94,18 +98,69 @@ public class FamilyEventServiceImpl implements FamilyEventService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<FamilyEventRes> searchEvents(FamilyEventSearchReq req, Pageable pageable) {
-        log.info("Searching family events with criteria: {}", req);
-        Page<FamilyEvent> familyEventPage = familyEventRepo.searchEvents(
-                req.getFamilyId(),
-                req.getKeyword(),
-                req.getStartDate(),
-                req.getEndDate(),
-                req.getCalendarType(),
-                req.getReminderType(),
-                pageable
-        );
 
-        return pageMapper.toPageResponse(familyEventPage,
+        log.info("Searching family events with criteria: {}", req);
+
+        String keyword = req.getKeyword() != null ? req.getKeyword().toLowerCase(Locale.ROOT) : null;
+        LocalDate startDate = req.getStartDate();
+        LocalDate endDate = req.getEndDate();
+
+        Page<FamilyEvent> familyEventPage;
+
+        String dateFilterType = switch (
+                (startDate != null ? 1 : 0) + (endDate != null ? 2 : 0)
+                ) {
+            case 3 -> "RANGE";
+            case 1 -> "START";
+            case 2 -> "END";
+            default -> "NONE";
+        };
+
+        switch (dateFilterType) {
+
+            case "RANGE" -> familyEventPage =
+                    familyEventRepo.searchEventsByDateRange(
+                            req.getFamilyId(),
+                            keyword,
+                            startDate,
+                            endDate,
+                            req.getCalendarType(),
+                            req.getReminderType(),
+                            pageable
+                    );
+
+            case "START" -> familyEventPage =
+                    familyEventRepo.searchEventsByStartDate(
+                            req.getFamilyId(),
+                            keyword,
+                            startDate,
+                            req.getCalendarType(),
+                            req.getReminderType(),
+                            pageable
+                    );
+
+            case "END" -> familyEventPage =
+                    familyEventRepo.searchEventsByEndDate(
+                            req.getFamilyId(),
+                            keyword,
+                            endDate,
+                            req.getCalendarType(),
+                            req.getReminderType(),
+                            pageable
+                    );
+
+            default -> familyEventPage =
+                    familyEventRepo.searchEventsWithoutDateRange(
+                            req.getFamilyId(),
+                            keyword,
+                            req.getCalendarType(),
+                            req.getReminderType(),
+                            pageable
+                    );
+        }
+
+        return pageMapper.toPageResponse(
+                familyEventPage,
                 familyEventMapper::toDto
         );
     }
