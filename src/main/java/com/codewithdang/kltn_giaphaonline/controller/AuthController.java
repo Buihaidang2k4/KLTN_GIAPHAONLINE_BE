@@ -108,7 +108,7 @@ public class AuthController {
     }
 
     @PostMapping("/re-send-token-verify/{email}")
-    ResponseEntity<ApiResponse<Void>> reRendTokenVerifyAccount(@PathVariable("eamil") String email,
+    ResponseEntity<ApiResponse<Void>> reRendTokenVerifyAccount(@PathVariable("email") String email,
                                                                HttpServletRequest request
     ) {
         String requestIp = request.getRemoteAddr();
@@ -130,8 +130,19 @@ public class AuthController {
         );
     }
 
-    @PostMapping("/verify-forgot-password-otp-hash/{otp}")
-    ResponseEntity<ApiResponse<Void>> verifyForgotPasswordOtpHash(@PathVariable("otp") String otp) {
+
+    @PostMapping("/forgot-password-resend-otp/{email}")
+    ResponseEntity<ApiResponse<Void>> resendOTPForgotPassword(@PathVariable("email") String email,
+                                                              HttpServletRequest request) {
+        String requestIp = request.getRemoteAddr();
+        authService.resendOTPForgotPassword(email, requestIp);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "FORGOT_PASSWORD_RESEND_OTP_SUCCESS", null)
+        );
+    }
+
+    @PostMapping("/verify-forgot-password-otp/{otp}")
+    ResponseEntity<ApiResponse<Void>> verifyForgotPasswordOtp(@PathVariable("otp") String otp) {
         authService.verifyForgotPasswordOtpHash(otp);
         return ResponseEntity.ok(
                 ApiResponse.success(200, "VERIFY_FORGOT_PASSWORD_OTP_HASH_SUCCESS", null)

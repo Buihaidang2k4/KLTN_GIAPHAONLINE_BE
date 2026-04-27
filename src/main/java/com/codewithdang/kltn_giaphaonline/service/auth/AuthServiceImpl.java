@@ -14,6 +14,7 @@ import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.AccountMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyInvitationRepo;
+import com.codewithdang.kltn_giaphaonline.repo.PasswordResetTokenRepo;
 import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
 import com.codewithdang.kltn_giaphaonline.service.family.FamilyService;
 import com.codewithdang.kltn_giaphaonline.service.family_invitation.FamilyInvitationService;
@@ -70,6 +71,7 @@ public class AuthServiceImpl implements AuthService {
     FamilyInvitationService familyInvitationService;
     AccountMapper accountMapper;
     PasswordResetTokenService passwordResetTokenService;
+    PasswordResetTokenRepo passwordResetTokenRepo;
 
     @NonFinal
     @Value("${jwt.secret}")
@@ -288,17 +290,45 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public void resetPasswordWithOtp(ResetPasswordReq req) {
-        if (Boolean.FALSE.equals(passwordResetTokenService.isOtpVerified(req.getOtp())))
-            throw new AppException(ErrorCode.OTP_FORGOT_PASSWORD_ALREADY_USED);
-
-        Account account = accountRepo.findByEmail(req.getEmail())
+    public void resendOTPForgotPassword(String email, String requestIp) {
+        Account account = accountRepo.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+
+        if (!account.getAccountStatus().equals(AccountStatus.ACTIVE))
+            throw new AppException(ErrorCode.ACCOUNT_NOT_ACTIVE);
+
+        // Invalidate old OTP tokens (set isSuccess = false nếu chưa dùng)
+        List<PasswordResetToken> oldTokens = passwordResetTokenRepo.findAllByAccountAndIsSuccessFalse(account);
+        oldTokens.forEach(token -> {
+            if (token.getExpiresAt().isAfter(Instant.now())) {
+                token.setIsSuccess(false);
+                passwordResetTokenRepo.save(token);
+            }
+        });
+
+        // Send new OTP
+        passwordResetTokenService.sendOTP(account.getEmail(), requestIp, account);
+        log.info("=== Resend OTP Successfully for Email: {} ===", email);
+    }
+
+    @Override
+    @Transactional
+    public void resetPasswordWithOtp(ResetPasswordReq req) {
+        // 1. Kiểm tra OTP từ PasswordResetToken repo
+        PasswordResetToken resetToken = passwordResetTokenRepo.findByOtp(req.getOtp())
+                .orElseThrow(() -> new AppException(ErrorCode.OTP_FORGOT_PASSWORD_NOT_EXISTED));
+
+        // 2. Kiểm tra OTP đã verify chưa
+        if (Boolean.FALSE.equals(resetToken.getIsSuccess()))
+            throw new AppException(ErrorCode.OTP_FORGOT_PASSWORD_NOT_VERIFIED);
+
+        Account account = resetToken.getAccount();
 
         if (!req.getNewPassword().equals(req.getConfirmPassword()))
             throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
 
         account.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+        resetToken.setIsSuccess(false);
         accountRepo.save(account);
         log.info("=== Change Password Successfully  Account Id = {} ===", account.getAccountId());
     }

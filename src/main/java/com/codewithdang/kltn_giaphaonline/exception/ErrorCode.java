@@ -128,8 +128,7 @@ public enum ErrorCode {
     OTP_FORGOT_PASSWORD_NOT_EXISTED(2500, "Otp forgot password not existed", NOT_FOUND),
     OTP_FORGOT_PASSWORD_ALREADY_USED(2501, "Otp forgot password already used", BAD_REQUEST),
     OTP_FORGOT_PASSWORD_EXPIRED(2502, "Otp forgot password already expired", BAD_REQUEST),
-
-    ;
+    OTP_FORGOT_PASSWORD_NOT_VERIFIED(2503, "Otp forgot password not verified", BAD_REQUEST);
     final int code;
     final String message;
     final HttpStatusCode statusCode;

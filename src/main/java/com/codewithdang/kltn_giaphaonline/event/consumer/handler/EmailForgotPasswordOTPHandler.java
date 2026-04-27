@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-@Component
 @Slf4j
+@Component
 public class EmailForgotPasswordOTPHandler extends AbstractEmailHandler<ResetPasswordEmail> {
 
     public EmailForgotPasswordOTPHandler(JavaMailSender mailSender, SpringTemplateEngine templateEngine) {

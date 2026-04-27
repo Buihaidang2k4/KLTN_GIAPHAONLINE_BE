@@ -24,6 +24,8 @@ public interface AuthService {
 
     void forgotPasswordSendOTP(String email, String requestIp);
 
+    void resendOTPForgotPassword(String email, String requestIp);
+
     void verifyForgotPasswordOtpHash(String otp);
 
     void resetPasswordWithOtp(ResetPasswordReq req);
