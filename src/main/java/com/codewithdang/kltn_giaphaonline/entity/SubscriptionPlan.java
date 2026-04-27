@@ -5,6 +5,8 @@ import com.codewithdang.kltn_giaphaonline.enums.PlanName;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -52,9 +54,11 @@ public class SubscriptionPlan {
     @Column(name = "is_active")
     Boolean isActive;
 
+    @CreationTimestamp
     @Column(name = "created_at")
     Instant createdAt;
 
-    @Column(name = "updated_at")
+    @UpdateTimestamp
+    @Column(name = "updated_at", updatable = false)
     Instant updatedAt;
 }

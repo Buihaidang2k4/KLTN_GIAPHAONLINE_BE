@@ -3,9 +3,11 @@ package com.codewithdang.kltn_giaphaonline.controller;
 import com.codewithdang.kltn_giaphaonline.dto.request.LoginReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterByInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.ResetPasswordReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.LoginRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.RegisterRes;
+import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
 import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
 import com.codewithdang.kltn_giaphaonline.service.auth.AuthService;
 import com.nimbusds.jose.JOSEException;
@@ -116,5 +118,33 @@ public class AuthController {
                 ApiResponse.success(200, "RESEND_TOKEN_VERIFY_ACCOUNT_SUCCESS", null)
         );
     }
+
+    @PostMapping("/forgot-password-send-otp/{email}")
+    ResponseEntity<ApiResponse<Void>> forgotPasswordSendOTP(@PathVariable("email") String email,
+                                                            HttpServletRequest request
+    ) {
+        String requestIp = request.getRemoteAddr();
+        authService.forgotPasswordSendOTP(email, requestIp);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "FORGOT_PASSWORD_SEND_OTP_SUCCESS", null)
+        );
+    }
+
+    @PostMapping("/verify-forgot-password-otp-hash/{otp}")
+    ResponseEntity<ApiResponse<Void>> verifyForgotPasswordOtpHash(@PathVariable("otp") String otp) {
+        authService.verifyForgotPasswordOtpHash(otp);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "VERIFY_FORGOT_PASSWORD_OTP_HASH_SUCCESS", null)
+        );
+    }
+
+    @PostMapping("/reset-password")
+    ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody ResetPasswordReq req) {
+        authService.resetPasswordWithOtp(req);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "RESET_PASSWORD_SUCCESS", null)
+        );
+    }
+
 
 }

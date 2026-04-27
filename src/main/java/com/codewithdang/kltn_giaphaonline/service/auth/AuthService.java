@@ -3,6 +3,7 @@ package com.codewithdang.kltn_giaphaonline.service.auth;
 import com.codewithdang.kltn_giaphaonline.dto.request.LoginReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterByInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.ResetPasswordReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.LoginRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.IntrospectRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.RegisterRes;
@@ -20,6 +21,12 @@ public interface AuthService {
     void registerByInvitation(RegisterByInvitationReq req, String requestedIp, String userAgent);
 
     void refreshToken(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException;
+
+    void forgotPasswordSendOTP(String email, String requestIp);
+
+    void verifyForgotPasswordOtpHash(String otp);
+
+    void resetPasswordWithOtp(ResetPasswordReq req);
 
     IntrospectRes introspect(String token) throws ParseException, JOSEException;
 

@@ -24,8 +24,8 @@ public class PasswordResetToken {
     @JoinColumn(name = "account_id")
     Account account;
 
-    @Column(name = "otp_hash", length = 10)
-    String otpHash;
+    @Column(name = "otp", length = 10)
+    String otp;
 
     @Column(name = "requested_ip", length = 45)
     String requestedIp;

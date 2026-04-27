@@ -12,13 +12,6 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-//@JsonTypeInfo(
-//        use = JsonTypeInfo.Id.NAME, property = "type"
-//)
-//@JsonSubTypes({
-//        @JsonSubTypes.Type(value = EmailOTP.class, name = "OTP"),
-//        @JsonSubTypes.Type(value = EmailWelcome.class, name = "WELCOME")
-//})
 public abstract class EmailBase {
     String toEmail;
     String subject;

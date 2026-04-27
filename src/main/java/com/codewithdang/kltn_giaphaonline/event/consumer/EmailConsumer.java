@@ -2,10 +2,7 @@ package com.codewithdang.kltn_giaphaonline.event.consumer;
 
 import com.codewithdang.kltn_giaphaonline.config.rabbitmq.RabbitMQConfig;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.*;
-import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailInvitationAccountHandler;
-import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailOTPHandler;
-import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailVerifyAccountHandler;
-import com.codewithdang.kltn_giaphaonline.event.consumer.handler.EmailWelcomeHandler;
+import com.codewithdang.kltn_giaphaonline.event.consumer.handler.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,6 +23,7 @@ public class EmailConsumer {
     EmailOTPHandler emailOTPHandler;
     EmailVerifyAccountHandler emailVerifyAccountHandler;
     EmailInvitationAccountHandler emailInvitationAccountHandler;
+    EmailForgotPasswordOTPHandler passwordOTPHandler;
 
     @RabbitHandler
     public void handleEmail(EmailOTP email) throws Exception {
@@ -49,6 +47,12 @@ public class EmailConsumer {
     public void handleInvitationMemberEmail(EmailInvitationAccount invitationAccount) throws Exception {
         log.info("Received invitation email for {}", invitationAccount.getToEmail());
         emailInvitationAccountHandler.handle(invitationAccount);
+    }
+
+    @RabbitHandler
+    public void handleForgotPasswordEmail(ResetPasswordEmail resetPasswordEmail) throws Exception {
+        log.info("Received forgot password email for {}", resetPasswordEmail.getToEmail());
+        passwordOTPHandler.handle(resetPasswordEmail);
     }
 
     @RabbitHandler(isDefault = true)

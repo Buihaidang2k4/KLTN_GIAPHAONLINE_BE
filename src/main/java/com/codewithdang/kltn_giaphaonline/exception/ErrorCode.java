@@ -117,7 +117,19 @@ public enum ErrorCode {
     INVALID_CALENDAR_TYPE(2403, "Invalid calendar type is null", BAD_REQUEST),
     INVALID_REMINDER_TYPE(2404, "Invalid reminder type is null", BAD_REQUEST),
     INVALID_DATE_RANGE(2405, "Start date must not be after end date", BAD_REQUEST),
-    FAMILY_ID_IS_REQUIRED(2406, "Family id is required", BAD_REQUEST);
+    FAMILY_ID_IS_REQUIRED(2406, "Family id is required", BAD_REQUEST),
+
+
+    // family_achievement
+    FAMILY_ACHIEVEMENT_NOT_EXISTED(2600, "Family achievement not found", NOT_FOUND),
+    FAMILY_ACHIEVEMENT_NOT_IN_FAMILY(2601, "Achievement does not belong to this family", BAD_REQUEST),
+
+    // forgot-password
+    OTP_FORGOT_PASSWORD_NOT_EXISTED(2500, "Otp forgot password not existed", NOT_FOUND),
+    OTP_FORGOT_PASSWORD_ALREADY_USED(2501, "Otp forgot password already used", BAD_REQUEST),
+    OTP_FORGOT_PASSWORD_EXPIRED(2502, "Otp forgot password already expired", BAD_REQUEST),
+
+    ;
     final int code;
     final String message;
     final HttpStatusCode statusCode;

@@ -1,10 +1,7 @@
 package com.codewithdang.kltn_giaphaonline.service.auth;
 
 import com.codewithdang.kltn_giaphaonline.dto.event.UserRegisteredEvent;
-import com.codewithdang.kltn_giaphaonline.dto.request.LoginReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.FamilyReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.RegisterByInvitationReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.*;
 import com.codewithdang.kltn_giaphaonline.dto.response.LoginRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.IntrospectRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.RegisterRes;
@@ -20,6 +17,7 @@ import com.codewithdang.kltn_giaphaonline.repo.FamilyInvitationRepo;
 import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
 import com.codewithdang.kltn_giaphaonline.service.family.FamilyService;
 import com.codewithdang.kltn_giaphaonline.service.family_invitation.FamilyInvitationService;
+import com.codewithdang.kltn_giaphaonline.service.forgot_password.PasswordResetTokenService;
 import com.codewithdang.kltn_giaphaonline.service.revoked_token.RevokedTokenService;
 import com.codewithdang.kltn_giaphaonline.service.role.RoleService;
 import com.nimbusds.jose.JOSEException;
@@ -71,6 +69,7 @@ public class AuthServiceImpl implements AuthService {
     FamilyInvitationRepo familyInvitationRepo;
     FamilyInvitationService familyInvitationService;
     AccountMapper accountMapper;
+    PasswordResetTokenService passwordResetTokenService;
 
     @NonFinal
     @Value("${jwt.secret}")
@@ -171,7 +170,6 @@ public class AuthServiceImpl implements AuthService {
         return accountMapper.toRegisterRes(account);
     }
 
-
     /***
      * Register By Invitation
      * @param req
@@ -267,6 +265,43 @@ public class AuthServiceImpl implements AuthService {
         response.addHeader(HttpHeaders.SET_COOKIE, cookieRefresh.toString());
     }
 
+    @Override
+    @Transactional
+    public void forgotPasswordSendOTP(String email, String requestIp) {
+        Account account = accountRepo.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+
+        if (!account.getAccountStatus().equals(AccountStatus.ACTIVE))
+            throw new AppException(ErrorCode.ACCOUNT_NOT_ACTIVE);
+
+        // send Token
+        passwordResetTokenService.sendOTP(account.getEmail(), requestIp, account);
+        log.info("=== Send OTP Successfully ===");
+    }
+
+    @Override
+    public void verifyForgotPasswordOtpHash(String otp) {
+        // verify
+        passwordResetTokenService.verifyOTP(otp);
+        log.info("=== Verify OTP Successfully ===");
+    }
+
+    @Override
+    @Transactional
+    public void resetPasswordWithOtp(ResetPasswordReq req) {
+        if (Boolean.FALSE.equals(passwordResetTokenService.isOtpVerified(req.getOtp())))
+            throw new AppException(ErrorCode.OTP_FORGOT_PASSWORD_ALREADY_USED);
+
+        Account account = accountRepo.findByEmail(req.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+
+        if (!req.getNewPassword().equals(req.getConfirmPassword()))
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+
+        account.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
+        accountRepo.save(account);
+        log.info("=== Change Password Successfully  Account Id = {} ===", account.getAccountId());
+    }
 
     /***
      * Check token expiredAt

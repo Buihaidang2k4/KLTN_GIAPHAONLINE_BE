@@ -15,6 +15,7 @@ import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyEventRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
+import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -39,6 +40,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
     PageMapper pageMapper;
     FamilyRepo familyRepo;
     AccountService accountService;
+    NotificationService notificationService;
 
     @Override
     @Transactional
@@ -166,8 +168,9 @@ public class FamilyEventServiceImpl implements FamilyEventService {
     }
 
     @Override
-    @Scheduled(fixedRate = 60000)
     public void checkEventNotification() {
+        Account currentAccount = accountService.getCurrentAccount();
+        
 
     }
 
