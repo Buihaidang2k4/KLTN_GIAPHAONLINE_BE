@@ -38,6 +38,16 @@ public class FamilyController {
         return ResponseEntity.ok(ApiResponse.success(200, "CREATE_FAMILY_SUCCESS", familyService.getFamilies(pageable)));
     }
 
+    @GetMapping("/current-account")
+    public ResponseEntity<ApiResponse<PageResponse<FamilyRes>>> getAllFamiliesCurrentAccount(
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(200, "CREATE_FAMILY_SUCCESS", familyService.getFamiliesByCurrentAccount(pageable)));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<FamilyRes> getFamilyById(@PathVariable Long id) {
         FamilyRes familyResponse = familyService.getFamilyById(id);

@@ -4,6 +4,8 @@ import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Family;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyMember;
 import com.codewithdang.kltn_giaphaonline.enums.FamilyMemberStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -24,4 +26,8 @@ public interface FamilyMemberRepo extends JpaRepository<FamilyMember, Long> {
     void deleteByAccount(Account account);
 
     List<FamilyMember> findByFamily_FamilyId(Long familyFamilyId);
+
+    Page<FamilyMember> findAllByAccount(Account account, Pageable pageable);
+
+    boolean existsByFamilyAndAccount(Family family, Account account);
 }

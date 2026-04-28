@@ -27,5 +27,4 @@ public class FamilyEventSearchReq {
     LocalDate endDate;
 
     ReminderEventType reminderType;
-
 }

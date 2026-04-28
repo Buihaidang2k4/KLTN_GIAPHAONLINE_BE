@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.mail.MailSendException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,33 +27,33 @@ public class EmailConsumer {
     EmailForgotPasswordOTPHandler passwordOTPHandler;
 
     @RabbitHandler
-    public void handleEmail(EmailOTP email) throws Exception {
+    public void handleEmail(EmailOTP email) {
         log.info("Received OTP email for {}", email.getToEmail());
-        emailOTPHandler.handle(email);
+        safeHandle(() -> emailOTPHandler.handle(email), "OTP");
     }
 
     @RabbitHandler
-    public void handleWelcome(EmailWelcome email) throws Exception {
+    public void handleWelcome(EmailWelcome email) {
         log.info("Received welcome email for {}", email.getToEmail());
-        emailWelcomeHandler.handle(email);
+        safeHandle(() -> emailWelcomeHandler.handle(email), "Welcome");
     }
 
     @RabbitHandler
-    public void handleEmailVerifyAccount(EmailVerifyAccount verifyAccount) throws Exception {
+    public void handleEmailVerifyAccount(EmailVerifyAccount verifyAccount) {
         log.info("Received verify account email for {}", verifyAccount.getToEmail());
-        emailVerifyAccountHandler.handle(verifyAccount);
+        safeHandle(() -> emailVerifyAccountHandler.handle(verifyAccount), "Verify Account");
     }
 
     @RabbitHandler
-    public void handleInvitationMemberEmail(EmailInvitationAccount invitationAccount) throws Exception {
+    public void handleInvitationMemberEmail(EmailInvitationAccount invitationAccount) {
         log.info("Received invitation email for {}", invitationAccount.getToEmail());
-        emailInvitationAccountHandler.handle(invitationAccount);
+        safeHandle(() -> emailInvitationAccountHandler.handle(invitationAccount), "Invitation Account");
     }
 
     @RabbitHandler
-    public void handleForgotPasswordEmail(ResetPasswordEmail resetPasswordEmail) throws Exception {
+    public void handleForgotPasswordEmail(ResetPasswordEmail resetPasswordEmail) {
         log.info("Received forgot password email for {}", resetPasswordEmail.getToEmail());
-        passwordOTPHandler.handle(resetPasswordEmail);
+        safeHandle(() -> passwordOTPHandler.handle(resetPasswordEmail), "Forgot Password OTP");
     }
 
     @RabbitHandler(isDefault = true)
@@ -62,4 +63,19 @@ public class EmailConsumer {
         );
     }
 
+    @FunctionalInterface
+    private interface EmailHandler {
+        void handle() throws Exception;
+    }
+
+    private void safeHandle(EmailHandler handler, String type) {
+        try {
+            handler.handle();
+            log.info("{} email handled successfully", type);
+        } catch (MailSendException e) {
+            log.error("{} email failed: {}", type, e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("{} email consumer failed", type, e);
+        }
+    }
 }

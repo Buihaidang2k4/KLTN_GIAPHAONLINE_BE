@@ -6,12 +6,13 @@ import com.codewithdang.kltn_giaphaonline.dto.response.FamilyRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Family;
-import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
+import com.codewithdang.kltn_giaphaonline.entity.FamilyMember;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
+import com.codewithdang.kltn_giaphaonline.repo.FamilyMemberRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.service.family_member.FamilyMemberService;
 import com.codewithdang.kltn_giaphaonline.utils.SlugUtil;
@@ -21,6 +22,8 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +37,7 @@ public class FamilyServiceImpl implements FamilyService {
     PageMapper pageMapper;
     FamilyMemberService familyMemberService;
     AccountRepo accountRepo;
+    FamilyMemberRepo familyMemberRepo;
 
     @Override
     @Transactional
@@ -69,6 +73,9 @@ public class FamilyServiceImpl implements FamilyService {
     @Override
     public FamilyRes getFamilyById(Long familyId) {
         Family family = familyRepo.findById(familyId).orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
+        Account account = getCurrentAccount();
+        boolean isMember = familyMemberRepo.existsByFamilyAndAccount(family, account);
+        if (!isMember) throw new AppException(ErrorCode.UNAUTHORIZED);
         return familyMapper.toRes(family);
     }
 
@@ -79,5 +86,22 @@ public class FamilyServiceImpl implements FamilyService {
         familyRepo.delete(family);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<FamilyRes> getFamiliesByCurrentAccount(Pageable pageable) {
+        Account account = getCurrentAccount();
+        Page<FamilyMember> familyMembers = familyMemberRepo.findAllByAccount(account, pageable);
+        Page<Family> familyPage = familyMembers.map(FamilyMember::getFamily);
+        log.info("Found {} families for account {}", familyPage.getTotalElements(), account.getEmail());
+        return pageMapper.toPageResponse(
+                familyPage,
+                familyMapper::toRes);
+    }
 
+    private Account getCurrentAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return accountRepo.findByEmail(currentUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+    }
 }

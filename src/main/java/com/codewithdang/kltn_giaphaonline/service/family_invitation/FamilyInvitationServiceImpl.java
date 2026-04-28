@@ -24,6 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +49,6 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     ApplicationEventPublisher eventPublisher;
     NotificationService notificationService;
     FamilyMemberService familyMemberService;
-    AccountService accountService;
     AuditLogService auditLogService;
     PageMapper pageMapper;
 
@@ -58,7 +59,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
      */
     @Override
     public PageResponse<InviteInvitationMemberRes> getMyInvitationsSent(Pageable pageable) {
-        Account currentAccount = accountService.getCurrentAccount();
+        Account currentAccount = getCurrentAccount();
 
         Page<FamilyInvitation> invitationsSentPage = invitationRepo.findByInvitedByAccount_AccountId(currentAccount.getAccountId(), pageable);
         return pageMapper.toPageResponse(
@@ -74,7 +75,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
      */
     @Override
     public PageResponse<InviteInvitationMemberRes> getMyInvitationsReceived(Pageable pageable) {
-        Account currentAccount = accountService.getCurrentAccount();
+        Account currentAccount = getCurrentAccount();
         Page<FamilyInvitation> invitationReceivedPage = invitationRepo.findByInvitedEmailIgnoreCase(currentAccount.getEmail(), pageable);
 
         return pageMapper.toPageResponse(invitationReceivedPage, familyInvitationMapper::toRes);
@@ -91,7 +92,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     public InviteInvitationMemberRes inviteMember(
             Long familyId, CreateFamilyInvitationReq invitationReq
     ) {
-        Account inviterAccount = accountService.getCurrentAccount();
+        Account inviterAccount = getCurrentAccount();
 
         Family family = familyRepo.findById(familyId).orElseThrow(
                 () -> new AppException(ErrorCode.FAMILY_NOT_EXISTED)
@@ -159,7 +160,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     @Override
     @Transactional
     public void acceptInvitation(String token) {
-        Account currentAccount = accountService.getCurrentAccount();
+        Account currentAccount = getCurrentAccount();
 
         FamilyInvitation familyInvitation = invitationRepo.findByInviteToken(token)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
@@ -210,7 +211,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     @Override
     @Transactional
     public void rejectInvitation(String inviteToken) {
-        Account currentAccount = accountService.getCurrentAccount();
+        Account currentAccount = getCurrentAccount();
 
         FamilyInvitation invitation = invitationRepo.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
@@ -249,7 +250,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     @Override
     @Transactional
     public void cancelInvitation(Long invitationId) {
-        Account currentAccount = accountService.getCurrentAccount();
+        Account currentAccount = getCurrentAccount();
 
         FamilyInvitation invitation = invitationRepo.findById(invitationId).orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
 
@@ -297,7 +298,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
             eventPublisher.publishEvent(
                     EmailInvitationAccount.builder()
                             .toEmail(invitation.getInvitedEmail())
-                            .subject(invitation.getMessage())
+                            .subject("Bạn được mời tham gia dòng họ " + family.getFamilyName())
                             .senderFullName(inviter.getFullName())
                             .familyName(family.getFamilyName())
                             .invitationToken(invitation.getInviteToken())
@@ -375,5 +376,13 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         data.put("expiredAt", invitation.getExpiredAt());
         if (invitation.getHandledAt() != null) data.put("handledAt", invitation.getHandledAt());
         return data;
+    }
+
+    //
+    private Account getCurrentAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return accountRepo.findByEmail(currentUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
     }
 }

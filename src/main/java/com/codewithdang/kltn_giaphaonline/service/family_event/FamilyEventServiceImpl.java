@@ -170,7 +170,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
     @Override
     public void checkEventNotification() {
         Account currentAccount = accountService.getCurrentAccount();
-        
+
 
     }
 

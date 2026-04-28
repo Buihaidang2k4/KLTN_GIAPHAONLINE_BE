@@ -13,6 +13,7 @@ import java.time.Instant;
 public class InviteInvitationMemberRes {
     Long familyInvitationId;
     String familyName;
+    String roleName;
     String invitedEmail;
     Long invitedByAccountId;
     String invitationStatus;

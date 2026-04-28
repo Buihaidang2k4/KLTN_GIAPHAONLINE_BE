@@ -15,4 +15,6 @@ public interface FamilyService {
     FamilyRes getFamilyById(Long familyId);
 
     void deleteFamilyById(Long familyId);
+
+    PageResponse<FamilyRes> getFamiliesByCurrentAccount(Pageable pageable);
 }

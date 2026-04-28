@@ -12,5 +12,6 @@ public interface FamilyInvitationMapper {
 
     @Mapping(target = "familyName", source = "family.familyName")
     @Mapping(target = "invitedByAccountId", source = "invitedByAccount.accountId")
+    @Mapping(target = "roleName", source = "role.name")
     InviteInvitationMemberRes toRes(FamilyInvitation familyInvitation);
 }
