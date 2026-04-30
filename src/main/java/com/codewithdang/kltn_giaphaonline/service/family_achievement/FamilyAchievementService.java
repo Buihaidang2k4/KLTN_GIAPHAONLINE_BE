@@ -5,11 +5,12 @@ import com.codewithdang.kltn_giaphaonline.dto.request.UpdateFamilyAchievementReq
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyAchievementRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface FamilyAchievementService {
-    FamilyAchievementRes create(Long familyId, FamilyAchievementReq req);
+    FamilyAchievementRes create(Long familyId, FamilyAchievementReq req, MultipartFile evidence);
 
-    FamilyAchievementRes update(Long familyId, Long achievementId, UpdateFamilyAchievementReq req);
+    FamilyAchievementRes update(Long familyId, Long achievementId, UpdateFamilyAchievementReq req, MultipartFile evidence);
 
     void delete(Long familyId, Long achievementId);
 

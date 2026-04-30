@@ -51,7 +51,10 @@ public class FamilyAchievement {
     @Column(name = "description", length = 500)
     String description;
 
-    @Column(name = "evidence_url", length = 500)
+    @Column(name = "evidence_path", length = 500)
+    String evidencePath;
+
+    @Transient
     String evidenceUrl;
 
     @CreationTimestamp

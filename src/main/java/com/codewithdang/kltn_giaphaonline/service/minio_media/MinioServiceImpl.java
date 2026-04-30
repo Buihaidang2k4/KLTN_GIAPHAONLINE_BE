@@ -94,7 +94,7 @@ public class MinioServiceImpl implements MinioService {
 
     private String executeUpload(MultipartFile file, String folder) {
         try {
-            // Cấu trúc: folder/uuid/filename (Bạn đã dùng cấu trúc này, rất tốt để tránh trùng tên)
+            // Cấu trúc: folder/uuid/filename
             String fileName = folder + "/" + UUID.randomUUID() + "/" + file.getOriginalFilename();
 
             minioClient.putObject(

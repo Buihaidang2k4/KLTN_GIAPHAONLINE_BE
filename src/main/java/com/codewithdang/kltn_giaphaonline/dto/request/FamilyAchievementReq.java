@@ -23,5 +23,4 @@ public class FamilyAchievementReq {
     String organization;
     LocalDate achievedDate;
     String description;
-    String evidenceUrl;
 }

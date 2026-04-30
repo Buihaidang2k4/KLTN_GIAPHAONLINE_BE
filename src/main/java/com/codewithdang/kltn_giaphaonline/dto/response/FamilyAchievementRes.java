@@ -17,6 +17,7 @@ public class FamilyAchievementRes {
     String organization;
     LocalDate achievedDate;
     String description;
+    String evidencePath;
     String evidenceUrl;
     Instant createdAt;
     Instant updatedAt;

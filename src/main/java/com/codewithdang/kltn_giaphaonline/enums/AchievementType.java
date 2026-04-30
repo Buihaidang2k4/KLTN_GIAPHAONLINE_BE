@@ -9,7 +9,8 @@ public enum AchievementType implements BaseEnum {
     EDUCATION("Học vấn"),
     AWARD("Giải thưởng"),
     CERTIFICATE("Chứng chỉ"),
-    TITLE("Danh hiệu");
+    TITLE("Danh hiệu"),
+    OTHER("Khác");
 
     private final String label;
 

@@ -4,7 +4,10 @@ import lombok.Getter;
 
 @Getter
 public class ConstantUtils {
+    // minio
     public static final String Avatar = "avatars";
+    public static final String Evidence = "evidences";
+
 
     // role
     public static final String FAMILY_ADMIN = "FAMILY_ADMIN";

@@ -12,8 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("${api.prefix}/families/{familyId}/achievements")
@@ -23,13 +25,15 @@ public class FamilyAchievementController {
 
     private final FamilyAchievementService familyAchievementService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<FamilyAchievementRes>> create(
             @PathVariable Long familyId,
-            @Valid @RequestBody FamilyAchievementReq req) {
+            @Valid @RequestPart("data") FamilyAchievementReq req,
+            @RequestPart(value = "evidence", required = false) MultipartFile evidence
+    ) {
         return ResponseEntity.ok(
                 ApiResponse.success(201, "CREATE_ACHIEVEMENT_SUCCESS",
-                        familyAchievementService.create(familyId, req))
+                        familyAchievementService.create(familyId, req, evidence))
         );
     }
 
@@ -37,10 +41,12 @@ public class FamilyAchievementController {
     public ResponseEntity<ApiResponse<FamilyAchievementRes>> update(
             @PathVariable Long familyId,
             @PathVariable Long achievementId,
-            @Valid @RequestBody UpdateFamilyAchievementReq req) {
+            @Valid @RequestPart("data") UpdateFamilyAchievementReq req,
+            @RequestPart(value = "evidence", required = false) MultipartFile evidence
+    ) {
         return ResponseEntity.ok(
                 ApiResponse.success(200, "UPDATE_ACHIEVEMENT_SUCCESS",
-                        familyAchievementService.update(familyId, achievementId, req))
+                        familyAchievementService.update(familyId, achievementId, req, evidence))
         );
     }
 
