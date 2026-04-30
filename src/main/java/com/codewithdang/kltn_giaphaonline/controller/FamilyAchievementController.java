@@ -67,10 +67,11 @@ public class FamilyAchievementController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<FamilyAchievementRes>>> getByFamily(
             @PathVariable Long familyId,
+            @RequestParam(required = false, defaultValue = "") String keyword,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(
                 ApiResponse.success(200, "GET_ACHIEVEMENTS_SUCCESS",
-                        familyAchievementService.getByFamily(familyId, pageable))
+                        familyAchievementService.getByFamily(familyId, keyword, pageable))
         );
     }
 }

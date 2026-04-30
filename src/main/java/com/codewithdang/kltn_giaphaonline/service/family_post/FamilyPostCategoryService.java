@@ -12,7 +12,7 @@ public interface FamilyPostCategoryService {
 
     void deletePostCategory(Long familyId, Long postCategoryId);
 
-    PageResponse<FamilyPostCategoryRes> getPostCategoriesByFamily(Long familyId, Pageable pageable);
+    PageResponse<FamilyPostCategoryRes> getPostCategoriesByFamily(Long familyId, String keyword, Pageable pageable);
 
     PageResponse<FamilyPostCategoryRes> getPostCategories(Pageable pageable);
 

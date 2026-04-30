@@ -5,13 +5,15 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
 public interface FamilyPostCategoryRepo extends JpaRepository<FamilyPostCategory, Long> {
-    Page<FamilyPostCategory> findAllByFamily_FamilyId(Long familyFamilyId, Pageable pageable);
+    @Query("SELECT c FROM FamilyPostCategory c WHERE c.family.familyId = :familyFamilyId  AND (:keyword = '' OR :keyword = null OR LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<FamilyPostCategory> findAllByFamily_FamilyIdAndKeyword(Long familyFamilyId, String keyword, Pageable pageable);
 
     Optional<FamilyPostCategory> findByFamily_FamilyIdAndCategoryId(Long familyFamilyId, Long categoryId);
 

@@ -13,9 +13,6 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CeremonyReq {
-    @NotNull(message = "FAMILY_ID_REQUIRED")
-    Long familyId;
-
     @NotBlank(message = "CEREMONY_TYPE_REQUIRED")
     String ceremonyType;
 

@@ -45,11 +45,19 @@ public class FamilyEvent {
     @JsonFormat(pattern = "HH:mm:ss")
     LocalTime eventTime;
 
-    @Column(name = "solar_date")
-    LocalDate solarDate;
+    @Column(name = "event_day")
+    Integer day;
 
-    @Column(name = "lunar_date")
-    LocalDate lunarDate;
+    @Column(name = "event_month")
+    Integer month;
+
+    // có thể null nếu là event lặp hàng năm
+    @Column(name = "event_year", nullable = true)
+    Integer year;
+
+    // Next occurrence in solar calendar (computed)
+    @Column(name = "next_occurrence_date")
+    LocalDate nextOccurrenceDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "calendar_type", length = 20)

@@ -8,8 +8,12 @@ import org.springframework.data.domain.Pageable;
 
 public interface FamilyAchievementService {
     FamilyAchievementRes create(Long familyId, FamilyAchievementReq req);
+
     FamilyAchievementRes update(Long familyId, Long achievementId, UpdateFamilyAchievementReq req);
+
     void delete(Long familyId, Long achievementId);
+
     FamilyAchievementRes getById(Long achievementId);
-    PageResponse<FamilyAchievementRes> getByFamily(Long familyId, Pageable pageable);
+
+    PageResponse<FamilyAchievementRes> getByFamily(Long familyId, String keyword, Pageable pageable);
 }

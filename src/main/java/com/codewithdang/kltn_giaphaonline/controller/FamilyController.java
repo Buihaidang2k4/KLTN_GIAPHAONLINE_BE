@@ -35,7 +35,7 @@ public class FamilyController {
                     direction = Sort.Direction.DESC
             ) Pageable pageable
     ) {
-        return ResponseEntity.ok(ApiResponse.success(200, "CREATE_FAMILY_SUCCESS", familyService.getFamilies(pageable)));
+        return ResponseEntity.ok(ApiResponse.success(200, "GET_FAMILY_SUCCESS", familyService.getFamilies(pageable)));
     }
 
     @GetMapping("/current-account")
@@ -45,7 +45,7 @@ public class FamilyController {
                     direction = Sort.Direction.DESC
             ) Pageable pageable
     ) {
-        return ResponseEntity.ok(ApiResponse.success(200, "CREATE_FAMILY_SUCCESS", familyService.getFamiliesByCurrentAccount(pageable)));
+        return ResponseEntity.ok(ApiResponse.success(200, "GET_FAMILY_SUCCESS", familyService.getFamiliesByCurrentAccount(pageable)));
     }
 
     @GetMapping("/{id}")

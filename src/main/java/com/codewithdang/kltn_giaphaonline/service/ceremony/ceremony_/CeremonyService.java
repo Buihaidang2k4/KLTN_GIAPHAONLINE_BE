@@ -7,11 +7,11 @@ import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import org.springframework.data.domain.Pageable;
 
 public interface CeremonyService {
-    CeremonyRes createCeremony(CeremonyReq req);
+    CeremonyRes createCeremony(Long familyId, CeremonyReq req);
 
     PageResponse<CeremonyRes> getCeremonyList(Pageable pageable);
 
-    PageResponse<CeremonyRes> getCeremonyByFamilyId(Pageable pageable, Long familyId);
+    PageResponse<CeremonyRes> getCeremonyByFamilyId(Long familyId, String keyword, Pageable pageable);
 
     CeremonyRes updateCeremony(Long ceremonyId, CeremonyUpdateReq req);
 

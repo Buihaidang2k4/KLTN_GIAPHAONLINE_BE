@@ -78,9 +78,9 @@ public class FamilyAchievementServiceImpl implements FamilyAchievementService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<FamilyAchievementRes> getByFamily(Long familyId, Pageable pageable) {
+    public PageResponse<FamilyAchievementRes> getByFamily(Long familyId, String keyword, Pageable pageable) {
         return pageMapper.toPageResponse(
-                familyAchievementRepo.findAllByFamily_FamilyId(familyId, pageable),
+                familyAchievementRepo.findAllByFamily_FamilyIdAndKeyword(familyId, keyword, pageable),
                 familyAchievementMapper::toDto
         );
     }

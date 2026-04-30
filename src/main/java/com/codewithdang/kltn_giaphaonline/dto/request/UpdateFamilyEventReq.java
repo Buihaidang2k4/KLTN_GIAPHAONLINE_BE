@@ -17,13 +17,14 @@ import java.time.LocalTime;
 public class UpdateFamilyEventReq {
     String eventName;
     LocalTime eventTime;
-    LocalDate solarDate;
-    LocalDate lunarDate;
+    Integer day;
+    Integer month;
+    Integer year;
     CalendarType calendarType;
     RepeatType repeatType;
     ReminderEventType reminderType;
     FamilyEventStatus status;
-    String LocationMapUrl;
+    String locationMapUrl;
     String location;
     String note;
 }

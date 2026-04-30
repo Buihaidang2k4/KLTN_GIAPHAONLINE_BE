@@ -7,8 +7,11 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum RepeatType implements BaseEnum {
     NONE("Không lặp lại"),
-    YEARLY("Hàng năm"),
-    MONTHLY("Hàng tháng");
+    YEARLY("Hàng năm");
+//    MONTHLY("Hàng tháng"),
+//    WEEKLY("Hàng tuần"),
+//    DAILY("Hàng ngày");
+
 
     private final String label;
 

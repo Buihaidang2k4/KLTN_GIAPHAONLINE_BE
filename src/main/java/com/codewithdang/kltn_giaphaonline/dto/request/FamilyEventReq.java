@@ -5,6 +5,9 @@ import com.codewithdang.kltn_giaphaonline.enums.FamilyEventStatus;
 import com.codewithdang.kltn_giaphaonline.enums.ReminderEventType;
 import com.codewithdang.kltn_giaphaonline.enums.RepeatType;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,11 +21,17 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @Builder
 public class FamilyEventReq {
+    @NotNull(message = "Event name is required")
     String eventName;
     @JsonFormat(pattern = "HH:mm:ss")
     LocalTime eventTime;
-    LocalDate solarDate;
-    LocalDate lunarDate;
+    @Min(1)
+    @Max(31)
+    Integer day;
+    @Min(1)
+    @Max(12)
+    Integer month;
+    Integer year;
     FamilyEventStatus status;
     CalendarType calendarType;
     RepeatType repeatType;

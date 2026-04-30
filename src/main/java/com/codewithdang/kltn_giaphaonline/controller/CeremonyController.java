@@ -38,6 +38,7 @@ public class CeremonyController {
     @GetMapping("/family/{familyId}")
     ResponseEntity<ApiResponse<PageResponse<CeremonyRes>>> getByFamilyId(
             @PathVariable("familyId") Long familyId,
+            @RequestParam(required = false, defaultValue = "") String keyword,
             @PageableDefault(
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
@@ -45,21 +46,26 @@ public class CeremonyController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(200,
                 "Lấy thông tin nghi lễ thành công",
-                ceremonyService.getCeremonyByFamilyId(pageable, familyId)));
+                ceremonyService.getCeremonyByFamilyId(familyId, keyword, pageable)));
     }
 
     @GetMapping
-    ResponseEntity<ApiResponse<PageResponse<CeremonyRes>>> getCeremony(Pageable pageable) {
+    ResponseEntity<ApiResponse<PageResponse<CeremonyRes>>> getCeremony(
+            @PageableDefault(
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            )
+            Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(200,
                 "Tải danh sách nghi lễ thành công",
                 ceremonyService.getCeremonyList(pageable)));
     }
 
     @PostMapping
-    ResponseEntity<ApiResponse<CeremonyRes>> createCeremony(@Valid @RequestBody CeremonyReq ceremonyReq) {
+    ResponseEntity<ApiResponse<CeremonyRes>> createCeremony(@RequestParam Long familyId, @Valid @RequestBody CeremonyReq ceremonyReq) {
         return ResponseEntity.ok(ApiResponse.success(201,
                 "Tạo nghi lễ mới thành công",
-                ceremonyService.createCeremony(ceremonyReq)));
+                ceremonyService.createCeremony(familyId, ceremonyReq)));
     }
 
     @PutMapping("/{ceremonyId}")
@@ -72,7 +78,8 @@ public class CeremonyController {
     }
 
     @DeleteMapping("/{ceremonyId}")
-    ResponseEntity<ApiResponse<Void>> deleteById(@PathVariable Long ceremonyId) {
+    ResponseEntity<ApiResponse<Void>> deleteById(@PathVariable Long ceremonyId
+    ) {
         ceremonyService.deleteCeremonyById(ceremonyId);
         return ResponseEntity.ok(ApiResponse.success(200,
                 "Đã xóa nghi lễ thành công",

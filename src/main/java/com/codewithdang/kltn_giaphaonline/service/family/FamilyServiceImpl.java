@@ -90,7 +90,9 @@ public class FamilyServiceImpl implements FamilyService {
     @Transactional(readOnly = true)
     public PageResponse<FamilyRes> getFamiliesByCurrentAccount(Pageable pageable) {
         Account account = getCurrentAccount();
+        log.info("account current: {}", account.getAccountId());
         Page<FamilyMember> familyMembers = familyMemberRepo.findAllByAccount(account, pageable);
+        log.info("List family members found for account {}: {}", account.getEmail(), familyMembers.getContent());
         Page<Family> familyPage = familyMembers.map(FamilyMember::getFamily);
         log.info("Found {} families for account {}", familyPage.getTotalElements(), account.getEmail());
         return pageMapper.toPageResponse(

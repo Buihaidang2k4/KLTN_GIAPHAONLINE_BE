@@ -84,6 +84,7 @@ public class FamilyPostCategoryController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<FamilyPostCategoryRes>>> getPostCategoriesByFamily(
             @RequestParam Long familyId,
+            @RequestParam(required = false, defaultValue = "") String keyword,
             @PageableDefault(
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
@@ -93,7 +94,7 @@ public class FamilyPostCategoryController {
                 ApiResponse.success(
                         200,
                         "GET_POST_CATEGORIES_BY_FAMILY_SUCCESS",
-                        postCategoryService.getPostCategoriesByFamily(familyId, pageable)
+                        postCategoryService.getPostCategoriesByFamily(familyId, keyword, pageable)
                 )
         );
     }

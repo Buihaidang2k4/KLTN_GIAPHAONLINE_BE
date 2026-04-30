@@ -1,11 +1,11 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.FamilyEventReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.FamilyEventSearchReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateFamilyEventReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyEventRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
+import com.codewithdang.kltn_giaphaonline.enums.SearchEventOptionEnum;
 import com.codewithdang.kltn_giaphaonline.service.family_event.FamilyEventService;
 
 import jakarta.validation.Valid;
@@ -66,6 +66,8 @@ public class FamilyEventController {
     @GetMapping("/family/{familyId}")
     public ResponseEntity<ApiResponse<PageResponse<FamilyEventRes>>> getEventsByFamily(
             @PathVariable Long familyId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false, defaultValue = "ALL") SearchEventOptionEnum option,
             @PageableDefault(
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
@@ -74,24 +76,7 @@ public class FamilyEventController {
                 ApiResponse.success(
                         200,
                         "GET_EVENTS_BY_FAMILY_SUCCESS",
-                        familyEventService.getEventsByFamily(familyId, pageable)
-                )
-        );
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<ApiResponse<PageResponse<FamilyEventRes>>> searchEvents(
-            @RequestBody FamilyEventSearchReq searchReq,
-            @PageableDefault(
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable) {
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        200,
-                        "SEARCH_EVENTS_SUCCESS",
-                        familyEventService.searchEvents(searchReq, pageable)
+                        familyEventService.getEventsByFamily(familyId, keyword, option, pageable)
                 )
         );
     }

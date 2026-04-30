@@ -1,13 +1,15 @@
 package com.codewithdang.kltn_giaphaonline.service.family_event;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.FamilyEventReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.FamilyEventSearchReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateFamilyEventReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyEventRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Family;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyEvent;
+import com.codewithdang.kltn_giaphaonline.enums.CalendarType;
+import com.codewithdang.kltn_giaphaonline.enums.RepeatType;
+import com.codewithdang.kltn_giaphaonline.enums.SearchEventOptionEnum;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyEventMapper;
@@ -26,15 +28,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
-import java.util.Locale;
-
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FamilyEventServiceImpl implements FamilyEventService {
+
     FamilyEventRepo familyEventRepo;
     FamilyEventMapper familyEventMapper;
     PageMapper pageMapper;
@@ -49,13 +53,24 @@ public class FamilyEventServiceImpl implements FamilyEventService {
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
 
         Account account = accountService.getCurrentAccount();
+
         FamilyEvent event = familyEventMapper.toEntity(req);
-        event.setEventName(req.getEventName().toLowerCase(Locale.ROOT));
-        event.setFamily(family);
-        event.setLocationMapUrl(req.getLocationMapUrl());
+
+        if (req.getEventName() != null) {
+            event.setEventName(req.getEventName().trim());
+        }
+
         event.setCreatedByAccount(account);
-        event = familyEventRepo.save(event);
-        return familyEventMapper.toDto(event);
+        event.setFamily(family);
+
+        normalizeEvent(event);
+
+        LocalDate nextDate = computeNextOccurrence(event, LocalDate.now());
+        event.setNextOccurrenceDate(nextDate);
+
+        FamilyEvent savedEvent = familyEventRepo.save(event);
+
+        return familyEventMapper.toDto(savedEvent);
     }
 
     @Override
@@ -67,9 +82,21 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         if (!event.getFamily().getFamilyId().equals(familyId)) {
             throw new AppException(ErrorCode.FAMILY_EVENT_NOT_IN_FAMILY);
         }
+
         familyEventMapper.updateEvent(req, event);
-        event = familyEventRepo.save(event);
-        return familyEventMapper.toDto(event);
+
+        if (event.getEventName() != null) {
+            event.setEventName(event.getEventName().trim());
+        }
+
+        normalizeEvent(event);
+
+        LocalDate nextDate = computeNextOccurrence(event, LocalDate.now());
+        event.setNextOccurrenceDate(nextDate);
+
+        FamilyEvent savedEvent = familyEventRepo.save(event);
+
+        return familyEventMapper.toDto(savedEvent);
     }
 
     @Override
@@ -77,7 +104,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
     public void deleteEvent(Long familyId, Long eventId) {
         FamilyEvent event = familyEventRepo
                 .findByFamily_FamilyIdAndFamilyEventId(familyId, eventId)
-                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_EVENT_IS_EXISTED));
+                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_EVENT_NOT_EXISTED));
 
         familyEventRepo.delete(event);
     }
@@ -87,91 +114,195 @@ public class FamilyEventServiceImpl implements FamilyEventService {
     public FamilyEventRes getEventById(Long eventId) {
         FamilyEvent event = familyEventRepo.findById(eventId)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_EVENT_NOT_EXISTED));
+
         return familyEventMapper.toDto(event);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<FamilyEventRes> getEventsByFamily(Long familyId, Pageable pageable) {
-        Page<FamilyEvent> events = familyEventRepo.findAllByFamily_FamilyId(familyId, pageable);
+    public PageResponse<FamilyEventRes> getEventsByFamily(
+            Long familyId,
+            String keyword,
+            SearchEventOptionEnum optionEnum,
+            Pageable pageable
+    ) {
+        SearchEventOptionEnum option = optionEnum == null
+                ? SearchEventOptionEnum.ALL
+                : optionEnum;
+
+        Page<FamilyEvent> events;
+
+        switch (option) {
+            case UPCOMING -> {
+                LocalDate today = LocalDate.now();
+                LocalDate next30Days = today.plusDays(30);
+
+                events = familyEventRepo.findUpcomingEvents(
+                        familyId,
+                        keyword,
+                        today,
+                        next30Days,
+                        pageable
+                );
+            }
+            case ALL -> events = familyEventRepo.findAllByFamily_FamilyIdAndKeyword(
+                    familyId,
+                    keyword,
+                    pageable
+            );
+            default -> events = familyEventRepo.findAllByFamily_FamilyIdAndKeyword(
+                    familyId,
+                    keyword,
+                    pageable
+            );
+        }
+
         return pageMapper.toPageResponse(events, familyEventMapper::toDto);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public PageResponse<FamilyEventRes> searchEvents(FamilyEventSearchReq req, Pageable pageable) {
+    /**
+     * Chạy mỗi ngày lúc 00:00 để cập nhật nextOccurrenceDate cho sự kiện YEARLY đã qua.
+     * Gửi thông báo email cho các thành viên gia đình sự kiện sắp tới 30 ngày
+     */
+    @Scheduled(cron = "0 0 0 * * ?")
+    @Transactional
+    public void refreshNextOccurrenceDates() {
+        LocalDate today = LocalDate.now();
 
-        log.info("Searching family events with criteria: {}", req);
+        List<FamilyEvent> dueEvents =
+                familyEventRepo.findAllByNextOccurrenceDateLessThanEqual(today);
 
-        String keyword = req.getKeyword() != null ? req.getKeyword().toLowerCase(Locale.ROOT) : null;
-        LocalDate startDate = req.getStartDate();
-        LocalDate endDate = req.getEndDate();
-
-        Page<FamilyEvent> familyEventPage;
-
-        String dateFilterType = switch (
-                (startDate != null ? 1 : 0) + (endDate != null ? 2 : 0)
-                ) {
-            case 3 -> "RANGE";
-            case 1 -> "START";
-            case 2 -> "END";
-            default -> "NONE";
-        };
-
-        switch (dateFilterType) {
-
-            case "RANGE" -> familyEventPage =
-                    familyEventRepo.searchEventsByDateRange(
-                            req.getFamilyId(),
-                            keyword,
-                            startDate,
-                            endDate,
-                            req.getCalendarType(),
-                            req.getReminderType(),
-                            pageable
-                    );
-
-            case "START" -> familyEventPage =
-                    familyEventRepo.searchEventsByStartDate(
-                            req.getFamilyId(),
-                            keyword,
-                            startDate,
-                            req.getCalendarType(),
-                            req.getReminderType(),
-                            pageable
-                    );
-
-            case "END" -> familyEventPage =
-                    familyEventRepo.searchEventsByEndDate(
-                            req.getFamilyId(),
-                            keyword,
-                            endDate,
-                            req.getCalendarType(),
-                            req.getReminderType(),
-                            pageable
-                    );
-
-            default -> familyEventPage =
-                    familyEventRepo.searchEventsWithoutDateRange(
-                            req.getFamilyId(),
-                            keyword,
-                            req.getCalendarType(),
-                            req.getReminderType(),
-                            pageable
-                    );
+        if (dueEvents == null || dueEvents.isEmpty()) {
+            return;
         }
 
-        return pageMapper.toPageResponse(
-                familyEventPage,
-                familyEventMapper::toDto
-        );
+        List<FamilyEvent> updatedEvents = new ArrayList<>();
+
+        for (FamilyEvent event : dueEvents) {
+            try {
+                if (event.getRepeatType() != RepeatType.YEARLY) {
+                    log.info("One-time event reached occurrence: {}", event.getFamilyEventId());
+                    continue;
+                }
+
+                LocalDate nextDate = computeNextOccurrence(event, today.plusDays(1));
+
+                if (nextDate != null) {
+                    event.setNextOccurrenceDate(nextDate);
+                    updatedEvents.add(event);
+                }
+            } catch (Exception ex) {
+                log.error("Failed to refresh event {}", event.getFamilyEventId(), ex);
+            }
+        }
+
+        if (!updatedEvents.isEmpty()) {
+            familyEventRepo.saveAll(updatedEvents);
+        }
     }
 
-    @Override
-    public void checkEventNotification() {
-        Account currentAccount = accountService.getCurrentAccount();
+    /**
+     * Chuẩn hóa event:
+     * - repeatType null => NONE
+     * - calendarType null => SOLAR
+     * - YEARLY => year = null
+     */
+    private void normalizeEvent(FamilyEvent event) {
+        if (event.getRepeatType() == null) {
+            event.setRepeatType(RepeatType.NONE);
+        }
 
+        if (event.getCalendarType() == null) {
+            event.setCalendarType(CalendarType.SOLAR);
+        }
 
+        if (event.getRepeatType() == RepeatType.YEARLY) {
+            event.setYear(null);
+        }
     }
 
+    /**
+     * Tính ngày diễn ra tiếp theo.
+     * <p>
+     * NONE:
+     * - Cần có day/month/year.
+     * - Nếu ngày đã qua => null.
+     * <p>
+     * YEARLY:
+     * - Chỉ cần day/month.
+     * - Nếu năm nay chưa tới => trả năm nay.
+     * - Nếu năm nay qua rồi => trả năm sau.
+     * <p>
+     * LUNAR:
+     * - Tạm thời chưa xử lý convert âm -> dương.
+     */
+    private LocalDate computeNextOccurrence(FamilyEvent event, LocalDate fromDate) {
+        if (event == null || fromDate == null) {
+            return null;
+        }
+
+        Integer day = event.getDay();
+        Integer month = event.getMonth();
+        Integer year = event.getYear();
+
+        if (day == null || month == null) {
+            return null;
+        }
+
+        if (event.getCalendarType() == CalendarType.LUNAR) {
+            log.warn("Lunar calendar is not implemented yet. eventId={}", event.getFamilyEventId());
+            return null;
+        }
+
+        RepeatType repeatType = event.getRepeatType() == null
+                ? RepeatType.NONE
+                : event.getRepeatType();
+
+        try {
+            if (repeatType == RepeatType.YEARLY) {
+                return computeYearlyOccurrence(day, month, fromDate);
+            }
+
+            return computeOneTimeOccurrence(day, month, year, fromDate);
+
+        } catch (DateTimeException ex) {
+            log.warn(
+                    "Invalid event date. eventId={}, day={}, month={}, year={}",
+                    event.getFamilyEventId(),
+                    day,
+                    month,
+                    year
+            );
+            return null;
+        }
+    }
+
+    private LocalDate computeOneTimeOccurrence(
+            Integer day,
+            Integer month,
+            Integer year,
+            LocalDate fromDate
+    ) {
+        if (year == null) {
+            return null;
+        }
+
+        LocalDate candidate = LocalDate.of(year, month, day);
+
+        return candidate.isBefore(fromDate) ? null : candidate;
+    }
+
+    private LocalDate computeYearlyOccurrence(
+            Integer day,
+            Integer month,
+            LocalDate fromDate
+    ) {
+        LocalDate candidate = LocalDate.of(fromDate.getYear(), month, day);
+
+        if (!candidate.isBefore(fromDate)) {
+            return candidate;
+        }
+
+        return candidate.plusYears(1);
+    }
 }

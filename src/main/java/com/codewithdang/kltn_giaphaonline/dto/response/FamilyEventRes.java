@@ -1,15 +1,12 @@
 package com.codewithdang.kltn_giaphaonline.dto.response;
 
-import com.codewithdang.kltn_giaphaonline.entity.Family;
 import com.codewithdang.kltn_giaphaonline.enums.CalendarType;
 import com.codewithdang.kltn_giaphaonline.enums.FamilyEventStatus;
 import com.codewithdang.kltn_giaphaonline.enums.ReminderEventType;
 import com.codewithdang.kltn_giaphaonline.enums.RepeatType;
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -24,8 +21,10 @@ public class FamilyEventRes {
     Long createdByAccountId;
     String eventName;
     LocalTime eventTime;
-    LocalDate solarDate;
-    LocalDate lunarDate;
+    Integer day;
+    Integer month;
+    Integer year;
+    LocalDate nextOccurrenceDate;
     FamilyEventStatus status;
     CalendarType calendarType;
     RepeatType repeatType;

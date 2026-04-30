@@ -70,8 +70,8 @@ public class FamilyPostCategoryServiceImpl implements FamilyPostCategoryService 
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<FamilyPostCategoryRes> getPostCategoriesByFamily(Long familyId, Pageable pageable) {
-        Page<FamilyPostCategory> postCategories = postCategoryRepo.findAllByFamily_FamilyId(familyId, pageable);
+    public PageResponse<FamilyPostCategoryRes> getPostCategoriesByFamily(Long familyId, String keyword, Pageable pageable) {
+        Page<FamilyPostCategory> postCategories = postCategoryRepo.findAllByFamily_FamilyIdAndKeyword(familyId, keyword, pageable);
         return pageMapper.toPageResponse(postCategories, postCategoryMapper::toDto);
     }
 
