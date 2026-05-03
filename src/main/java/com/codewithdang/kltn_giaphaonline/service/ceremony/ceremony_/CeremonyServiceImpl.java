@@ -70,7 +70,7 @@ public class CeremonyServiceImpl implements CeremonyService {
         Family family = familyRepo.findById(familyId)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
 
-        Page<Ceremony> ceremonyPage = ceremonyRepo.findAllByFamilyAndKeyword(family, keyword, pageable);
+        Page<Ceremony> ceremonyPage = ceremonyRepo.findAllByFamilyAndKeyword(family.getFamilyId(), keyword, pageable);
 
         return pageMapper.toPageResponse(
                 ceremonyPage,

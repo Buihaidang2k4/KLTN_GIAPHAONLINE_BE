@@ -9,6 +9,7 @@ import com.codewithdang.kltn_giaphaonline.service.family_achievement.FamilyAchie
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -20,10 +21,11 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("${api.prefix}/families/{familyId}/achievements")
 @RequiredArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "Family Achievement Management")
 public class FamilyAchievementController {
 
-    private final FamilyAchievementService familyAchievementService;
+    FamilyAchievementService familyAchievementService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<FamilyAchievementRes>> create(

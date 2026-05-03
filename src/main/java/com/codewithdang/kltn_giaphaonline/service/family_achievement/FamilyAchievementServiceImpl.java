@@ -44,14 +44,11 @@ public class FamilyAchievementServiceImpl implements FamilyAchievementService {
         achievement.setFamily(family);
 
         // upload evidence if exists
-        if (evidence != null && !evidence.isEmpty()) {
-            String path = minioService.uploadImage(evidence, ConstantUtils.Evidence);
-            achievement.setEvidencePath(path);
-        }
+        String path = uploadEvidence(evidence);
+        achievement.setEvidencePath(path);
+
         achievement = familyAchievementRepo.save(achievement);
-        if (achievement.getEvidencePath() != null)
-            achievement.setEvidenceUrl(minioService.getPresignedUrl(achievement.getEvidencePath()));
-        return familyAchievementMapper.toDto(achievement);
+        return toDtoWithEvidenceUrl(achievement);
     }
 
     @Override
@@ -60,28 +57,23 @@ public class FamilyAchievementServiceImpl implements FamilyAchievementService {
         FamilyAchievement achievement = familyAchievementRepo.findById(achievementId)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_ACHIEVEMENT_NOT_EXISTED));
 
-
         if (!achievement.getFamily().getFamilyId().equals(familyId))
             throw new AppException(ErrorCode.FAMILY_ACHIEVEMENT_NOT_IN_FAMILY);
 
         familyAchievementMapper.updateEntity(req, achievement);
 
-        if (evidence != null && !evidence.isEmpty()) {
+        if (hasFile(evidence)) {
             // delete old evidence
-            if (achievement.getEvidencePath() != null) {
-                minioService.deleteFile(achievement.getEvidencePath());
-            }
+            deleteEvidenceIfExists(achievement);
 
             // set new evidence
-            String path = minioService.uploadImage(evidence, ConstantUtils.Evidence);
+            String path = uploadEvidence(evidence);
             achievement.setEvidencePath(path);
         }
         achievement = familyAchievementRepo.save(achievement);
 
-        if (achievement.getEvidencePath() != null)
-            achievement.setEvidenceUrl(minioService.getPresignedUrl(achievement.getEvidencePath()));
 
-        return familyAchievementMapper.toDto(achievement);
+        return toDtoWithEvidenceUrl(achievement);
     }
 
     @Override
@@ -91,13 +83,11 @@ public class FamilyAchievementServiceImpl implements FamilyAchievementService {
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_ACHIEVEMENT_NOT_EXISTED));
 
         // delete evidence if exists
-        if (achievement.getEvidencePath() != null)
-            minioService.deleteFile(achievement.getEvidencePath());
-
         if (!achievement.getFamily().getFamilyId().equals(familyId))
             throw new AppException(ErrorCode.FAMILY_ACHIEVEMENT_NOT_IN_FAMILY);
 
         familyAchievementRepo.delete(achievement);
+        deleteEvidenceIfExists(achievement);
     }
 
     @Override
@@ -106,25 +96,43 @@ public class FamilyAchievementServiceImpl implements FamilyAchievementService {
         FamilyAchievement achievement = familyAchievementRepo.findById(achievementId)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_ACHIEVEMENT_NOT_EXISTED));
 
-        if (achievement.getEvidencePath() != null)
-            achievement.setEvidenceUrl(minioService.getPresignedUrl(achievement.getEvidencePath()));
-
-        return familyAchievementMapper.toDto(achievement);
+        return toDtoWithEvidenceUrl(achievement);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<FamilyAchievementRes> getByFamily(Long familyId, String keyword, Pageable pageable) {
         Page<FamilyAchievement> page = familyAchievementRepo.findAllByFamily_FamilyIdAndKeyword(familyId, keyword, pageable);
-
-        return pageMapper.toPageResponse(
-                page,
-                familyAchievement -> {
-                    if (familyAchievement.getEvidencePath() != null)
-                        familyAchievement.setEvidenceUrl(minioService.getPresignedUrl(familyAchievement.getEvidencePath()));
-
-                    return familyAchievementMapper.toDto(familyAchievement);
-                }
-        );
+        return pageMapper.toPageResponse(page, this::toDtoWithEvidenceUrl);
     }
+
+    private FamilyAchievementRes toDtoWithEvidenceUrl(FamilyAchievement achievement) {
+        FamilyAchievementRes res = familyAchievementMapper.toDto(achievement);
+
+        if (achievement.getEvidencePath() != null) {
+            res.setEvidenceUrl(
+                    minioService.getPresignedUrl(achievement.getEvidencePath())
+            );
+        }
+
+        return res;
+    }
+
+    private String uploadEvidence(MultipartFile file) {
+        if (!hasFile(file)) return null;
+
+        return minioService.uploadImage(file, ConstantUtils.Evidence);
+    }
+
+    private boolean hasFile(MultipartFile file) {
+        return file != null && !file.isEmpty();
+    }
+
+    private void deleteEvidenceIfExists(FamilyAchievement achievement) {
+        if (achievement.getEvidencePath() != null) {
+            minioService.deleteFile(achievement.getEvidencePath());
+        }
+    }
+
+
 }

@@ -18,5 +18,5 @@ public interface CeremonyRepo extends JpaRepository<Ceremony, Long> {
                         WHERE c.family.familyId = :familyId 
                        AND (:keyword = '' OR :keyword IS NULL OR LOWER(c.ceremonyName) LIKE LOWER(CONCAT('%', :keyword, '%')))
             """)
-    Page<Ceremony> findAllByFamilyAndKeyword(Family family, String keyword, Pageable pageable);
+    Page<Ceremony> findAllByFamilyAndKeyword(Long familyId, String keyword, Pageable pageable);
 }
