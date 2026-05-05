@@ -1,4 +1,114 @@
 package com.codewithdang.kltn_giaphaonline.service.album;
 
-public class AlbumServiceImpl {
+import com.codewithdang.kltn_giaphaonline.dto.request.AlbumReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.AlbumRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
+import com.codewithdang.kltn_giaphaonline.entity.Account;
+import com.codewithdang.kltn_giaphaonline.entity.Album;
+import com.codewithdang.kltn_giaphaonline.entity.Family;
+import com.codewithdang.kltn_giaphaonline.exception.AppException;
+import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
+import com.codewithdang.kltn_giaphaonline.mapper.AlbumMapper;
+import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
+import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
+import com.codewithdang.kltn_giaphaonline.repo.AlbumRepo;
+import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
+import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioService;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Service
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
+@Slf4j
+public class AlbumServiceImpl implements AlbumService {
+    AlbumRepo albumRepo;
+    AlbumMapper albumMapper;
+    AccountRepo accountRepo;
+    FamilyRepo familyRepo;
+    PageMapper pageMapper;
+    MinioService minioService;
+
+    @Override
+    @Transactional
+    public AlbumRes createAlbum(Long familyId, AlbumReq albumReq) {
+        Family family = familyRepo.findById(familyId).orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
+
+        Account account = getCurrentAccount();
+        Album album = albumMapper.toEntity(albumReq);
+        album.setFamily(family);
+        album.setCreatedByAccount(account);
+        album.setSlug(generateSlug(albumReq.getTitle()));
+        albumRepo.save(album);
+
+        return toResAlbum(album);
+    }
+
+    @Override
+    @Transactional
+    public AlbumRes updateAlbumById(Long albumId, AlbumReq albumReq) {
+        Album album = albumRepo.findById(albumId)
+                .orElseThrow(() -> new AppException(ErrorCode.ALBUM_NOT_FOUND));
+
+        albumMapper.updateEntityFromRequest(albumReq, album);
+        albumRepo.save(album);
+        return toResAlbum(album);
+    }
+
+    @Override
+    @Transactional
+    public void deleteAlbumById(Long albumId) {
+        Album album = albumRepo.findById(albumId)
+                .orElseThrow(() -> new AppException(ErrorCode.ALBUM_NOT_FOUND));
+        albumRepo.delete(album);
+
+        if (album.getCoverPath() != null) {
+            minioService.deleteFile(album.getCoverPath());
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<AlbumRes> getAlbumByFamilyId(Long familyId, String keyword, Pageable pageable) {
+        Page<Album> albumPage = albumRepo.findAlbumsByFamily_FamilyIdAndTitleContainingIgnoreCase(familyId, keyword, pageable);
+        return pageMapper.toPageResponse(albumPage, this::toResAlbum);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AlbumRes getAlbumById(Long albumId) {
+        return albumRepo.findById(albumId).map(this::toResAlbum)
+                .orElseThrow(() -> new AppException(ErrorCode.ALBUM_NOT_FOUND));
+    }
+
+    private Account getCurrentAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return accountRepo.findByEmail(currentUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+    }
+
+    private String generateSlug(String title) {
+        return title.toLowerCase().replaceAll("\\s+", "-") + "-" + UUID.randomUUID().toString().substring(0, 6);
+    }
+
+    private AlbumRes toResAlbum(Album album) {
+        AlbumRes albumRes = albumMapper.toRes(album);
+
+        if (album.getCoverPath() != null) {
+            String coverUrl = minioService.getPresignedUrl(albumRes.getCoverPath());
+            albumRes.setCoverUrl(coverUrl);
+        }
+        return albumRes;
+    }
 }

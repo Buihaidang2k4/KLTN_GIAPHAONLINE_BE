@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum String implements BaseEnum {
+public enum MediaType implements BaseEnum {
     IMAGE("Hình ảnh"),    // .jpg, .png, .gif
     VIDEO("Video"),       // .mp4, .mov
     DOCUMENT("Tài liệu"),  // .pdf, .docx, .txt
@@ -14,7 +14,7 @@ public enum String implements BaseEnum {
     private final java.lang.String label;
 
     @Override
-    public java.lang.String getLabel() {
+    public String getLabel() {
         return this.label;
     }
 }

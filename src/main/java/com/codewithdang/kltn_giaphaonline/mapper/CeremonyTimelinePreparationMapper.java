@@ -14,5 +14,5 @@ public interface CeremonyTimelinePreparationMapper {
     CeremonyTimelinePreparationRes toRes(CeremonyTimelinePreparation timelinePreparation);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEntity(CeremonyTimelinePreparationUpdateReq timelineUpdateReq, @MappingTarget CeremonyTimelinePreparation timelinePreparation);
+    void updateEntity(CeremonyTimelinePreparationReq timelineUpdateReq, @MappingTarget CeremonyTimelinePreparation timelinePreparation);
 }

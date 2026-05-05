@@ -54,14 +54,12 @@ public enum ErrorCode {
     PERMISSION_NOT_EXISTED(1201, "Permission not  existed", HttpStatus.NOT_FOUND),
     PERMISSION_IS_ALREADY_USED(1202, "Permission is used by role", HttpStatus.CONFLICT),
 
-    // minio
+    // minio 
     INVALID_FILE_TYPE(1306, "Only image files are allowed (jpg, png, jpeg)", HttpStatus.BAD_REQUEST),
     FILE_TOO_LARGE(1307, "File size must not exceed 5MB", HttpStatus.BAD_REQUEST),
     INVALID_VIDEO_TYPE(1308, "Only video files are allowed (mp4, mkv, avi)", HttpStatus.BAD_REQUEST),
     VIDEO_TOO_LARGE(1309, "Video size must not exceed 100MB", HttpStatus.BAD_REQUEST),
-
-    // token
-    TOKEN_INVALID(1400, "Token invalid or expired", HttpStatus.BAD_REQUEST),
+    INVALID_DOCUMENT_TYPE(1310, "Only document files are allowed (pdf, doc, docx, txt)", BAD_REQUEST),
 
     // audit
     ACTION_IS_EMPTY(1500, "Audit action must not be blank", HttpStatus.BAD_REQUEST),
@@ -119,16 +117,20 @@ public enum ErrorCode {
     INVALID_DATE_RANGE(2405, "Start date must not be after end date", BAD_REQUEST),
     FAMILY_ID_IS_REQUIRED(2406, "Family id is required", BAD_REQUEST),
 
+    // forgot-password
+    OTP_FORGOT_PASSWORD_NOT_EXISTED(2500, "Otp forgot password not existed", NOT_FOUND),
+    OTP_FORGOT_PASSWORD_ALREADY_USED(2501, "Otp forgot password already used", BAD_REQUEST),
+    OTP_FORGOT_PASSWORD_EXPIRED(2502, "Otp forgot password already expired", BAD_REQUEST),
+    OTP_FORGOT_PASSWORD_NOT_VERIFIED(2503, "Otp forgot password not verified", BAD_REQUEST),
 
     // family_achievement
     FAMILY_ACHIEVEMENT_NOT_EXISTED(2600, "Family achievement not found", NOT_FOUND),
     FAMILY_ACHIEVEMENT_NOT_IN_FAMILY(2601, "Achievement does not belong to this family", BAD_REQUEST),
 
-    // forgot-password
-    OTP_FORGOT_PASSWORD_NOT_EXISTED(2500, "Otp forgot password not existed", NOT_FOUND),
-    OTP_FORGOT_PASSWORD_ALREADY_USED(2501, "Otp forgot password already used", BAD_REQUEST),
-    OTP_FORGOT_PASSWORD_EXPIRED(2502, "Otp forgot password already expired", BAD_REQUEST),
-    OTP_FORGOT_PASSWORD_NOT_VERIFIED(2503, "Otp forgot password not verified", BAD_REQUEST);
+    // album
+    ALBUM_NOT_FOUND(2700, "Album not found", NOT_FOUND),
+    ALBUM_IS_EXISTED(2701, "Album is existed", BAD_REQUEST),
+    ALBUM_MEDIA_NOT_FOUND(2702, "Album media not found", NOT_FOUND);
     final int code;
     final String message;
     final HttpStatusCode statusCode;

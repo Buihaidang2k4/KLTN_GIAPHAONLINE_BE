@@ -6,12 +6,11 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @Builder
 public class CeremonyTimelineReq {
-    @NotNull(message = "CEREMONY_ID_REQUIRED")
-    Long ceremonyId;
-
     @NotBlank(message = "STEP_NAME_REQUIRED")
     @Size(max = 255, message = "STEP_NAME_TOO_LONG")
     String stepName;

@@ -33,10 +33,10 @@ public class CeremonyTimelinePreparationServiceImpl implements CeremonyTimelineP
 
     @Override
     @Transactional
-    public CeremonyTimelinePreparationRes createPreparation(CeremonyTimelinePreparationReq req) {
-        log.info("Creating preparation for timeline id: {}", req.getTimelineId());
+    public CeremonyTimelinePreparationRes createPreparation(Long timelineId, CeremonyTimelinePreparationReq req) {
+        log.info("Creating preparation for timeline id: {}", timelineId);
 
-        CeremonyTimeline ceremonyTimeline = ceremonyTimelineRepo.findById(req.getTimelineId())
+        CeremonyTimeline ceremonyTimeline = ceremonyTimelineRepo.findById(timelineId)
                 .orElseThrow(() -> new AppException(ErrorCode.CEREMONY_TIMELINE_NOT_EXISTED));
 
         CeremonyTimelinePreparation timelinePreparation = timelinePreparationMapper.toEntity(req);
@@ -79,7 +79,7 @@ public class CeremonyTimelinePreparationServiceImpl implements CeremonyTimelineP
 
     @Override
     @Transactional
-    public CeremonyTimelinePreparationRes updatePreparation(Long preparationId, CeremonyTimelinePreparationUpdateReq req) {
+    public CeremonyTimelinePreparationRes updatePreparation(Long preparationId, CeremonyTimelinePreparationReq req) {
         log.info("Updating preparation id: {}", preparationId);
         CeremonyTimelinePreparation timelinePreparation = ceremonyTimelinePreparationRepo.
                 findById(preparationId).orElseThrow(() -> new AppException(ErrorCode.CEREMONY_TIMELINE_PREPARATION_NOT_EXISTED));

@@ -1,7 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CeremonyTimelineReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.CeremonyTimelineUpdateReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.CeremonyTimelineRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
@@ -28,10 +27,10 @@ public class CeremonyTimelineController {
     CeremonyTimelineService timelineService;
 
     @PostMapping
-    ResponseEntity<ApiResponse<CeremonyTimelineRes>> createTimeline(@Valid @RequestBody CeremonyTimelineReq req) {
+    ResponseEntity<ApiResponse<CeremonyTimelineRes>> createTimeline(@RequestParam Long ceremonyId, @Valid @RequestBody CeremonyTimelineReq req) {
         return ResponseEntity.ok(ApiResponse.success(201,
                 "CREATE_TIMELINE_SUCCESS",
-                timelineService.createCeremonyTimeline(req)));
+                timelineService.createCeremonyTimeline(ceremonyId, req)));
     }
 
     @GetMapping("/{timelineId}")
@@ -66,7 +65,7 @@ public class CeremonyTimelineController {
     @PutMapping("/{timelineId}")
     ResponseEntity<ApiResponse<CeremonyTimelineRes>> updateTimeline(
             @PathVariable Long timelineId,
-            @Valid @RequestBody CeremonyTimelineUpdateReq updateReq) {
+            @Valid @RequestBody CeremonyTimelineReq updateReq) {
         return ResponseEntity.ok(ApiResponse.success(200,
                 "UPDATE_TIMELINE_SUCCESS",
                 timelineService.updateCeremonyTimeline(timelineId, updateReq)));

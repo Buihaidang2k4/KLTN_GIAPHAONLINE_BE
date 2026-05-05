@@ -1,7 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.service.ceremony.ceremony_timeline;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CeremonyTimelineReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.CeremonyTimelineUpdateReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.CeremonyTimelineRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Ceremony;
@@ -33,8 +32,8 @@ public class CeremonyTimelineServiceImpl implements CeremonyTimelineService {
 
     @Override
     @Transactional
-    public CeremonyTimelineRes createCeremonyTimeline(CeremonyTimelineReq req) {
-        Ceremony ceremony = ceremonyRepo.findById(req.getCeremonyId()).
+    public CeremonyTimelineRes createCeremonyTimeline(Long ceremonyId, CeremonyTimelineReq req) {
+        Ceremony ceremony = ceremonyRepo.findById(ceremonyId).
                 orElseThrow(() -> new AppException(ErrorCode.CEREMONY_NOT_EXISTED));
 
         // tinh step lon nhat
@@ -46,7 +45,7 @@ public class CeremonyTimelineServiceImpl implements CeremonyTimelineService {
         timeline.setCeremony(ceremony);
         timeline.setStepOrder(nextOrder);
 
-        log.info("Creating timeline step {} for ceremony {}", nextOrder, req.getCeremonyId());
+        log.info("Creating timeline step {} for ceremony {}", nextOrder, ceremonyId);
         ceremonyTimelineRepo.save(timeline);
 
         return timelineMapper.toRes(timeline);
@@ -80,7 +79,7 @@ public class CeremonyTimelineServiceImpl implements CeremonyTimelineService {
 
     @Override
     @Transactional
-    public CeremonyTimelineRes updateCeremonyTimeline(Long timelineId, CeremonyTimelineUpdateReq req) {
+    public CeremonyTimelineRes updateCeremonyTimeline(Long timelineId, CeremonyTimelineReq req) {
         CeremonyTimeline ceremonyTimeline = ceremonyTimelineRepo.findById(timelineId)
                 .orElseThrow(() -> new AppException(ErrorCode.CEREMONY_TIMELINE_NOT_EXISTED));
 

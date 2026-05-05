@@ -8,9 +8,6 @@ import lombok.Data;
 @Builder
 public class CeremonyTimelinePreparationReq {
 
-    @NotNull(message = "ID của dòng thời gian không được để trống")
-    Long timelineId;
-
     @NotBlank(message = "Tên vật dụng không được để trống")
     @Size(max = 255, message = "Tên vật dụng không vượt quá 255 ký tự")
     String itemName;

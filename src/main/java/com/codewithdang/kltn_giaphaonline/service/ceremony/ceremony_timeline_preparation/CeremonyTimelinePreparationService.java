@@ -7,7 +7,7 @@ import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import org.springframework.data.domain.Pageable;
 
 public interface CeremonyTimelinePreparationService {
-    CeremonyTimelinePreparationRes createPreparation(CeremonyTimelinePreparationReq req);
+    CeremonyTimelinePreparationRes createPreparation(Long timelineId, CeremonyTimelinePreparationReq req);
 
     PageResponse<CeremonyTimelinePreparationRes> getPreparationList(Pageable pageable);
 
@@ -15,7 +15,7 @@ public interface CeremonyTimelinePreparationService {
 
     CeremonyTimelinePreparationRes getPreparationById(Long preparationId);
 
-    CeremonyTimelinePreparationRes updatePreparation(Long preparationId, CeremonyTimelinePreparationUpdateReq req);
+    CeremonyTimelinePreparationRes updatePreparation(Long preparationId, CeremonyTimelinePreparationReq req);
 
     void deletePreparationById(Long preparationId);
 }

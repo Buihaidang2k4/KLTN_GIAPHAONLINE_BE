@@ -19,6 +19,6 @@ public enum NotificationType implements BaseEnum {
 
     @Override
     public String getLabel() {
-        return "";
+        return this.label;
     }
 }

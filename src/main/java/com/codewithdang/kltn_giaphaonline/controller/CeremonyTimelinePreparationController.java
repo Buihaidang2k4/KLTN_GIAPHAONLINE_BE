@@ -29,10 +29,11 @@ public class CeremonyTimelinePreparationController {
 
     @PostMapping
     ResponseEntity<ApiResponse<CeremonyTimelinePreparationRes>> createPreparation(
+            @RequestParam Long timelineId,
             @Valid @RequestBody CeremonyTimelinePreparationReq req) {
         return ResponseEntity.ok(ApiResponse.success(201,
                 "CREATE_PREPARATION_SUCCESS",
-                preparationService.createPreparation(req)));
+                preparationService.createPreparation(timelineId, req)));
     }
 
     @GetMapping("/{preparationId}")
@@ -67,7 +68,7 @@ public class CeremonyTimelinePreparationController {
     @PutMapping("/{preparationId}")
     ResponseEntity<ApiResponse<CeremonyTimelinePreparationRes>> updatePreparation(
             @PathVariable Long preparationId,
-            @Valid @RequestBody CeremonyTimelinePreparationUpdateReq updateReq) {
+            @Valid @RequestBody CeremonyTimelinePreparationReq updateReq) {
         return ResponseEntity.ok(ApiResponse.success(200,
                 "UPDATE_PREPARATION_SUCCESS",
                 preparationService.updatePreparation(preparationId, updateReq)));

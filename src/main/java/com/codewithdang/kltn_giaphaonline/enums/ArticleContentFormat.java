@@ -14,6 +14,6 @@ public enum ArticleContentFormat implements BaseEnum {
 
     @Override
     public String getLabel() {
-        return "";
+        return this.label;
     }
 }

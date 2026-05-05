@@ -32,12 +32,26 @@ public class MinioServiceImpl implements MinioService {
     @Value("${minio.presign-expire}")
     int expire;
 
+    public static final List<String> IMAGE = List.of(
+            "image/jpeg", "image/png", "image/jpg", "image/webp"
+    );
+
+    public static final List<String> VIDEO = List.of(
+            "video/mp4", "video/x-matroska", "video/x-msvideo"
+    );
+
+    public static final List<String> DOCUMENT = List.of(
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+
     /**
      * Upload Ảnh (max 5MB)
      */
     @Override
     public String uploadImage(MultipartFile file, String folder) {
-        validateFile(file, 5 * 1024 * 1024, List.of("image/jpeg", "image/png", "image/jpg"), ErrorCode.INVALID_FILE_TYPE);
+        validateFile(file, 5 * 1024 * 1024, IMAGE, ErrorCode.INVALID_FILE_TYPE);
         return executeUpload(file, folder);
     }
 
@@ -46,7 +60,7 @@ public class MinioServiceImpl implements MinioService {
      */
     @Override
     public String uploadVideo(MultipartFile file, String folder) {
-        validateFile(file, 100 * 1024 * 1024, List.of("video/mp4", "video/x-matroska", "video/x-msvideo"), ErrorCode.INVALID_VIDEO_TYPE);
+        validateFile(file, 100 * 1024 * 1024, VIDEO, ErrorCode.INVALID_VIDEO_TYPE);
         return executeUpload(file, folder);
     }
 
@@ -55,7 +69,8 @@ public class MinioServiceImpl implements MinioService {
      */
     @Override
     public String uploadFile(MultipartFile file, String folder) {
-        return uploadImage(file, folder);
+        validateFile(file, 20 * 1024 * 1024, DOCUMENT, ErrorCode.INVALID_DOCUMENT_TYPE);
+        return executeUpload(file, folder);
     }
 
     @Override
