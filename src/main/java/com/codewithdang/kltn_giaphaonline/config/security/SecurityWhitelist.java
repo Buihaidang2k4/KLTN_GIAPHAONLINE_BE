@@ -13,7 +13,9 @@ public final class SecurityWhitelist {
             "/api/v1/auth/login",
             "/api/v1/auth/introspect",
             "/api/v1/auth/verify-account/**",
-            "/api/v1/auth/re-send-token-verify/**"
+            "/api/v1/auth/re-send-token-verify/**",
+            // Payment callbacks
+            "/api/v1/payments/vnpay/callback"
     );
     // swagger
     public static final List<String> SWAGGER_ENDPOINTS = List.of(

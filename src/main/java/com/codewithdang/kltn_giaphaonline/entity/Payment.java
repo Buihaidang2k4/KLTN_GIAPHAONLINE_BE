@@ -6,7 +6,9 @@ import com.codewithdang.kltn_giaphaonline.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
@@ -28,12 +30,20 @@ public class Payment {
     Long paymentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id")
+    @JoinColumn(name = "account_id", nullable = false)
     Account account;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subscription_plan_id")
+    @JoinColumn(name = "subscription_plan_id", nullable = false)
     SubscriptionPlan subscriptionPlan;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "family_id", nullable = false)
+    Family family;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "family_subscription_id")
+    FamilySubscription familySubscription;
 
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
     BigDecimal amount;
@@ -42,18 +52,24 @@ public class Payment {
     String currency;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "provider", length = 20)
+    @Column(name = "provider", length = 30, nullable = false)
     PaymentProvider provider;
 
     @Column(name = "provider_transaction_id", unique = true)
     String providerTransactionId;
 
-    @Column(name = "merchant_transaction_id", unique = true)
+    @Column(name = "merchant_transaction_id", unique = true, nullable = false)
     String merchantTransactionId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20)
+    @Column(name = "status", length = 20, nullable = false)
     PaymentStatus status;
+
+    @Column(name = "bank_code", length = 20)
+    String bankCode;
+
+    @Column(name = "bank_transaction_no")
+    String bankTransactionNo;
 
     @Column(name = "failure_reason", length = 500)
     String failureReason;
@@ -65,6 +81,11 @@ public class Payment {
     @Column(name = "paid_at")
     Instant paidAt;
 
+    @CreationTimestamp
     @Column(name = "created_at")
     Instant createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    Instant updatedAt;
 }

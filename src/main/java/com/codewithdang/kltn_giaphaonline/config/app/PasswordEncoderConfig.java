@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.config;
+package com.codewithdang.kltn_giaphaonline.config.app;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

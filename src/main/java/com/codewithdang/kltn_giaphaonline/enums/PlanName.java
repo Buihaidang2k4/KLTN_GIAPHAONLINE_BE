@@ -6,10 +6,11 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum PlanName implements BaseEnum {
-    KHOI_DAU("Gói Khởi Đầu"),     // Gói miễn phí, giới hạn số thành viên
-    DONG_TAM("Gói Đồng Tâm"),     // Gói cơ bản cho dòng họ nhỏ
-    THINH_VUONG("Gói Thịnh Vượng"), // Gói cao cấp, đầy đủ tính năng
-    BAN_SAC("Gói Bản Sắc");       // Gói đặc biệt (V.I.P) với các tính năng lưu trữ di sản
+    FREE("Gói Khởi Đầu"),     // Gói miễn phí, giới hạn số thành viên
+    BASIC("Gói Đồng Tâm"),     // Gói cơ bản cho dòng họ nhỏ
+    PREMIUM("Gói Thịnh Vượng"),
+    PRO("Gói Phát Triển"),       // nhiều dung lượng hơn, nhiều tính năng hơn
+    ENTERPRISE("Gói Di Sản");    // gói cao nhất cho dòng họ lớn// Gói cao cấp, đầy đủ tính năng
 
     private final String label;
 

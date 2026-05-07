@@ -130,7 +130,18 @@ public enum ErrorCode {
     // album
     ALBUM_NOT_FOUND(2700, "Album not found", NOT_FOUND),
     ALBUM_IS_EXISTED(2701, "Album is existed", BAD_REQUEST),
-    ALBUM_MEDIA_NOT_FOUND(2702, "Album media not found", NOT_FOUND);
+    ALBUM_MEDIA_NOT_FOUND(2702, "Album media not found", NOT_FOUND),
+
+    // sub plan
+    SUBSCRIPTION_PLAN_IS_EXISTED(2800, "Subscription plan is existed", BAD_REQUEST),
+    SUBSCRIPTION_PLAN_NOT_FOUND(2801, "Subscription plan not found", NOT_FOUND),
+    SUBSCRIPTION_PLAN_CODE_IS_EXISTED(2802, "Subscription plan code is existed", BAD_REQUEST),
+    SUBSCRIPTION_PLAN_NOT_ACTIVE(2803, "Subscription plan is not active", BAD_REQUEST),
+
+    // payment
+    PAYMENT_NOT_FOUND(2900, "Payment not found", NOT_FOUND),
+    PAYMENT_ALREADY_EXISTS(2901, "Payment already exists", BAD_REQUEST),
+    PAYMENT_PROVIDER_NOT_SUPPORTED(2902, "Payment provider is not supported", BAD_REQUEST);
     final int code;
     final String message;
     final HttpStatusCode statusCode;

@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class PaymentHandleRes {
+public class PaymentCreateRes {
     Long paymentId;
     String paymentUrl;
 }

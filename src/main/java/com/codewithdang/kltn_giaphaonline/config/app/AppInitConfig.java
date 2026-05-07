@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.config;
+package com.codewithdang.kltn_giaphaonline.config.app;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreatePermissionReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateRoleReq;

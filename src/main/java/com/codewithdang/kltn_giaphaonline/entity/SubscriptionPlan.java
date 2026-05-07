@@ -1,7 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.entity;
 
 
-import com.codewithdang.kltn_giaphaonline.enums.PlanName;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -26,20 +25,19 @@ public class SubscriptionPlan {
     @Column(name = "subscription_plan_id")
     Long subscriptionPlanId;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "name_plan", length = 30)
-    PlanName namePlan;
+    String namePlan;
 
-    @Column(name = "code")
+    @Column(name = "code", nullable = false, unique = true, length = 50)
     String code;
 
     @Column(name = "description", length = 500)
     String description;
 
-    @Column(name = "price", precision = 12, scale = 2)
+    @Column(name = "price", precision = 12, scale = 2, nullable = false)
     BigDecimal price;
 
-    @Column(name = "currency", length = 3)
+    @Column(name = "currency", length = 3, nullable = false)
     String currency;
 
     @Column(name = "max_person")
@@ -48,17 +46,17 @@ public class SubscriptionPlan {
     @Column(name = "max_storage_mb")
     Integer maxStorageMb;
 
-    @Column(name = "duration_month")
+    @Column(name = "duration_month", nullable = false)
     Integer durationMonth;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     Boolean isActive;
 
     @CreationTimestamp
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
     Instant createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at", updatable = false)
+    @Column(name = "updated_at")
     Instant updatedAt;
 }
