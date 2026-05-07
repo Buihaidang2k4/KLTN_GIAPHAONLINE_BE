@@ -16,7 +16,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AccountSubscription {
+public class FamilySubscription {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,6 +34,9 @@ public class AccountSubscription {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id")
     Payment payment;
+
+    @Column(name = "auto_renewal")
+    Boolean autoRenewal;
 
     @Column(name = "start_date")
     LocalDate startDate;
