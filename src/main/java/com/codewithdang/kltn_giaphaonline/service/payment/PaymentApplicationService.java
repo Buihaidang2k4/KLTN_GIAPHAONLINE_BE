@@ -12,6 +12,8 @@ import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.repo.PaymentRepo;
 import com.codewithdang.kltn_giaphaonline.repo.SubscriptionPlanRepo;
 import com.codewithdang.kltn_giaphaonline.service.family_subscription.FamilySubscriptionService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -76,7 +79,7 @@ public class PaymentApplicationService {
     public VNPayCallbackRes handleCallback(
             PaymentProvider provider,
             Map<String, String> params
-    ) {
+    ) throws JsonProcessingException {
         PaymentGateway gateway = getGateway(provider);
 
         if (!gateway.verifyCallback(params)) {
@@ -117,15 +120,19 @@ public class PaymentApplicationService {
                     .build();
         }
 
-        payment.setProviderTransactionId(gateway.getProviderTransactionId(params));
         payment.setBankCode(gateway.getBankCode(params));
         payment.setBankTransactionNo(gateway.getBankTransactionNo(params));
-        payment.setRawCallback(params.toString());
+        payment.setRawCallback(convertCallBack(params));
 
         boolean success = "00".equals(gateway.getResponseCode(params))
                 && "00".equals(gateway.getTransactionStatus(params));
 
         if (success) {
+            // chỉ set providerTransactionId khi thành công
+            String providerTxnId = gateway.getProviderTransactionId(params);
+            if (providerTxnId != null && !"0".equals(providerTxnId)) {
+                payment.setProviderTransactionId(providerTxnId);
+            }
             payment.setStatus(PaymentStatus.SUCCESS);
             payment.setPaidAt(Instant.now());
 
@@ -172,4 +179,10 @@ public class PaymentApplicationService {
         return accountRepo.findByEmail(currentUsername)
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
     }
+
+    public String convertCallBack(Map<String, String> params) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(params);
+    }
+
 }

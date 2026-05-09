@@ -65,9 +65,7 @@ public class VNPayUtil {
         return params.entrySet().stream()
                 .filter(e -> e.getValue() != null && !e.getValue().isBlank())
                 .sorted(Map.Entry.comparingByKey())
-                .map(e -> URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8)
-                        + "=" +
-                        URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
+                .map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8))
                 .collect(Collectors.joining("&"));
     }
 

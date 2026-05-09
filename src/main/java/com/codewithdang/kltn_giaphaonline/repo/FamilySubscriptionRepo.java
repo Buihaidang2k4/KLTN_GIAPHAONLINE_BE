@@ -6,9 +6,15 @@ import com.codewithdang.kltn_giaphaonline.enums.SubscriptionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface FamilySubscriptionRepo extends JpaRepository<FamilySubscription, Long> {
     Optional<FamilySubscription> findFirstByFamilyAndStatusOrderByCreatedAtDesc(Family family, SubscriptionStatus status);
+
+    List<FamilySubscription> findByStatusAndEndDateBefore(SubscriptionStatus status, LocalDate endDateBefore);
+
+    Optional<FamilySubscription> findFirstByFamily_FamilyIdOrderByCreatedAtDesc(Long familyId);
 }
