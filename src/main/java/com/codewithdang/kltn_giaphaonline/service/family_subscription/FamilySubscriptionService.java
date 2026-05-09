@@ -5,4 +5,8 @@ import com.codewithdang.kltn_giaphaonline.entity.Payment;
 
 public interface FamilySubscriptionService {
     FamilySubscription activateSubscription(Payment payment);
+
+    public void cancelAutoRenewal(Long familyId);
+
+    public void expireSubscriptions();
 }

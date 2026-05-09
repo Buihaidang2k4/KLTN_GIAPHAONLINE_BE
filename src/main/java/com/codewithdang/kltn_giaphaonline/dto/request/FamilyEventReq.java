@@ -25,9 +25,11 @@ public class FamilyEventReq {
     String eventName;
     @JsonFormat(pattern = "HH:mm:ss")
     LocalTime eventTime;
+    @NotNull(message = "Day is required")
     @Min(1)
     @Max(31)
     Integer day;
+    @NotNull(message = "Month is required")
     @Min(1)
     @Max(12)
     Integer month;

@@ -23,8 +23,9 @@ public class CustomCookiesResolver implements BearerTokenResolver {
     public String resolve(HttpServletRequest request) {
         String path = request.getRequestURI();
 
-        if (request.getCookies() == null) return null;
+        // check public endpoint trước, tránh đọc token cũ hết hạn từ cookie
         if (SecurityMatcherUtils.isPublicOrSwagger(path)) return null;
+        if (request.getCookies() == null) return null;
 
         return Arrays.stream(request.getCookies())
                 .filter(c -> cookieName.equals(c.getName()))

@@ -141,7 +141,10 @@ public enum ErrorCode {
     // payment
     PAYMENT_NOT_FOUND(2900, "Payment not found", NOT_FOUND),
     PAYMENT_ALREADY_EXISTS(2901, "Payment already exists", BAD_REQUEST),
-    PAYMENT_PROVIDER_NOT_SUPPORTED(2902, "Payment provider is not supported", BAD_REQUEST);
+    PAYMENT_PROVIDER_NOT_SUPPORTED(2902, "Payment provider is not supported", BAD_REQUEST),
+
+    // family sub
+    FAMILY_SUBSCRIPTION_NOT_FOUND(3000, "Family subscription not found", NOT_FOUND);
     final int code;
     final String message;
     final HttpStatusCode statusCode;

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -61,7 +62,6 @@ public class VNPayGateway implements PaymentGateway {
         }
 
         String query = VNPayUtil.buildQuery(params);
-
         String hash = VNPayUtil.hmacSHA512(payConfig.getSecretKey(), query);
         return payConfig.getVnp_PayUrl() + "?" + query + "&vnp_SecureHash=" + hash;
     }
@@ -104,7 +104,7 @@ public class VNPayGateway implements PaymentGateway {
     @Override
     public BigDecimal getPaidAmount(Map<String, String> params) {
         return new BigDecimal(params.get("vnp_Amount"))
-                .divide(BigDecimal.valueOf(100));
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
     }
 
 

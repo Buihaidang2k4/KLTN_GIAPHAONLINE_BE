@@ -18,6 +18,7 @@ import com.codewithdang.kltn_giaphaonline.repo.FamilyEventRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
 import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
+import com.codewithdang.kltn_giaphaonline.utils.LunarSolarConverter;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -136,25 +137,11 @@ public class FamilyEventServiceImpl implements FamilyEventService {
             case UPCOMING -> {
                 LocalDate today = LocalDate.now();
                 LocalDate next30Days = today.plusDays(30);
-
                 events = familyEventRepo.findUpcomingEvents(
-                        familyId,
-                        keyword,
-                        today,
-                        next30Days,
-                        pageable
-                );
+                        familyId, keyword, today, next30Days, pageable);
             }
-            case ALL -> events = familyEventRepo.findAllByFamily_FamilyIdAndKeyword(
-                    familyId,
-                    keyword,
-                    pageable
-            );
             default -> events = familyEventRepo.findAllByFamily_FamilyIdAndKeyword(
-                    familyId,
-                    keyword,
-                    pageable
-            );
+                    familyId, keyword, pageable);
         }
 
         return pageMapper.toPageResponse(events, familyEventMapper::toDto);
@@ -181,7 +168,9 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         for (FamilyEvent event : dueEvents) {
             try {
                 if (event.getRepeatType() != RepeatType.YEARLY) {
-                    log.info("One-time event reached occurrence: {}", event.getFamilyEventId());
+                    // event một lần đã qua → set null để không load lại mỗi ngày
+                    event.setNextOccurrenceDate(null);
+                    updatedEvents.add(event);
                     continue;
                 }
 
@@ -192,7 +181,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
                     updatedEvents.add(event);
                 }
             } catch (Exception ex) {
-                log.error("Failed to refresh event {}", event.getFamilyEventId(), ex);
+                log.error("Failed to refresh event {}: {}", event.getFamilyEventId(), ex.getMessage(), ex);
             }
         }
 
@@ -223,16 +212,13 @@ public class FamilyEventServiceImpl implements FamilyEventService {
 
     /**
      * Tính ngày diễn ra tiếp theo.
-     * <p>
      * NONE:
      * - Cần có day/month/year.
      * - Nếu ngày đã qua => null.
-     * <p>
      * YEARLY:
      * - Chỉ cần day/month.
      * - Nếu năm nay chưa tới => trả năm nay.
      * - Nếu năm nay qua rồi => trả năm sau.
-     * <p>
      * LUNAR:
      * - Tạm thời chưa xử lý convert âm -> dương.
      */
@@ -250,8 +236,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         }
 
         if (event.getCalendarType() == CalendarType.LUNAR) {
-            log.warn("Lunar calendar is not implemented yet. eventId={}", event.getFamilyEventId());
-            return null;
+            return computeLunarYearlyOccurrence(day, month, fromDate, event.getRepeatType());
         }
 
         RepeatType repeatType = event.getRepeatType() == null
@@ -304,5 +289,32 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         }
 
         return candidate.plusYears(1);
+    }
+
+    private LocalDate computeLunarYearlyOccurrence(
+            Integer lunarDay,
+            Integer lunarMonth,
+            LocalDate fromDate,
+            RepeatType repeatType
+    ) {
+        try {
+            // thử convert sang năm âm tương ứng với năm dương hiện tại
+            // năm âm xấp xỉ = năm dương (chỉ lệch 1-2 tháng đầu năm)
+            LocalDate candidate = LunarSolarConverter.lunarToSolar(
+                    lunarDay, lunarMonth, fromDate.getYear(), false);
+
+            if (!candidate.isBefore(fromDate)) {
+                return candidate;
+            }
+
+            // đã qua trong năm nay → thử năm sau
+            return LunarSolarConverter.lunarToSolar(
+                    lunarDay, lunarMonth, fromDate.getYear() + 1, false);
+
+        } catch (Exception e) {
+            log.warn("Cannot convert lunar date {}/{} for year {}: {}",
+                    lunarDay, lunarMonth, fromDate.getYear(), e.getMessage());
+            return null;
+        }
     }
 }
