@@ -18,4 +18,10 @@ public interface PaymentService {
     );
 
     PageResponse<PaymentRes> getAll(Pageable pageable);
+
+    PageResponse<PaymentRes> getAllByFamilyId(Long familyId, Pageable pageable);
+
+    PaymentRes getByTransactionId(String transactionId);
+
+    void deletePayment(Long paymentId);
 }

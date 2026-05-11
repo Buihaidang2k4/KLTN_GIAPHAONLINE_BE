@@ -5,6 +5,8 @@ import com.codewithdang.kltn_giaphaonline.enums.FamilyPostType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -31,15 +33,15 @@ public class FamilyPost {
     @JoinColumn(name = "category_id")
     FamilyPostCategory category;
 
-    @Column(name = "title", length = 255)
+    @Column(name = "title", length = 255, nullable = false)
     String title;
 
     @Lob
     @Column(name = "content")
     String content;
 
-    @Column(name = "thumbnail_url", length = 500)
-    String thumbnailUrl;
+    @Column(name = "thumbnail_path", length = 500)
+    String thumbnailPath;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "post_type", length = 20)
@@ -53,12 +55,14 @@ public class FamilyPost {
     Instant publishedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_account_id")
+    @JoinColumn(name = "created_by_account_id", nullable = false)
     Account createdByAccount;
 
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     Instant createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     Instant updatedAt;
 

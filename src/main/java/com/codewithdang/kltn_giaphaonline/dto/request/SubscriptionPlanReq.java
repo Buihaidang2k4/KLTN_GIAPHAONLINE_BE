@@ -37,6 +37,10 @@ public class SubscriptionPlanReq {
     @Min(value = 1, message = "Số thành viên tối đa phải lớn hơn 0")
     Integer maxPerson;
 
+    @NotNull(message = "Số thành viên quản lí tối đa không được để trống")
+    @Min(value = 1, message = "Số thành viên quản lí tối đa phải lớn hơn 0")
+    Integer maxAdmin;
+
     @NotNull(message = "Dung lượng tối đa không được để trống")
     @Min(value = 0, message = "Dung lượng không được âm")
     Integer maxStorageMb;

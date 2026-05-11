@@ -5,6 +5,7 @@ import com.codewithdang.kltn_giaphaonline.dto.request.*;
 import com.codewithdang.kltn_giaphaonline.dto.response.LoginRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.IntrospectRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.RegisterRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.FamilyRes;
 import com.codewithdang.kltn_giaphaonline.entity.*;
 import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
 import com.codewithdang.kltn_giaphaonline.enums.FamilyInvitationStatus;
@@ -18,6 +19,7 @@ import com.codewithdang.kltn_giaphaonline.repo.PasswordResetTokenRepo;
 import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
 import com.codewithdang.kltn_giaphaonline.service.family.FamilyService;
 import com.codewithdang.kltn_giaphaonline.service.family_invitation.FamilyInvitationService;
+import com.codewithdang.kltn_giaphaonline.service.family_subscription.FamilySubscriptionService;
 import com.codewithdang.kltn_giaphaonline.service.forgot_password.PasswordResetTokenService;
 import com.codewithdang.kltn_giaphaonline.service.revoked_token.RevokedTokenService;
 import com.codewithdang.kltn_giaphaonline.service.role.RoleService;
@@ -72,6 +74,7 @@ public class AuthServiceImpl implements AuthService {
     AccountMapper accountMapper;
     PasswordResetTokenService passwordResetTokenService;
     PasswordResetTokenRepo passwordResetTokenRepo;
+    FamilySubscriptionService familySubscriptionService;
 
     @NonFinal
     @Value("${jwt.secret}")
@@ -151,12 +154,16 @@ public class AuthServiceImpl implements AuthService {
 
         roleService.assignRoleToAccount(account, RoleEnums.FAMILY_ADMIN);
 
-        // tao dong ho
-        familyService.createFamily(FamilyReq.builder()
+        // Create family
+        FamilyRes familyRes = familyService.createFamily(FamilyReq.builder()
                 .ownerAccountId(account.getAccountId())
                 .familyName(req.familyName())
                 .description("Dòng họ " + req.familyName().toUpperCase())
                 .build());
+
+        // Get family entity and subscribe to default plan
+        familySubscriptionService.subscribeFamilyToDefaultPlan(familyRes.getFamilyId(), account);
+        log.info("Family {} subscribed to default FREE plan", familyRes.getFamilyId());
 
         // verification email
         AccountVerificationToken verificationToken =

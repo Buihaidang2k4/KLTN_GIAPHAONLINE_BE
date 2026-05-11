@@ -8,6 +8,8 @@ import com.codewithdang.kltn_giaphaonline.entity.Payment;
 import com.codewithdang.kltn_giaphaonline.entity.SubscriptionPlan;
 import com.codewithdang.kltn_giaphaonline.enums.PaymentProvider;
 import com.codewithdang.kltn_giaphaonline.enums.PaymentStatus;
+import com.codewithdang.kltn_giaphaonline.exception.AppException;
+import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.PaymentMapper;
 import com.codewithdang.kltn_giaphaonline.repo.PaymentRepo;
@@ -64,6 +66,28 @@ public class PaymentServiceImpl implements PaymentService {
     public PageResponse<PaymentRes> getAll(Pageable pageable) {
         Page<Payment> payments = paymentRepo.findAll(pageable);
         return pageMapper.toPageResponse(payments, paymentMapper::toRes);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<PaymentRes> getAllByFamilyId(Long familyId, Pageable pageable) {
+        Page<Payment> payments = paymentRepo.findByFamily_FamilyId(familyId, pageable);
+        return pageMapper.toPageResponse(payments, paymentMapper::toRes);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaymentRes getByTransactionId(String transactionId) {
+        Payment payment = paymentRepo.findByMerchantTransactionId(transactionId)
+                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
+        return paymentMapper.toRes(payment);
+    }
+
+    @Override
+    @Transactional
+    public void deletePayment(Long paymentId) {
+        Payment payment = paymentRepo.findById(paymentId).orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
+        paymentRepo.delete(payment);
     }
 
     private String generateTxnRef(Long accountId) {

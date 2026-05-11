@@ -22,6 +22,7 @@ public class SubscriptionPlanRes {
     BigDecimal price;
     String currency;
     Integer maxPerson;
+    Integer maxAdmin;
     Integer maxStorageMb;
     Integer durationMonth;
     Boolean isActive;

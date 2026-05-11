@@ -14,6 +14,7 @@ public class AccountDetailsRes {
     Long accountId;
     String email;
     String fullName;
+    String phoneNumber;
     String avatarPath;
     String avatarUrl;
     String accountStatus;

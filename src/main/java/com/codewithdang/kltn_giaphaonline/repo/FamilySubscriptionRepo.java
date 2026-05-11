@@ -17,4 +17,6 @@ public interface FamilySubscriptionRepo extends JpaRepository<FamilySubscription
     List<FamilySubscription> findByStatusAndEndDateBefore(SubscriptionStatus status, LocalDate endDateBefore);
 
     Optional<FamilySubscription> findFirstByFamily_FamilyIdOrderByCreatedAtDesc(Long familyId);
+
+    Optional<FamilySubscription> findByFamily_FamilyId(Long familyFamilyId);
 }

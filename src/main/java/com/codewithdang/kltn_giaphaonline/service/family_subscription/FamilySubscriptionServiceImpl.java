@@ -1,12 +1,18 @@
 package com.codewithdang.kltn_giaphaonline.service.family_subscription;
 
+import com.codewithdang.kltn_giaphaonline.dto.response.FamilySubscriptionRes;
+import com.codewithdang.kltn_giaphaonline.entity.Account;
+import com.codewithdang.kltn_giaphaonline.entity.Family;
 import com.codewithdang.kltn_giaphaonline.entity.FamilySubscription;
 import com.codewithdang.kltn_giaphaonline.entity.Payment;
 import com.codewithdang.kltn_giaphaonline.entity.SubscriptionPlan;
 import com.codewithdang.kltn_giaphaonline.enums.SubscriptionStatus;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
+import com.codewithdang.kltn_giaphaonline.mapper.FamilySubscriptionMapper;
+import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilySubscriptionRepo;
+import com.codewithdang.kltn_giaphaonline.service.subscription_plan.SubscriptionPlanServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +30,9 @@ import java.util.List;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class FamilySubscriptionServiceImpl implements FamilySubscriptionService {
     FamilySubscriptionRepo familySubscriptionRepo;
+    SubscriptionPlanServiceImpl planService;
+    FamilyRepo familyRepo;
+    FamilySubscriptionMapper subscriptionMapper;
 
     /***
      * active subscription khi payment thanh cong
@@ -92,7 +101,6 @@ public class FamilySubscriptionServiceImpl implements FamilySubscriptionService 
         familySubscriptionRepo.save(subscription);
     }
 
-
     // job expire
     @Scheduled(cron = "0 0 0 * * *", zone = "${app.timezone}")
     @Transactional
@@ -119,5 +127,41 @@ public class FamilySubscriptionServiceImpl implements FamilySubscriptionService 
         }
 
         return baseDate.plusMonths(durationMonth);
+    }
+
+    @Override
+    @Transactional
+    public FamilySubscription subscribeFamilyToDefaultPlan(Long familyId, Account account) {
+        log.info("Subscribing family {} to default (FREE) plan", familyId);
+        Family family = familyRepo.findById(familyId)
+                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
+
+        // Get or create default FREE plan
+        SubscriptionPlan defaultPlan = planService.getOrCreateDefaultPlan();
+
+        LocalDate today = LocalDate.now();
+        FamilySubscription familySubscription = FamilySubscription.builder()
+                .createdByAccount(account)
+                .family(family)
+                .subscriptionPlan(defaultPlan)
+                .status(SubscriptionStatus.ACTIVE)
+                .autoRenewal(true)
+                .startDate(today)
+                .canceledAt(null)
+                .expiredAt(null)
+                .endDate(calculateEndDate(today, defaultPlan))
+                .build();
+
+        familySubscriptionRepo.save(familySubscription);
+        log.info("Family {} subscribed to default FREE plan. Expiry date: {}",
+                family.getFamilyId(), familySubscription.getEndDate());
+        return familySubscription;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FamilySubscriptionRes getByFamilyId(Long familyId) {
+        return familySubscriptionRepo.findByFamily_FamilyId(familyId).map(subscriptionMapper::toRes)
+                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_SUBSCRIPTION_NOT_FOUND));
     }
 }

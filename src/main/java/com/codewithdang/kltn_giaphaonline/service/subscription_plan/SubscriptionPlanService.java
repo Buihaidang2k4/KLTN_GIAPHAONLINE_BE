@@ -8,6 +8,8 @@ import java.util.List;
 public interface SubscriptionPlanService {
     SubscriptionPlanRes createPlan(SubscriptionPlanReq request);
 
+    SubscriptionPlanRes createPlanDefault();
+
     SubscriptionPlanRes updatePlan(Long planId, SubscriptionPlanReq request);
 
     SubscriptionPlanRes getPlanById(Long planId);

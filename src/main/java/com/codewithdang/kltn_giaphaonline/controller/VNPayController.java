@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
+import com.codewithdang.kltn_giaphaonline.config.fe.FrontendProperties;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.PaymentCreateRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.VNPayCallbackRes;
@@ -10,8 +11,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
 
@@ -23,12 +27,13 @@ import java.util.Map;
 public class VNPayController {
 
     PaymentApplicationService paymentApplicationService;
+    FrontendProperties frontendProperties;
 
     @PostMapping
     public ResponseEntity<ApiResponse<PaymentCreateRes>> createPayment(
             @RequestParam Long familyId,
             @RequestParam Long subscriptionPlanId,
-            @RequestParam(required = false) String bankCode,
+            @RequestParam(required = false, defaultValue = "NCB") String bankCode,
             HttpServletRequest request) {
         String ipAddress = getIpAddress(request);
         return ResponseEntity.ok(ApiResponse.success(201, "CREATE_PAYMENT_SUCCESS",
@@ -37,10 +42,21 @@ public class VNPayController {
     }
 
     @GetMapping("/callback")
-    public ResponseEntity<ApiResponse<VNPayCallbackRes>> callback(
+    public ResponseEntity<Void> callback(
             @RequestParam Map<String, String> params) throws JsonProcessingException {
-        return ResponseEntity.ok(ApiResponse.success(200, "VNPAY_CALLBACK_SUCCESS",
-                paymentApplicationService.handleCallback(PaymentProvider.VNPAY, params)));
+        VNPayCallbackRes result = paymentApplicationService.handleCallback(PaymentProvider.VNPAY, params);
+
+        // redirect về frontend kèm kết quả
+        String redirectUrl = UriComponentsBuilder
+                .fromHttpUrl(frontendProperties.getBaseUrl() + "/family/chi-tiet-thanh-toan")
+                .queryParam("success", result.isSuccess())
+                .queryParam("transactionId", result.getTransactionId())
+                .queryParam("responseCode", result.getResponseCode())
+                .build().toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.LOCATION, redirectUrl);
+        return new ResponseEntity<>(headers, HttpStatus.FOUND);
     }
 
     private String getIpAddress(HttpServletRequest request) {

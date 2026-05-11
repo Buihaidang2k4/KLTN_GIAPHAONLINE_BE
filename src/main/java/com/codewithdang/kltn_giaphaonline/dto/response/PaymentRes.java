@@ -18,6 +18,7 @@ public class PaymentRes {
     Long paymentId;
     Long accountId;
     Long subscriptionPlanId;
+    String planName;
     Long familyId;
     Long familySubscriptionId;
     BigDecimal amount;

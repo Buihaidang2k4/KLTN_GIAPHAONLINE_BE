@@ -43,6 +43,9 @@ public class SubscriptionPlan {
     @Column(name = "max_person")
     Integer maxPerson;
 
+    @Column(name = "max_admin")
+    Integer maxAdmin;
+
     @Column(name = "max_storage_mb")
     Integer maxStorageMb;
 

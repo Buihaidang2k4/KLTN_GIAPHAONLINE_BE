@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -34,6 +35,55 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
         plan.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
         planRepo.save(plan);
         return planMapper.toRes(plan);
+    }
+
+    @Override
+    @Transactional
+    public SubscriptionPlanRes createPlanDefault() {
+        // Check if FREE plan already exists
+        if (planRepo.existsByCode("FREE")) {
+            log.info("FREE plan already exists");
+            return planRepo.findByCode("FREE")
+                    .map(planMapper::toRes)
+                    .orElse(null);
+        }
+
+        // Create default FREE plan
+        SubscriptionPlan defaultPlan = SubscriptionPlan.builder()
+                .namePlan("Gói Khởi Đầu")
+                .code("FREE")
+                .price(BigDecimal.ZERO)
+                .currency("VND")
+                .maxAdmin(1)
+                .maxPerson(200)
+                .maxStorageMb(1024)
+                .durationMonth(12)
+                .isActive(true)
+                .build();
+
+        planRepo.save(defaultPlan);
+        log.info("Default FREE plan created successfully");
+        return planMapper.toRes(defaultPlan);
+    }
+
+    @Transactional(readOnly = true)
+    public SubscriptionPlan getOrCreateDefaultPlan() {
+        return planRepo.findByCode("FREE")
+                .orElseGet(() -> {
+                    log.warn("FREE plan not found! Creating default plan...");
+                    SubscriptionPlan defaultPlan = SubscriptionPlan.builder()
+                            .namePlan("Gói Khởi Đầu")
+                            .code("FREE")
+                            .price(BigDecimal.ZERO)
+                            .currency("VND")
+                            .maxAdmin(1)
+                            .maxPerson(200)
+                            .maxStorageMb(1024)
+                            .durationMonth(12)
+                            .isActive(true)
+                            .build();
+                    return planRepo.save(defaultPlan);
+                });
     }
 
     @Override
