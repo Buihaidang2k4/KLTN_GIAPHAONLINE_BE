@@ -1,13 +1,12 @@
-package com.codewithdang.kltn_giaphaonline.dto.request;
 
-import com.codewithdang.kltn_giaphaonline.entity.Account;
-import com.codewithdang.kltn_giaphaonline.entity.FamilyCategory;
-import com.codewithdang.kltn_giaphaonline.entity.Person;
+package com.codewithdang.kltn_giaphaonline.dto.response;
+
 import com.codewithdang.kltn_giaphaonline.enums.Gender;
 import com.codewithdang.kltn_giaphaonline.enums.LifeStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -17,7 +16,13 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PersonReq {
+public class PersonRes {
+    Long personId;
+    Long familyCategoryId;
+    Long rootPersonId;
+    Long fatherId;
+    Long motherId;
+    Long createdByAccountId;
     Long generation;
     Long birthOrder;
     String fullName;
@@ -32,4 +37,7 @@ public class PersonReq {
     String avatarUrl;
     String biography;
     String slug;
+    Instant createdAt;
+    Instant updatedAt;
+    Instant deletedAt;
 }

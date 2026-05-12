@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.service.family_category;
+package com.codewithdang.kltn_giaphaonline.service.tree.family_category;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.FamilyCategoryReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyCategoryRes;

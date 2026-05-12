@@ -6,12 +6,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AlbumReq {
-    @NotNull(message = "title may not be null")
-    String title;
+public class FamilyCategoryReq {
+    @NotNull(message = "familyName not null")
+    String familyName;
+    String origin;
     String description;
+    Boolean isPublic;
 }

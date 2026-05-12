@@ -7,6 +7,8 @@ import lombok.*;
 
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -77,8 +79,8 @@ public class Person {
     @Column(name = "life_status", nullable = false, length = 20)
     LifeStatus lifeStatus;
 
-    @Column(name = "avatar_url", length = 500)
-    String avatarUrl;
+    @Column(name = "avatar_path", length = 500)
+    String avatarPath;
 
     @Lob
     @Column(name = "biography")
@@ -91,13 +93,11 @@ public class Person {
     @JoinColumn(name = "created_by_account_id")
     Account createdByAccount;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "updated_by_account_id")
-    Account updatedByAccount;
-
-    @Column(name = "created_at")
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     Instant createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     Instant updatedAt;
 

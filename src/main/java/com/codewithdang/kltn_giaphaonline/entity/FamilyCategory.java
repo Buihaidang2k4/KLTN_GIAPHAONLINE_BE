@@ -35,15 +35,6 @@ public class FamilyCategory {
     @Column(name = "description", columnDefinition = "text")
     String description;
 
-    @Column(name = "left_couplet", length = 255)
-    String leftCouplet;
-
-    @Column(name = "right_couplet", length = 255)
-    String rightCouplet;
-
-    @Column(name = "background_template_url", length = 500)
-    String backgroundTemplateUrl;
-
     @Column(name = "is_public", nullable = false)
     Boolean isPublic;
 

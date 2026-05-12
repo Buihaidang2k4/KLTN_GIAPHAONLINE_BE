@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.service.family_category;
+package com.codewithdang.kltn_giaphaonline.service.tree.family_category;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.FamilyCategoryReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyCategoryRes;
@@ -13,7 +13,9 @@ import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyCategoryRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class FamilyCategoryServiceImpl implements FamilyCategoryService {
     FamilyCategoryRepo familyCategoryRepo;
     FamilyRepo familyRepo;
@@ -39,6 +42,7 @@ public class FamilyCategoryServiceImpl implements FamilyCategoryService {
         FamilyCategory familyCategory = categoryMapper.toEntity(req);
         familyCategory.setFamily(family);
         familyCategory.setOwner(currentAccount);
+        familyCategoryRepo.save(familyCategory);
         return categoryMapper.toRes(familyCategory);
     }
 
@@ -49,6 +53,7 @@ public class FamilyCategoryServiceImpl implements FamilyCategoryService {
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_CATEGORY_NOT_EXISTED));
 
         categoryMapper.updateEntityFromRequest(req, category);
+        familyCategoryRepo.save(category);
         return categoryMapper.toRes(category);
     }
 

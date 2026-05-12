@@ -144,7 +144,16 @@ public enum ErrorCode {
     PAYMENT_PROVIDER_NOT_SUPPORTED(2902, "Payment provider is not supported", BAD_REQUEST),
 
     // family sub
-    FAMILY_SUBSCRIPTION_NOT_FOUND(3000, "Family subscription not found", NOT_FOUND);
+    FAMILY_SUBSCRIPTION_NOT_FOUND(3000, "Family subscription not found", NOT_FOUND),
+
+    // family category
+    FAMILY_CATEGORY_NOT_EXISTED(3100, "Family category not found", NOT_FOUND),
+
+    // person
+    PERSON_NOT_FOUND(3200, "Person not found", NOT_FOUND),
+    PERSON_RELATIONSHIP_NOT_FOUND(3201, "Person relationship not found", NOT_FOUND);
+
+
     final int code;
     final String message;
     final HttpStatusCode statusCode;
