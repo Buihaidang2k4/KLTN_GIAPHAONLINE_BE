@@ -12,6 +12,7 @@ public enum RelationType implements BaseEnum {
     CONCUBINE("Vợ lẽ/Vợ thứ"),
 
     // Quan hệ nuôi dưỡng (Nếu bạn muốn làm chi tiết)
+    CHILD("Con ruột"),
     ADOPTED_CHILD("Con nuôi"),
     STEP_PARENT("Cha/Mẹ kế");
 

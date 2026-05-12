@@ -38,6 +38,10 @@ public class FamilyCategory {
     @Column(name = "is_public", nullable = false)
     Boolean isPublic;
 
+    @Builder.Default
+    @Column(name = "generation_offset", nullable = false, columnDefinition = "bigint default 1")
+    Long generationOffset = 1L;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     Instant createdAt;

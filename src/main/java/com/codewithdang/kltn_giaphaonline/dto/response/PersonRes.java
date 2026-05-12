@@ -39,5 +39,4 @@ public class PersonRes {
     String slug;
     Instant createdAt;
     Instant updatedAt;
-    Instant deletedAt;
 }

@@ -100,7 +100,4 @@ public class Person {
     @UpdateTimestamp
     @Column(name = "updated_at")
     Instant updatedAt;
-
-    @Column(name = "deleted_at")
-    Instant deletedAt;
 }

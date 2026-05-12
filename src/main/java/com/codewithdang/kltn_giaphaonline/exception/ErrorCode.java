@@ -151,7 +151,10 @@ public enum ErrorCode {
 
     // person
     PERSON_NOT_FOUND(3200, "Person not found", NOT_FOUND),
-    PERSON_RELATIONSHIP_NOT_FOUND(3201, "Person relationship not found", NOT_FOUND);
+    PERSON_RELATIONSHIP_NOT_FOUND(3201, "Person relationship not found", NOT_FOUND),
+    PERSON_ALREADY_HAS_FATHER(3202, "Person already has a father", BAD_REQUEST),
+    PERSON_MUST_BE_MALE_TO_ADD_ROOT(3203, "Only male person can add a parent as root", BAD_REQUEST),
+    PERSON_HAS_CHILDREN_CANNOT_DELETE(3204, "Cannot delete person who has children", BAD_REQUEST);
 
 
     final int code;

@@ -62,6 +62,36 @@ public class FamilyTreeController {
                 personService.getPersonById(personId)));
     }
 
+    @PostMapping("/persons/{personId}/root")
+    public ResponseEntity<ApiResponse<FamilyTreeNodeRes>> addRoot(
+            @PathVariable Long personId,
+            @Valid @RequestBody PersonReq req) {
+        return ResponseEntity.ok(ApiResponse.success(201, "ADD_ROOT_SUCCESS",
+                personService.addRoot(personId, req)));
+    }
+
+    @PostMapping("/persons/{personId}/partner")
+    public ResponseEntity<ApiResponse<FamilyTreeNodeRes>> addPartner(
+            @PathVariable Long personId,
+            @Valid @RequestBody PersonReq req) {
+        return ResponseEntity.ok(ApiResponse.success(201, "ADD_PARTNER_SUCCESS",
+                personService.addPartner(personId, req)));
+    }
+
+    @PostMapping("/persons/{personId}/child")
+    public ResponseEntity<ApiResponse<FamilyTreeNodeRes>> addChild(
+            @PathVariable Long personId,
+            @Valid @RequestBody PersonReq req) {
+        return ResponseEntity.ok(ApiResponse.success(201, "ADD_CHILD_SUCCESS",
+                personService.addChild(personId, req)));
+    }
+
+    @DeleteMapping("/persons/{personId}")
+    public ResponseEntity<ApiResponse<Void>> deletePerson(@PathVariable Long personId) {
+        personService.deletePerson(personId);
+        return ResponseEntity.ok(ApiResponse.success(200, "DELETE_PERSON_SUCCESS", null));
+    }
+
     // ==================== Relationship ====================
 
     @PostMapping("/persons/{personId}/relationships")

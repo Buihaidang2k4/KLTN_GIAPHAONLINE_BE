@@ -13,4 +13,9 @@ public interface PersonRelationshipRepo extends JpaRepository<PersonRelationship
 
     @Query("SELECT pr FROM PersonRelationship pr WHERE pr.person.personId IN :personIds OR pr.partner.personId IN :personIds")
     List<PersonRelationship> findAllByPersonIds(@Param("personIds") List<Long> personIds);
+
+    @Query("SELECT pr FROM PersonRelationship pr WHERE pr.person.personId = :personId OR pr.partner.personId = :personId")
+    List<PersonRelationship> findAllByPersonId(@Param("personId") Long personId);
+
+    void deleteAllByPerson_PersonIdOrPartner_PersonId(Long personId, Long partnerId);
 }
