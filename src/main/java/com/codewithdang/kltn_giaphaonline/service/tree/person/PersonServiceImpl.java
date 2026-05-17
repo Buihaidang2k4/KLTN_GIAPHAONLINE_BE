@@ -122,8 +122,8 @@ public class PersonServiceImpl implements PersonService {
         Person currentPerson = personRepo.findById(personId)
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
 
-        if (currentPerson.getGender() != Gender.MALE)
-            throw new AppException(ErrorCode.PERSON_MUST_BE_MALE_TO_ADD_ROOT);
+//        if (currentPerson.getGender() != Gender.MALE)
+//            throw new AppException(ErrorCode.PERSON_MUST_BE_MALE_TO_ADD_ROOT);
         if (currentPerson.getFather() != null)
             throw new AppException(ErrorCode.PERSON_ALREADY_HAS_FATHER);
 

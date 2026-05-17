@@ -38,8 +38,9 @@ public class FamilyCategory {
     @Column(name = "is_public", nullable = false)
     Boolean isPublic;
 
+    @Builder.Default
     @Column(name = "total_person", nullable = false, columnDefinition = "bigint default 0")
-    Long totalPerson;
+    Long totalPerson = 0L;
 
     @Builder.Default
     @Column(name = "generation_offset", nullable = false, columnDefinition = "bigint default 1")
