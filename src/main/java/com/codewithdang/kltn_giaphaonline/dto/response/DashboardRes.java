@@ -1,26 +1,27 @@
 package com.codewithdang.kltn_giaphaonline.dto.response;
 
-import com.codewithdang.kltn_giaphaonline.enums.NotificationType;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Data
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class NotificationRes {
-    Long notificationId;
-    Long recipientAccountId;
-    String recipientName;
-    Long senderAccountId;
-    String senderName;
-    NotificationType type;
-    String title;
-    String content;
-    Boolean isRead;
-    Long referenceId;
-    String referenceType;
-    String actionUrl;
-    Instant createdAt;
-    Instant readAt;
+public class DashboardRes {
+    Long totalMembersInFamilyTree;
+    Long totalEvents;
+    Long totalAlbumMedias;
+    Long totalAchievement;
+    Long totalCustoms;
+    Long totalAdmin;
+    Long totalStorages;
+    Long totalUsedStorages;
+    String currentFamilyName;
+    String currentSubscriptionPlanName;
+    String currentSubscriptionPlanPrice;
+    LocalDate currentSubscriptionStartDate;
+    LocalDate currentSubscriptionEndDate;
 }

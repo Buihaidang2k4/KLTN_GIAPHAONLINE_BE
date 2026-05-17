@@ -16,6 +16,7 @@ public class InviteInvitationMemberRes {
     String roleName;
     String invitedEmail;
     Long invitedByAccountId;
+    String invitedByEmail;
     String invitationStatus;
     String inviteToken;
     String message;

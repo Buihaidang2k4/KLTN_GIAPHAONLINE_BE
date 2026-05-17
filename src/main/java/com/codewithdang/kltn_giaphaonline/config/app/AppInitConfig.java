@@ -46,7 +46,7 @@ public class AppInitConfig {
     ) {
         return args -> {
 
-            // create full permission
+            // 1. sync permission - thêm mới nếu chưa có
             for (PermissionEnums permissionEnums : PermissionEnums.values()) {
                 if (!permissionRepo.existsById(permissionEnums.name())) {
                     permissionService.createPermission(
@@ -56,34 +56,36 @@ public class AppInitConfig {
                                     .description(permissionEnums.name())
                                     .build()
                     );
+                    log.info("[INIT] Created permission: {}", permissionEnums.name());
                 }
             }
 
-            // create full role
+            // 2. sync role - tạo mới nếu chưa có, cập nhật permission nếu thiếu
             for (RoleEnums roleEnums : RoleEnums.values()) {
                 if (!roleRepo.existsById(roleEnums.name())) {
-                    Set<String> perms = roleEnums.getPermissionEnums().stream()
-                            .map(Enum::name)
-                            .collect(Collectors.toSet());
-
+                    // tạo role mới
                     roleService.createRole(
                             CreateRoleReq.builder()
                                     .name(roleEnums.name())
-                                    .scopeType(String.valueOf(roleEnums.getScopeType()))
+                                    .scopeType(roleEnums.getScopeType().name())
                                     .description(roleEnums.getDescription())
                                     .build()
                     );
-
-
-                    roleService.addPermissionToRole(
-                            roleEnums.name(),
-                            UpdateRoleReq.builder()
-                                    .permissions(perms)
-                                    .description(roleEnums.getDescription())
-                                    .build()
-                    );
-
+                    log.info("[INIT] Created role: {}", roleEnums.name());
                 }
+
+                // luôn sync permission vào role (thêm những cái còn thiếu)
+                Set<String> expectedPerms = roleEnums.getPermissionEnums().stream()
+                        .map(Enum::name)
+                        .collect(Collectors.toSet());
+
+                roleService.addPermissionToRole(
+                        roleEnums.name(),
+                        UpdateRoleReq.builder()
+                                .permissions(expectedPerms)
+                                .description(roleEnums.getDescription())
+                                .build()
+                );
             }
 
             // create account

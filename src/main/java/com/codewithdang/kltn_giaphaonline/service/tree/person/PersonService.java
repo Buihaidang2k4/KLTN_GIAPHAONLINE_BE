@@ -4,6 +4,8 @@ import com.codewithdang.kltn_giaphaonline.dto.request.PersonReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyTreeNodeRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PersonRes;
 
+import java.util.List;
+
 public interface PersonService {
     PersonRes createPerson(Long categoryId, PersonReq req);
 
@@ -24,4 +26,9 @@ public interface PersonService {
 
     // Xóa person, chỉ được xóa nếu không có con
     void deletePerson(Long personId);
+
+    // Lấy danh sách partner của personId
+    List<PersonRes> getPartners(Long personId);
+
+    List<PersonRes> getMothersByFatherId(Long fatherId);
 }

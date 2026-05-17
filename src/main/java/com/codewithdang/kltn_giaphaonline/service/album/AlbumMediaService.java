@@ -12,6 +12,9 @@ import java.util.List;
 public interface AlbumMediaService {
     AlbumMediaRes uploadMedia(Long albumId, MultipartFile file) throws IOException;
 
+    AlbumMediaRes uploadLink(Long albumId, String url, String title);
+
+
     List<AlbumMediaRes> uploadMultiple(Long albumId, List<MultipartFile> files);
 
     PageResponse<AlbumMediaRes> getAlbumMediaByAlbumId(Long albumId, MediaType mediaType, Pageable pageable);

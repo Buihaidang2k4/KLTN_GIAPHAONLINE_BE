@@ -6,6 +6,7 @@ import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Family;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyCategory;
+import com.codewithdang.kltn_giaphaonline.entity.Person;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyCategoryMapper;
@@ -13,6 +14,8 @@ import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyCategoryRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
+import com.codewithdang.kltn_giaphaonline.repo.PersonRelationshipRepo;
+import com.codewithdang.kltn_giaphaonline.repo.PersonRepo;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,6 +25,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +38,8 @@ public class FamilyCategoryServiceImpl implements FamilyCategoryService {
     FamilyCategoryMapper categoryMapper;
     AccountRepo accountRepo;
     PageMapper pageMapper;
+    PersonRepo personRepo;
+    PersonRelationshipRepo relationshipRepo;
 
     @Override
     @Transactional
@@ -63,6 +70,29 @@ public class FamilyCategoryServiceImpl implements FamilyCategoryService {
         if (!familyCategoryRepo.existsById(id)) {
             throw new AppException(ErrorCode.FAMILY_CATEGORY_NOT_EXISTED);
         }
+
+        // 1. lấy tất cả person trong category
+        List<Person> persons = personRepo.findAllByFamilyCategory_FamilyCategoryId(id);
+
+        if (!persons.isEmpty()) {
+            List<Long> personIds = persons.stream().map(Person::getPersonId).toList();
+
+            // 2. xóa tất cả relationship liên quan
+            relationshipRepo.deleteAllByPersonIds(personIds);
+
+            // 3. gỡ bỏ các FK tự tham chiếu (father, mother, rootPerson) trước khi xóa
+            persons.forEach(p -> {
+                p.setFather(null);
+                p.setMother(null);
+                p.setRootPerson(null);
+            });
+            personRepo.saveAll(persons);
+
+            // 4. xóa tất cả person
+            personRepo.deleteAll(persons);
+        }
+
+        // 5. xóa category
         familyCategoryRepo.deleteById(id);
     }
 

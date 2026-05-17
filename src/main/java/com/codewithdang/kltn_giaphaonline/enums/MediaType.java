@@ -9,6 +9,7 @@ public enum MediaType implements BaseEnum {
     IMAGE("Hình ảnh"),    // .jpg, .png, .gif
     VIDEO("Video"),       // .mp4, .mov
     DOCUMENT("Tài liệu"),  // .pdf, .docx, .txt
+    LINK("Đường dẫn đến tài liệu/video/img"),
     OTHER("Khác");        // Các định dạng lạ khác
 
     private final java.lang.String label;

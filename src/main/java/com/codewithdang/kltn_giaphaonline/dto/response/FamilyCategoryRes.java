@@ -13,6 +13,7 @@ public class FamilyCategoryRes {
     Long familyId;
     String familyName;
     String origin;
+    Long totalPerson;
     String description;
     Boolean isPublic;
     Instant createdAt;

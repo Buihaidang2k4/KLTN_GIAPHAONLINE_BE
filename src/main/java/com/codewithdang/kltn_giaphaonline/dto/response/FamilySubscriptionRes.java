@@ -1,16 +1,10 @@
 package com.codewithdang.kltn_giaphaonline.dto.response;
 
-import com.codewithdang.kltn_giaphaonline.entity.Account;
-import com.codewithdang.kltn_giaphaonline.entity.Family;
-import com.codewithdang.kltn_giaphaonline.entity.SubscriptionPlan;
 import com.codewithdang.kltn_giaphaonline.enums.SubscriptionStatus;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -26,7 +20,11 @@ public class FamilySubscriptionRes {
     Long createdByAccountId;
     String planName;
     String planCode;
-    SubscriptionStatus status;
+    BigDecimal price;
+    Integer maxPerson;
+    Integer maxAdmin;
+    Integer maxStorageMb;
+    Integer durationMonth;
     Boolean autoRenewal;
     Instant createdAt;
     Instant updatedAt;

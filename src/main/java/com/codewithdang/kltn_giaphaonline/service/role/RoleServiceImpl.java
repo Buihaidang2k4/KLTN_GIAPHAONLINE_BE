@@ -2,20 +2,24 @@ package com.codewithdang.kltn_giaphaonline.service.role;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateRoleReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateRoleReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
+import com.codewithdang.kltn_giaphaonline.dto.response.RoleRes;
 import com.codewithdang.kltn_giaphaonline.entity.*;
 import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.enums.RoleScopeType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
-import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
-import com.codewithdang.kltn_giaphaonline.repo.PermissionRepo;
-import com.codewithdang.kltn_giaphaonline.repo.RolePermissionRepo;
-import com.codewithdang.kltn_giaphaonline.repo.RoleRepo;
+import com.codewithdang.kltn_giaphaonline.repo.*;
+import com.codewithdang.kltn_giaphaonline.dto.response.PermissionRes;
+import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +38,9 @@ public class RoleServiceImpl implements RoleService {
     AccountRoleRepo accountRoleRepo;
     PermissionRepo permissionRepo;
     RolePermissionRepo rolePermissionRepo;
+    AccountRepo accountRepo;
+    FamilyMemberRepo familyMemberRepo;
+    PageMapper pageMapper;
 
     @Override
     @Transactional
@@ -152,4 +160,84 @@ public class RoleServiceImpl implements RoleService {
     public List<Role> getAllRoles() {
         return roleRepository.findAll();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<RoleRes> getAll(Pageable pageable) {
+        return pageMapper.toPageResponse(
+                roleRepository.findAll(pageable),
+                this::toRoleRes
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isSystemAccount() {
+        Account account = getCurrentAccount();
+        return account.getAccountRoles().stream()
+                .map(AccountRole::getRole)
+                .anyMatch(role -> role.getScopeType() == RoleScopeType.SYSTEM);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoleRes> getRoleByCurrentAccount() {
+        Account account = getCurrentAccount();
+
+        // 1. system roles từ AccountRole
+        List<RoleRes> systemRoles = account.getAccountRoles().stream()
+                .map(AccountRole::getRole)
+                .map(this::toRoleRes)
+                .toList();
+
+        // 2. family roles từ FamilyMember
+        List<RoleRes> familyRoles = familyMemberRepo.findAllByAccount_AccountId(account.getAccountId())
+                .stream()
+                .filter(fm -> fm.getRole() != null)
+                .map(fm -> toRoleRes(fm.getRole()))
+                .distinct()
+                .toList();
+
+        return Stream.concat(systemRoles.stream(), familyRoles.stream()).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoleRes> getCurrentRoleByFamilyId(Long familyId) {
+        Account account = getCurrentAccount();
+
+        FamilyMember member = familyMemberRepo
+                .findByFamily_FamilyIdAndAccount_AccountId(familyId, account.getAccountId())
+                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_MEMBER_NOT_EXISTED));
+
+        if (member.getRole() == null) return List.of();
+
+        return List.of(toRoleRes(member.getRole()));
+    }
+
+
+    private RoleRes toRoleRes(Role role) {
+        Set<PermissionRes> permissions = role.getRolePermissions().stream()
+                .map(rp -> new PermissionRes(
+                        rp.getPermission().getName(),
+                        rp.getPermission().getScopeType().name(),
+                        rp.getPermission().getDescription()
+                ))
+                .collect(Collectors.toSet());
+
+        return RoleRes.builder()
+                .name(role.getName())
+                .description(role.getDescription())
+                .scopeType(role.getScopeType().name())
+                .permissions(permissions)
+                .build();
+    }
+
+    private Account getCurrentAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return accountRepo.findByEmail(currentUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+    }
+
 }

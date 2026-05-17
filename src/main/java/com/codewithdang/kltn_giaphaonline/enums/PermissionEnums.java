@@ -15,6 +15,7 @@ public enum PermissionEnums implements BaseEnum {
     SYS_CONTENT_MANAGE("Quản lý bài viết trang chủ", RoleScopeType.SYSTEM),
 
     // ================= FAMILY =================
+    FAM_WRITE("Thêm/Sửa gia phả", RoleScopeType.FAMILY),
     FAM_DELETE("Xóa gia phả", RoleScopeType.FAMILY),
     FAM_SETTINGS_EDIT("Chỉnh sửa thông tin dòng họ", RoleScopeType.FAMILY),
     FAM_MEMBER_MANAGE("Quản lý thành viên", RoleScopeType.FAMILY),
@@ -23,7 +24,7 @@ public enum PermissionEnums implements BaseEnum {
     FAM_SUBSCRIPTION_VIEW("Xem gói hiện tại, dung lượng, hạn dùng", RoleScopeType.FAMILY),
     FAM_SUBSCRIPTION_UPGRADE_REQUEST("Gửi yêu cầu nâng cấp cho manager", RoleScopeType.FAMILY),
     FAM_PAYMENT_VIEW("xem lịch sử thanh toán", RoleScopeType.FAMILY),
-
+    ACHIEVEMENT_MANAGE("Quản lý các thành tựu", RoleScopeType.FAMILY),
     // ================= DATA =================
     NODE_WRITE("Thêm/Sửa thành viên cây", RoleScopeType.FAMILY),
     NODE_DELETE("Xóa thành viên cây", RoleScopeType.FAMILY),
@@ -35,7 +36,12 @@ public enum PermissionEnums implements BaseEnum {
 
     // ================= PUBLIC =================
     FAM_VIEW_PUBLIC("Xem gia phả", RoleScopeType.FAMILY),
-    POST_VIEW_PUBLIC("Xem bài viết", RoleScopeType.FAMILY);
+    POST_VIEW_PUBLIC("Xem bài viết", RoleScopeType.FAMILY),
+    ALBUM_VIEW_PUBLIC("Xem album ", RoleScopeType.FAMILY),
+    EVENT_VIEW_PUBLIC("Xem sự kiện", RoleScopeType.FAMILY),
+    ACHIEVEMENT_VIEW_PUBLIC("Xem các thành tựu", RoleScopeType.FAMILY),
+    CEREMONY_VIEW_PUBLIC("Xem các cách tổ chức lễ hội", RoleScopeType.FAMILY),
+    SETTINGS_VIEW("Xem thông tin dòng họ", RoleScopeType.FAMILY);
 
     private final String label;
     private final RoleScopeType scopeType;

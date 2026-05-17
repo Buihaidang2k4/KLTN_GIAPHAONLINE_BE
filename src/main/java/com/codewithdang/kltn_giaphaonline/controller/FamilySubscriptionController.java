@@ -1,6 +1,7 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
+import com.codewithdang.kltn_giaphaonline.dto.response.FamilySubscriptionCheckQuotaRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilySubscriptionRes;
 import com.codewithdang.kltn_giaphaonline.service.family_subscription.FamilySubscriptionService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,5 +26,9 @@ public class FamilySubscriptionController {
         return ResponseEntity.ok(ApiResponse.success(200, "GET_FAMILY_SUBSCRIPTION_SUCCESS", familySubscriptionService.getByFamilyId(familyId)));
     }
 
+    @GetMapping("/family/{familyId}/usageStorage")
+    public ResponseEntity<ApiResponse<FamilySubscriptionCheckQuotaRes>> getByStorage(@PathVariable Long familyId) {
+        return ResponseEntity.ok(ApiResponse.success(200, "GET_FAMILY_SUBSCRIPTION_SUCCESS", familySubscriptionService.getFamilySubByQuotaUsage(familyId)));
+    }
 
 }

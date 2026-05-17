@@ -60,6 +60,10 @@ public enum ErrorCode {
     INVALID_VIDEO_TYPE(1308, "Only video files are allowed (mp4, mkv, avi)", HttpStatus.BAD_REQUEST),
     VIDEO_TOO_LARGE(1309, "Video size must not exceed 100MB", HttpStatus.BAD_REQUEST),
     INVALID_DOCUMENT_TYPE(1310, "Only document files are allowed (pdf, doc, docx, txt)", BAD_REQUEST),
+    INVALID_LINK_URL(1311, "Invalid link is null", HttpStatus.BAD_REQUEST),
+    INVALID_URL_FORMAT(1312, "Invalid URL format or is null", HttpStatus.BAD_REQUEST),
+    URL_TOO_LONG(1313, "URL too long", HttpStatus.BAD_REQUEST),
+    
 
     // audit
     ACTION_IS_EMPTY(1500, "Audit action must not be blank", HttpStatus.BAD_REQUEST),

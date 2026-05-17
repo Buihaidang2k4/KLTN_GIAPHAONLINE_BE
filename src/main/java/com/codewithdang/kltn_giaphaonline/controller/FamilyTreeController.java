@@ -8,7 +8,6 @@ import com.codewithdang.kltn_giaphaonline.service.tree.node.FamilyTreeService;
 import com.codewithdang.kltn_giaphaonline.service.tree.person.PersonRelationshipService;
 import com.codewithdang.kltn_giaphaonline.service.tree.person.PersonService;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -37,20 +36,20 @@ public class FamilyTreeController {
                 familyTreeService.getTree(categoryId)));
     }
 
-    // ==================== Person ====================
+    // ==================== Person CRUD ====================
 
-    @PostMapping("/categories/{categoryId}/persons")
+    @PostMapping(value = "/categories/{categoryId}/persons", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<PersonRes>> createPerson(
             @PathVariable Long categoryId,
-            @Valid @RequestBody PersonReq req) {
+            @ModelAttribute PersonReq req) {
         return ResponseEntity.ok(ApiResponse.success(201, "CREATE_PERSON_SUCCESS",
                 personService.createPerson(categoryId, req)));
     }
 
-    @PutMapping("/persons/{personId}")
+    @PutMapping(value = "/persons/{personId}", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<PersonRes>> updatePerson(
             @PathVariable Long personId,
-            @Valid @RequestBody PersonReq req) {
+            @ModelAttribute PersonReq req) {
         return ResponseEntity.ok(ApiResponse.success(200, "UPDATE_PERSON_SUCCESS",
                 personService.updatePerson(personId, req)));
     }
@@ -62,34 +61,52 @@ public class FamilyTreeController {
                 personService.getPersonById(personId)));
     }
 
-    @PostMapping("/persons/{personId}/root")
-    public ResponseEntity<ApiResponse<FamilyTreeNodeRes>> addRoot(
-            @PathVariable Long personId,
-            @Valid @RequestBody PersonReq req) {
-        return ResponseEntity.ok(ApiResponse.success(201, "ADD_ROOT_SUCCESS",
-                personService.addRoot(personId, req)));
-    }
-
-    @PostMapping("/persons/{personId}/partner")
-    public ResponseEntity<ApiResponse<FamilyTreeNodeRes>> addPartner(
-            @PathVariable Long personId,
-            @Valid @RequestBody PersonReq req) {
-        return ResponseEntity.ok(ApiResponse.success(201, "ADD_PARTNER_SUCCESS",
-                personService.addPartner(personId, req)));
-    }
-
-    @PostMapping("/persons/{personId}/child")
-    public ResponseEntity<ApiResponse<FamilyTreeNodeRes>> addChild(
-            @PathVariable Long personId,
-            @Valid @RequestBody PersonReq req) {
-        return ResponseEntity.ok(ApiResponse.success(201, "ADD_CHILD_SUCCESS",
-                personService.addChild(personId, req)));
-    }
-
     @DeleteMapping("/persons/{personId}")
     public ResponseEntity<ApiResponse<Void>> deletePerson(@PathVariable Long personId) {
         personService.deletePerson(personId);
         return ResponseEntity.ok(ApiResponse.success(200, "DELETE_PERSON_SUCCESS", null));
+    }
+
+    // ==================== Person Query ====================
+
+    @GetMapping("/persons/{personId}/partners")
+    public ResponseEntity<ApiResponse<List<PersonRes>>> getPartners(
+            @PathVariable Long personId) {
+        return ResponseEntity.ok(ApiResponse.success(200, "GET_PARTNERS_SUCCESS",
+                personService.getPartners(personId)));
+    }
+
+    @GetMapping("/persons/{fatherId}/mothers")
+    public ResponseEntity<ApiResponse<List<PersonRes>>> getMothersByFatherId(
+            @PathVariable Long fatherId) {
+        return ResponseEntity.ok(ApiResponse.success(200, "GET_MOTHERS_SUCCESS",
+                personService.getMothersByFatherId(fatherId)));
+    }
+
+    // ==================== Person Tree Actions ====================
+
+    @PostMapping(value = "/persons/{personId}/root", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<FamilyTreeNodeRes>> addRoot(
+            @PathVariable Long personId,
+            @ModelAttribute PersonReq req) {
+        return ResponseEntity.ok(ApiResponse.success(201, "ADD_ROOT_SUCCESS",
+                personService.addRoot(personId, req)));
+    }
+
+    @PostMapping(value = "/persons/{personId}/partner", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<FamilyTreeNodeRes>> addPartner(
+            @PathVariable Long personId,
+            @ModelAttribute PersonReq req) {
+        return ResponseEntity.ok(ApiResponse.success(201, "ADD_PARTNER_SUCCESS",
+                personService.addPartner(personId, req)));
+    }
+
+    @PostMapping(value = "/persons/{personId}/child", consumes = "multipart/form-data")
+    public ResponseEntity<ApiResponse<FamilyTreeNodeRes>> addChild(
+            @PathVariable Long personId,
+            @ModelAttribute PersonReq req) {
+        return ResponseEntity.ok(ApiResponse.success(201, "ADD_CHILD_SUCCESS",
+                personService.addChild(personId, req)));
     }
 
     // ==================== Relationship ====================

@@ -13,10 +13,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PersonReq {
-    Long birthOrder;
-    Long partnerId;
-    Long motherId;
+public class UpdatePersonReq {
     String fullName;
     Gender gender;
     String phoneNumber;
@@ -28,5 +25,5 @@ public class PersonReq {
     LifeStatus lifeStatus;
     String biography;
     String slug;
-    MultipartFile avatar;
+    MultipartFile avatar; // file ảnh đại diện, null nếu không cập nhật
 }

@@ -33,6 +33,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Optional;
 
@@ -118,6 +119,67 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
 
     @Override
     @Transactional
+    public AlbumMediaRes uploadLink(Long albumId, String url, String title) {
+        if (url == null || url.isBlank()) throw new AppException(ErrorCode.INVALID_LINK_URL);
+
+        // validate URL format
+        try {
+            new java.net.URI(url).toURL();
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.INVALID_URL_FORMAT);
+        }
+
+        Album album = albumRepo.findById(albumId)
+                .orElseThrow(() -> new AppException(ErrorCode.ALBUM_NOT_FOUND));
+
+        Long fileSize = fetchContentLength(url);
+
+        AlbumMedia albumMedia = AlbumMedia.builder()
+                .title(title != null && !title.isBlank() ? title : url)
+                .album(album)
+                .mediaPath(url)
+                .mediaType(MediaType.LINK)
+                .fileSizeBytes(fileSize)
+                .build();
+
+        albumMediaRepo.save(albumMedia);
+
+        // cập nhật album
+        int currentCount = Optional.ofNullable(album.getMediaCount()).orElse(0);
+        long currentSize = Optional.ofNullable(album.getTotalSize()).orElse(0L);
+        album.setMediaCount(currentCount + 1);
+        album.setTotalSize(currentSize + (fileSize != null ? fileSize : 0L));
+        albumRepo.save(album);
+
+        return AlbumMediaRes.builder()
+                .albumMediaId(albumMedia.getAlbumMediaId())
+                .albumId(album.getAlbumId())
+                .title(albumMedia.getTitle())
+                .mediaPath(url)
+                .mediaUrl(url)
+                .mediaType(MediaType.LINK)
+                .fileSizeBytes(fileSize)
+                .build();
+    }
+
+    private Long fetchContentLength(String url) {
+        try {
+            HttpURLConnection conn = (HttpURLConnection) new java.net.URI(url).toURL().openConnection();
+            conn.setRequestMethod("HEAD");
+            conn.setConnectTimeout(3000);
+            conn.setReadTimeout(3000);
+            conn.connect();
+            long length = conn.getContentLengthLong();
+            conn.disconnect();
+            return length > 0 ? length : null;
+        } catch (Exception e) {
+            log.warn("Cannot fetch content length for url: {}", url);
+            return null;
+        }
+    }
+
+    @Override
+    @Transactional
     public List<AlbumMediaRes> uploadMultiple(Long albumId, List<MultipartFile> files) {
         return files.stream()
                 .map(file -> {
@@ -169,8 +231,10 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
 
 
     private AlbumMediaRes toRes(AlbumMedia media) {
+        String mediaUrl = media.getMediaType() == MediaType.LINK
+                ? media.getMediaPath()
+                : minioService.getPresignedUrl(media.getMediaPath());
 
-        String mediaUrl = minioService.getPresignedUrl(media.getMediaPath());
         String thumbnailUrl = media.getThumbnailPath() != null
                 ? minioService.getPresignedUrl(media.getThumbnailPath())
                 : null;

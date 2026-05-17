@@ -9,6 +9,7 @@ public interface MinioService {
 
     String uploadFile(MultipartFile file, String folder);
 
+
     String getPresignedUrl(String objectName);
 
     void deleteFile(String objectName);

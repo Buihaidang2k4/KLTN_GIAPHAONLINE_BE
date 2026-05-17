@@ -42,16 +42,27 @@ public class FamilyTreeServiceImpl implements FamilyTreeService {
         List<Long> memberIds = members.stream().map(Person::getPersonId).toList();
         List<PersonRelationship> relationships = relationshipRepo.findAllByPersonIds(memberIds);
 
-        Map<Long, List<String>> partnerMap = new HashMap<>();
+        Map<Long, List<Long>> partnerMap = new HashMap<>();
         Set<Long> partnerOutsideIds = new HashSet<>();
+        Map<Long, List<Long>> childMap = new HashMap<>();
 
         for (PersonRelationship rel : relationships) {
             Long pid = rel.getPerson().getPersonId();
             Long partnerId = rel.getPartner().getPersonId();
-            partnerMap.computeIfAbsent(pid, k -> new ArrayList<>()).add(partnerId.toString());
-            partnerMap.computeIfAbsent(partnerId, k -> new ArrayList<>()).add(pid.toString());
+            partnerMap.computeIfAbsent(pid, k -> new ArrayList<>()).add(partnerId);
+            partnerMap.computeIfAbsent(partnerId, k -> new ArrayList<>()).add(pid);
             if (!memberIds.contains(partnerId)) partnerOutsideIds.add(partnerId);
             if (!memberIds.contains(pid)) partnerOutsideIds.add(pid);
+        }
+
+        // build childMap
+        for (Person p : members) {
+            if (p.getFather() != null) {
+                childMap.computeIfAbsent(p.getFather().getPersonId(), k -> new ArrayList<>()).add(p.getPersonId());
+            }
+            if (p.getMother() != null) {
+                childMap.computeIfAbsent(p.getMother().getPersonId(), k -> new ArrayList<>()).add(p.getPersonId());
+            }
         }
 
         List<Person> outsidePartners = partnerOutsideIds.isEmpty()
@@ -60,10 +71,10 @@ public class FamilyTreeServiceImpl implements FamilyTreeService {
 
         List<FamilyTreeNodeRes> result = new ArrayList<>();
         for (Person p : members) {
-            result.add(toNode(p, partnerMap, true, offset));
+            result.add(toNode(p, partnerMap, childMap, true, offset));
         }
         for (Person p : outsidePartners) {
-            result.add(toNode(p, partnerMap, false, offset));
+            result.add(toNode(p, partnerMap, childMap, false, offset));
         }
 
         result.sort(Comparator.comparing(FamilyTreeNodeRes::getGeneration,
@@ -74,25 +85,28 @@ public class FamilyTreeServiceImpl implements FamilyTreeService {
         return result;
     }
 
-    private FamilyTreeNodeRes toNode(Person p, Map<Long, List<String>> partnerMap, boolean isInFamily, Long offset) {
+    private FamilyTreeNodeRes toNode(Person p, Map<Long, List<Long>> partnerMap, Map<Long, List<Long>> childMap, boolean isInFamily, Long offset) {
         String avatarPath = p.getAvatarPath();
         String avatarUrl = avatarPath != null ? minioService.getPresignedUrl(avatarPath) : null;
         Long displayGen = p.getGeneration() != null ? p.getGeneration() + offset : null;
 
         return FamilyTreeNodeRes.builder()
-                .id(p.getPersonId().toString())
-                .fid(p.getFather() != null ? p.getFather().getPersonId().toString() : null)
-                .mid(p.getMother() != null ? p.getMother().getPersonId().toString() : null)
+                .id(p.getPersonId())
+                .fid(p.getFather() != null ? p.getFather().getPersonId() : null)
+                .mid(p.getMother() != null ? p.getMother().getPersonId() : null)
+                .fidName(p.getFather() != null ? p.getFather().getFullName() : null)
+                .midName(p.getMother() != null ? p.getMother().getFullName() : null)
                 .pids(partnerMap.getOrDefault(p.getPersonId(), Collections.emptyList()))
-                .generation(displayGen != null ? displayGen.toString() : null)
+                .childs(childMap.getOrDefault(p.getPersonId(), Collections.emptyList()))
+                .generation(displayGen)
                 .personName(p.getFullName())
                 .gender(p.getGender() != null ? p.getGender().name().toLowerCase() : null)
                 .avatarPath(p.getAvatarPath())
                 .avatarUrl(avatarUrl)
                 .biography(p.getBiography())
                 .phoneNumber(p.getPhoneNumber())
-                .birthDate(p.getBirthDate() != null ? p.getBirthDate().toString() : null)
-                .deathDate(p.getDeathDate() != null ? p.getDeathDate().toString() : null)
+                .birthDate(p.getBirthDate() != null ? p.getBirthDate() : null)
+                .deathDate(p.getDeathDate() != null ? p.getDeathDate() : null)
                 .lifeStatus(p.getLifeStatus() != null ? p.getLifeStatus().name() : null)
                 .originPlace(p.getOriginPlace())
                 .placeOfResidence(p.getPlaceOfResidence())

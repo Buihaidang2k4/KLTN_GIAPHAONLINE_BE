@@ -1,15 +1,15 @@
 package com.codewithdang.kltn_giaphaonline.service.family_subscription;
 
+import com.codewithdang.kltn_giaphaonline.dto.response.FamilySubscriptionCheckQuotaRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilySubscriptionRes;
-import com.codewithdang.kltn_giaphaonline.entity.Account;
-import com.codewithdang.kltn_giaphaonline.entity.Family;
-import com.codewithdang.kltn_giaphaonline.entity.FamilySubscription;
-import com.codewithdang.kltn_giaphaonline.entity.Payment;
-import com.codewithdang.kltn_giaphaonline.entity.SubscriptionPlan;
+import com.codewithdang.kltn_giaphaonline.entity.*;
+import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.enums.SubscriptionStatus;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilySubscriptionMapper;
+import com.codewithdang.kltn_giaphaonline.repo.AlbumRepo;
+import com.codewithdang.kltn_giaphaonline.repo.FamilyCategoryRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilySubscriptionRepo;
 import com.codewithdang.kltn_giaphaonline.service.subscription_plan.SubscriptionPlanServiceImpl;
@@ -32,7 +32,9 @@ public class FamilySubscriptionServiceImpl implements FamilySubscriptionService 
     FamilySubscriptionRepo familySubscriptionRepo;
     SubscriptionPlanServiceImpl planService;
     FamilyRepo familyRepo;
+    FamilyCategoryRepo familyCategoryRepo;
     FamilySubscriptionMapper subscriptionMapper;
+    AlbumRepo albumRepo;
 
     /***
      * active subscription khi payment thanh cong
@@ -163,5 +165,36 @@ public class FamilySubscriptionServiceImpl implements FamilySubscriptionService 
     public FamilySubscriptionRes getByFamilyId(Long familyId) {
         return familySubscriptionRepo.findByFamily_FamilyId(familyId).map(subscriptionMapper::toRes)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_SUBSCRIPTION_NOT_FOUND));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FamilySubscriptionCheckQuotaRes getFamilySubByQuotaUsage(Long familyId) {
+        Family family = familyRepo.findById(familyId)
+                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
+
+        Long currentAdminCount = 0L;
+        Long currentPersonCount = 0L;
+        Long currentStorageUsedMb = 0L;
+
+        currentAdminCount = family.getMembers().stream()
+                .map(member -> member.getRole().getName().equals(RoleEnums.FAMILY_ADMIN.name()))
+                .count();
+
+        currentPersonCount = familyCategoryRepo.findAllByFamily(family).stream()
+                .map(category -> category.getTotalPerson())
+                .reduce(0L, Long::sum);
+
+        currentStorageUsedMb = albumRepo.getAllByFamily(family)
+                .stream()
+                .map(album -> album.getTotalSize())
+                .reduce(0L, Long::sum) / (1024 * 1024);
+
+        return FamilySubscriptionCheckQuotaRes.builder()
+                .currentAdminCount(currentAdminCount)
+                .currentPersonCount(currentPersonCount)
+                .currentStorageUsedMb(currentStorageUsedMb)
+                .build();
+
     }
 }

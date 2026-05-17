@@ -92,6 +92,15 @@ public class AlbumController {
                 albumMediaService.getAlbumMediaByAlbumId(albumId, mediaType, pageable)));
     }
 
+    @PostMapping("/{albumId}/media/link")
+    public ResponseEntity<ApiResponse<AlbumMediaRes>> uploadLink(
+            @PathVariable Long albumId,
+            @RequestParam String url,
+            @RequestParam(required = false) String title) {
+        return ResponseEntity.ok(ApiResponse.success(201, "UPLOAD_LINK_SUCCESS",
+                albumMediaService.uploadLink(albumId, url, title)));
+    }
+
     @DeleteMapping("/media/{mediaId}")
     public ResponseEntity<ApiResponse<Void>> deleteMedia(@PathVariable Long mediaId) {
         albumMediaService.deleteMedia(mediaId);

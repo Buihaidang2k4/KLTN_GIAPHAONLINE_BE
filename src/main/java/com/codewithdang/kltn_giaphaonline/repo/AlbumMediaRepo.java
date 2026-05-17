@@ -21,4 +21,7 @@ public interface AlbumMediaRepo extends JpaRepository<AlbumMedia, Long> {
             MediaType mediaType,
             Pageable pageable
     );
+
+    @Query("SELECT COALESCE(SUM(m.fileSizeBytes), 0) FROM AlbumMedia m WHERE m.album.family.familyId = :familyId")
+    Long sumFileSizeByFamilyId(Long familyId);
 }

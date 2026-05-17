@@ -17,6 +17,7 @@ import com.codewithdang.kltn_giaphaonline.repo.FamilyCategoryRepo;
 import com.codewithdang.kltn_giaphaonline.repo.PersonRelationshipRepo;
 import com.codewithdang.kltn_giaphaonline.repo.PersonRepo;
 import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioService;
+import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -42,13 +43,6 @@ public class PersonServiceImpl implements PersonService {
     PersonMapper personMapper;
     MinioService minioService;
 
-
-    /***
-     * Create first person in family category
-     * @param categoryId
-     * @param req
-     * @return
-     */
     @Override
     @Transactional
     public PersonRes createPerson(Long categoryId, PersonReq req) {
@@ -61,7 +55,13 @@ public class PersonServiceImpl implements PersonService {
         newPerson.setCreatedByAccount(account);
         newPerson.setGeneration(0L);
 
-        return personMapper.toRes(personRepo.save(newPerson));
+        if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
+            newPerson.setAvatarPath(minioService.uploadImage(req.getAvatar(), ConstantUtils.Avatar));
+        }
+
+        Person saved = personRepo.save(newPerson);
+        incrementTotalPerson(category);
+        return personMapper.toRes(saved);
     }
 
     @Override
@@ -70,7 +70,29 @@ public class PersonServiceImpl implements PersonService {
         Person person = personRepo.findById(personId)
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
 
-        personMapper.updateEntityFromRequest(req, person);
+        if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
+            if (person.getAvatarPath() != null) minioService.deleteFile(person.getAvatarPath());
+            person.setAvatarPath(minioService.uploadImage(req.getAvatar(), ConstantUtils.Avatar));
+        }
+
+        if (req.getMotherId() != null) {
+            Person mother = personRepo.findById(req.getMotherId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
+            person.setMother(mother);
+            if (mother.getGeneration() != null) person.setGeneration(mother.getGeneration() + 1);
+        }
+
+        if (req.getFullName() != null) person.setFullName(req.getFullName());
+        if (req.getGender() != null) person.setGender(req.getGender());
+        if (req.getPhoneNumber() != null) person.setPhoneNumber(req.getPhoneNumber());
+        if (req.getBirthDate() != null) person.setBirthDate(req.getBirthDate());
+        if (req.getDeathDate() != null) person.setDeathDate(req.getDeathDate());
+        if (req.getOriginPlace() != null) person.setOriginPlace(req.getOriginPlace());
+        if (req.getPlaceOfResidence() != null) person.setPlaceOfResidence(req.getPlaceOfResidence());
+        if (req.getGraveLocation() != null) person.setGraveLocation(req.getGraveLocation());
+        if (req.getLifeStatus() != null) person.setLifeStatus(req.getLifeStatus());
+        if (req.getBiography() != null) person.setBiography(req.getBiography());
+        if (req.getSlug() != null) person.setSlug(req.getSlug());
 
         return personMapper.toRes(personRepo.save(person));
     }
@@ -94,29 +116,20 @@ public class PersonServiceImpl implements PersonService {
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
     }
 
-    /**
-     * Tạo thủy tổ (cha) cho node hiện tại.
-     * Điều kiện: node phải là nam và chưa có cha.
-     * Thủy tổ mới sẽ thuộc cùng familyCategory, không có cha/mẹ.
-     * Node hiện tại sẽ được set father = thủy tổ mới.
-     */
     @Override
     @Transactional
     public FamilyTreeNodeRes addRoot(Long personId, PersonReq req) {
         Person currentPerson = personRepo.findById(personId)
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
 
-        if (currentPerson.getGender() != Gender.MALE) {
+        if (currentPerson.getGender() != Gender.MALE)
             throw new AppException(ErrorCode.PERSON_MUST_BE_MALE_TO_ADD_ROOT);
-        }
-        if (currentPerson.getFather() != null) {
+        if (currentPerson.getFather() != null)
             throw new AppException(ErrorCode.PERSON_ALREADY_HAS_FATHER);
-        }
 
         FamilyCategory category = currentPerson.getFamilyCategory();
         Account currentAccount = getCurrentAccount();
 
-        // tìm generation nhỏ nhất hiện tại trong category
         Long minGen = personRepo.findAllByFamilyCategory_FamilyCategoryId(category.getFamilyCategoryId())
                 .stream()
                 .map(Person::getGeneration)
@@ -124,110 +137,114 @@ public class PersonServiceImpl implements PersonService {
                 .min(Long::compareTo)
                 .orElse(1L);
 
-        // tạo thủy tổ mới với gen = minGen - 1
         Person newRoot = personMapper.toEntity(req);
         newRoot.setFamilyCategory(category);
         newRoot.setCreatedByAccount(currentAccount);
         newRoot.setFather(null);
         newRoot.setMother(null);
         newRoot.setGeneration(minGen - 1);
-        newRoot = personRepo.save(newRoot);
 
-        // gán thủy tổ làm cha của node hiện tại
+        if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
+            newRoot.setAvatarPath(minioService.uploadImage(req.getAvatar(), ConstantUtils.Avatar));
+        }
+
+        newRoot = personRepo.save(newRoot);
+        incrementTotalPerson(category);
+
         currentPerson.setFather(newRoot);
         personRepo.save(currentPerson);
 
-        // tăng offset để generation hiển thị luôn dương
         category.setGenerationOffset(category.getGenerationOffset() + 1);
         familyCategoryRepo.save(category);
 
         return toNode(newRoot, Collections.emptyList(), true, category.getGenerationOffset());
     }
 
-    /**
-     * Thêm vợ/chồng cho personId.
-     * Partner mới không thuộc dòng họ (familyCategory = null).
-     * Tạo PersonRelationship SPOUSE giữa 2 người.
-     */
     @Override
     @Transactional
     public FamilyTreeNodeRes addPartner(Long personId, PersonReq req) {
-        Person person = personRepo.findById(personId)
+        Person currentPerson = personRepo.findById(personId)
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
 
         Account account = getCurrentAccount();
 
         Person partner = personMapper.toEntity(req);
-        partner.setFamilyCategory(null);
+        if (currentPerson.getGender() == Gender.MALE) partner.setGender(Gender.FEMALE);
+        else if (currentPerson.getGender() == Gender.FEMALE) partner.setGender(Gender.MALE);
+        partner.setFamilyCategory(currentPerson.getFamilyCategory());
         partner.setCreatedByAccount(account);
+        partner.setGeneration(currentPerson.getGeneration());
+
+        if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
+            partner.setAvatarPath(minioService.uploadImage(req.getAvatar(), ConstantUtils.Avatar));
+        }
+
         partner = personRepo.save(partner);
 
-        PersonRelationship relationship = PersonRelationship.builder()
-                .person(person)
+        if (currentPerson.getFamilyCategory() != null) {
+            incrementTotalPerson(currentPerson.getFamilyCategory());
+        }
+
+        relationshipRepo.save(PersonRelationship.builder()
+                .person(currentPerson)
                 .partner(partner)
                 .relationType(RelationType.SPOUSE)
                 .isPrimary(true)
-                .build();
-        relationshipRepo.save(relationship);
+                .build());
 
-        Long offset = getOffset(person);
-        List<String> pids = List.of(personId.toString());
-        return toNode(partner, pids, false, offset);
+        Long offset = getOffset(currentPerson);
+        return toNode(partner, List.of(personId), false, offset);
     }
 
-    /**
-     * Thêm con cho personId.
-     * Tự xác định fid/mid dựa vào gender của personId.
-     * Tìm partner qua PersonRelationship để set fid+mid đầy đủ cho con.
-     * Con thuộc cùng familyCategory với cha/mẹ trong dòng họ.
-     */
     @Override
     @Transactional
     public FamilyTreeNodeRes addChild(Long personId, PersonReq req) {
-        Person person = personRepo.findById(personId)
+        Person currentPerson = personRepo.findById(personId)
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
 
         Account account = getCurrentAccount();
 
-        // tìm partner qua relationship
-        List<PersonRelationship> relationships = relationshipRepo.findAllByPersonId(personId);
-        Person partner = relationships.stream()
-                .map(rel -> rel.getPerson().getPersonId().equals(personId)
-                        ? rel.getPartner()
-                        : rel.getPerson())
-                .findFirst()
-                .orElse(null);
-
-        Person child = personMapper.toEntity(req);
-        child.setFamilyCategory(person.getFamilyCategory());
-        child.setCreatedByAccount(account);
-
-        // set generation cho con
-        if (person.getGeneration() != null) {
-            child.setGeneration(person.getGeneration() + 1);
+        Person partner = null;
+        if (req.getPartnerId() != null) {
+            partner = personRepo.findById(req.getPartnerId())
+                    .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
         }
 
-        // xác định fid/mid theo gender
-        if (person.getGender() == Gender.MALE) {
-            child.setFather(person);
+        FamilyCategory childCategory = currentPerson.getFamilyCategory() != null
+                ? currentPerson.getFamilyCategory()
+                : (partner != null ? partner.getFamilyCategory() : null);
+
+        Person child = personMapper.toEntity(req);
+        child.setCreatedByAccount(account);
+        child.setFamilyCategory(childCategory);
+
+        if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
+            child.setAvatarPath(minioService.uploadImage(req.getAvatar(), ConstantUtils.Avatar));
+        }
+
+        if (currentPerson.getGeneration() != null) {
+            child.setGeneration(currentPerson.getGeneration() + 1);
+        }
+
+        if (currentPerson.getGender() == Gender.MALE) {
+            child.setFather(currentPerson);
             if (partner != null) child.setMother(partner);
         } else {
-            child.setMother(person);
+            child.setMother(currentPerson);
             if (partner != null) child.setFather(partner);
         }
 
         child = personRepo.save(child);
 
-        Long offset = getOffset(person);
+        // chỉ tăng totalPerson nếu con thuộc dòng tộc
+        if (childCategory != null) {
+            incrementTotalPerson(childCategory);
+        }
+
+        Long offset = getOffset(currentPerson);
         return toNode(child, Collections.emptyList(), true, offset);
     }
 
-    /**
-     * Xóa person.
-     * Chỉ được xóa nếu không có con (không ai có father/mother = personId).
-     * Soft delete: set deletedAt = now().
-     * Xóa luôn các PersonRelationship liên quan.
-     */
     @Override
     @Transactional
     public void deletePerson(Long personId) {
@@ -238,11 +255,51 @@ public class PersonServiceImpl implements PersonService {
             throw new AppException(ErrorCode.PERSON_HAS_CHILDREN_CANNOT_DELETE);
         }
 
+        FamilyCategory category = person.getFamilyCategory();
+
         relationshipRepo.deleteAllByPerson_PersonIdOrPartner_PersonId(personId, personId);
         personRepo.delete(person);
+
+        // chỉ giảm nếu thuộc dòng tộc
+        if (category != null) {
+            decrementTotalPerson(category);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PersonRes> getPartners(Long personId) {
+        if (!personRepo.existsById(personId)) throw new AppException(ErrorCode.PERSON_NOT_FOUND);
+        return relationshipRepo.findAllByPersonId(personId).stream()
+                .map(rel -> rel.getPerson().getPersonId().equals(personId) ? rel.getPartner() : rel.getPerson())
+                .map(personMapper::toRes)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PersonRes> getMothersByFatherId(Long fatherId) {
+        if (!personRepo.existsById(fatherId)) throw new AppException(ErrorCode.PERSON_NOT_FOUND);
+        return relationshipRepo.findAllByPersonId(fatherId).stream()
+                .map(rel -> rel.getPerson().getPersonId().equals(fatherId) ? rel.getPartner() : rel.getPerson())
+                .filter(p -> p.getGender() == Gender.FEMALE)
+                .distinct()
+                .map(personMapper::toRes)
+                .toList();
     }
 
     // ==================== helpers ====================
+
+    private void incrementTotalPerson(FamilyCategory category) {
+        category.setTotalPerson(category.getTotalPerson() == null ? 1L : category.getTotalPerson() + 1);
+        familyCategoryRepo.save(category);
+    }
+
+    private void decrementTotalPerson(FamilyCategory category) {
+        long current = category.getTotalPerson() == null ? 0L : category.getTotalPerson();
+        category.setTotalPerson(Math.max(0L, current - 1));
+        familyCategoryRepo.save(category);
+    }
 
     private Long getOffset(Person person) {
         if (person.getFamilyCategory() == null) return 1L;
@@ -250,20 +307,23 @@ public class PersonServiceImpl implements PersonService {
         return offset != null ? offset : 1L;
     }
 
-    private FamilyTreeNodeRes toNode(Person p, List<String> pids, boolean isInFamily, Long offset) {
+    private FamilyTreeNodeRes toNode(Person p, List<Long> pids, boolean isInFamily, Long offset) {
         String avatarUrl = p.getAvatarPath() != null ? minioService.getPresignedUrl(p.getAvatarPath()) : null;
         Long displayGen = p.getGeneration() != null ? p.getGeneration() + offset : null;
 
         return FamilyTreeNodeRes.builder()
-                .id(p.getPersonId().toString())
-                .fid(p.getFather() != null ? p.getFather().getPersonId().toString() : null)
-                .mid(p.getMother() != null ? p.getMother().getPersonId().toString() : null)
+                .id(p.getPersonId())
+                .fid(p.getFather() != null ? p.getFather().getPersonId() : null)
+                .mid(p.getMother() != null ? p.getMother().getPersonId() : null)
                 .pids(pids)
-                .generation(displayGen != null ? displayGen.toString() : null)
+                .childs(Collections.emptyList())
+                .fidName(p.getFather() != null ? p.getFather().getFullName() : null)
+                .midName(p.getMother() != null ? p.getMother().getFullName() : null)
+                .generation(displayGen)
                 .personName(p.getFullName())
                 .gender(p.getGender() != null ? p.getGender().name().toLowerCase() : null)
-                .birthDate(p.getBirthDate() != null ? p.getBirthDate().toString() : null)
-                .deathDate(p.getDeathDate() != null ? p.getDeathDate().toString() : null)
+                .birthDate(p.getBirthDate() != null ? p.getBirthDate() : null)
+                .deathDate(p.getDeathDate() != null ? p.getDeathDate() : null)
                 .lifeStatus(p.getLifeStatus() != null ? p.getLifeStatus().name() : null)
                 .originPlace(p.getOriginPlace())
                 .placeOfResidence(p.getPlaceOfResidence())

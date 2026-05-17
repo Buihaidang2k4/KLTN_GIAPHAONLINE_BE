@@ -30,4 +30,10 @@ public interface FamilyMemberRepo extends JpaRepository<FamilyMember, Long> {
     Page<FamilyMember> findAllByAccount(Account account, Pageable pageable);
 
     boolean existsByFamilyAndAccount(Family family, Account account);
+
+    List<FamilyMember> findAllByAccount_AccountId(Long accountId);
+
+    List<FamilyMember> findByAccount_AccountIdAndFamily_FamilyId(Long accountAccountId, Long familyFamilyId);
+
+    long countByFamily_FamilyIdAndRole_NameAndStatus(Long familyId, String roleName, FamilyMemberStatus status);
 }

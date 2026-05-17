@@ -23,4 +23,6 @@ public interface FamilyAchievementRepo extends JpaRepository<FamilyAchievement, 
             )
             """)
     Page<FamilyAchievement> findAllByFamily_FamilyIdAndKeyword(Long familyId, String keyword, Pageable pageable);
+
+    long countByFamily_FamilyId(Long familyId);
 }
