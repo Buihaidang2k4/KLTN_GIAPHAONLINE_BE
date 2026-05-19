@@ -1,7 +1,9 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreatePermissionReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.UpdatePermissionReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
+import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.PermissionRes;
 import com.codewithdang.kltn_giaphaonline.entity.Permission;
 import com.codewithdang.kltn_giaphaonline.mapper.PermissionMapper;
@@ -11,6 +13,9 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -28,14 +33,22 @@ public class PermissionController {
     PermissionMapper permissionMapper;
 
     @GetMapping
-    ResponseEntity<ApiResponse<List<PermissionRes>>> getAllPermissions() {
-        List<PermissionRes> permissions = permissionService.getPermissions()
-                .stream()
-                .map(permissionMapper::toResponse)
-                .toList();
-
+    ResponseEntity<ApiResponse<PageResponse<PermissionRes>>> getAllPermissions(
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false) String scopeType,
+            @PageableDefault(sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
         return ResponseEntity.ok(
-                ApiResponse.success(200, "GET_ALL_PERMISSIONS_SUCCESS", permissions)
+                ApiResponse.success(200, "GET_ALL_PERMISSIONS_SUCCESS",
+                        permissionService.getAllPaged(keyword, scopeType, pageable))
+        );
+    }
+
+    @GetMapping("/list")
+    ResponseEntity<ApiResponse<List<PermissionRes>>> getAllList(
+            @RequestParam(required = false) String scopeType) {
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "GET_ALL_PERMISSIONS_LIST_SUCCESS",
+                        permissionService.getAllByScopeType(scopeType))
         );
     }
 
@@ -55,9 +68,11 @@ public class PermissionController {
         );
     }
 
-    @PutMapping
-    ResponseEntity<ApiResponse<PermissionRes>> updatePermission(@Valid @RequestBody CreatePermissionReq req) {
-        PermissionRes res = permissionMapper.toResponse(permissionService.updatePermission(req));
+    @PutMapping("/{permissionName}")
+    ResponseEntity<ApiResponse<PermissionRes>> updatePermission(
+            @PathVariable String permissionName,
+            @Valid @RequestBody UpdatePermissionReq req) {
+        PermissionRes res = permissionMapper.toResponse(permissionService.updatePermission(permissionName, req));
         return ResponseEntity.ok(
                 ApiResponse.success(200, "UPDATE_PERMISSION_SUCCESS", res)
         );

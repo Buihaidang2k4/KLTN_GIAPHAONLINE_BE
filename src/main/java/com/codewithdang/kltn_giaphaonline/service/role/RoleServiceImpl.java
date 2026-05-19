@@ -163,9 +163,12 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<RoleRes> getAll(Pageable pageable) {
+    public PageResponse<RoleRes> getAll(String keyword, String scopeType, Pageable pageable) {
+        RoleScopeType scope = (scopeType != null && !scopeType.isBlank())
+                ? RoleScopeType.fromString(scopeType).orElse(null)
+                : null;
         return pageMapper.toPageResponse(
-                roleRepository.findAll(pageable),
+                roleRepository.searchByNameAndScope(keyword, scope, pageable),
                 this::toRoleRes
         );
     }
@@ -214,7 +217,6 @@ public class RoleServiceImpl implements RoleService {
 
         return List.of(toRoleRes(member.getRole()));
     }
-
 
     private RoleRes toRoleRes(Role role) {
         Set<PermissionRes> permissions = role.getRolePermissions().stream()

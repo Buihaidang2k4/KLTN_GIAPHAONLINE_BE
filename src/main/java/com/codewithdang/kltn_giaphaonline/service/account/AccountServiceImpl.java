@@ -57,14 +57,6 @@ public class AccountServiceImpl implements AccountService {
     FamilyMemberRepo familyMemberRepo;
     NotificationRepo notificationRepo;
 
-    @Override
-    @Transactional(readOnly = true)
-    public Account getCurrentAccount() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-        return accountRepo.findByEmail(currentUsername)
-                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
-    }
 
     @Override
     @Transactional
@@ -231,23 +223,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
-    public void removeRole(Long accountId, String roleName) {
-        Account account = accountRepo.findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
-
-        AccountRole accountRole = accountRoleRepo.findByAccount_AccountIdAndRole_Name(accountId, roleName);
-        if (accountRole == null)
-            throw new AppException(ErrorCode.ROLE_NOT_ASSIGNED_TO_ACCOUNT);
-
-        accountRoleRepo.delete(accountRole);
-
-        if (account.getAccountRoles() != null)
-            account.getAccountRoles().remove(accountRole);
-
-    }
-
-    @Override
-    @Transactional
     public void changeAvatar(Long accountId, MultipartFile avatarFile) {
         Account account = accountRepo.findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
 
@@ -266,21 +241,49 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public void removeRole(Long accountId, String roleName) {
+        Account account = accountRepo.findById(accountId).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+
+        AccountRole accountRole = accountRoleRepo.findByAccount_AccountIdAndRole_Name(accountId, roleName);
+        if (accountRole == null)
+            throw new AppException(ErrorCode.ROLE_NOT_ASSIGNED_TO_ACCOUNT);
+
+        accountRoleRepo.delete(accountRole);
+
+        if (account.getAccountRoles() != null)
+            account.getAccountRoles().remove(accountRole);
+
+    }
+
+
+    @Override
     @Transactional(readOnly = true)
-    public PageResponse<AccountRes> getAccounts(Pageable pageable) {
-        Page<Account> accountPage = accountRepo.findAll(pageable);
+    public Account getCurrentAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return accountRepo.findByEmail(currentUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+    }
 
-        return pageMapper.toPageResponse(accountPage, account ->
-                {
-                    AccountRes res = accountMapper.toRes(account);
 
-                    if (account.getAvatarPath() != null && !account.getAvatarPath().isBlank()) {
-                        account.setAvatarUrl(minioService.getPresignedUrl(account.getAvatarPath()));
-                    }
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<AccountRes> getAccounts(String keyword, String status, Pageable pageable) {
+        AccountStatus accountStatus = (status != null && !status.isBlank())
+                ? AccountStatus.valueOf(status.trim().toUpperCase())
+                : null;
 
-                    return res;
-                }
-        );
+        Page<Account> accountPage = accountRepo.searchByEmailAndStatus(keyword, accountStatus, pageable);
+
+        return pageMapper.toPageResponse(accountPage, account -> {
+            AccountRes res = accountMapper.toRes(account);
+            if (account.getAvatarPath() != null && !account.getAvatarPath().isBlank()) {
+                res.setAvatarUrl(minioService.getPresignedUrl(account.getAvatarPath()));
+            }
+            return res;
+        });
     }
 
     @Override

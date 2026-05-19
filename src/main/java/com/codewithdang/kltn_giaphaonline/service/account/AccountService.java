@@ -34,7 +34,7 @@ public interface AccountService {
 
     void changeAvatar(Long accountId, MultipartFile avatarFile);
 
-    PageResponse<AccountRes> getAccounts(Pageable pageable); // admin
+    PageResponse<AccountRes> getAccounts(String keyword, String status, Pageable pageable); // admin
 
     AccountRes getAccountById(Long accountId);
 

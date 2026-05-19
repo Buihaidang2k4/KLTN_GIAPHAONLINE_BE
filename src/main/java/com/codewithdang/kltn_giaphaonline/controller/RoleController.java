@@ -31,10 +31,12 @@ public class RoleController {
     RoleMapper roleMapper;
 
     @GetMapping
-    ResponseEntity<ApiResponse<PageResponse<RoleRes>>> getAll(
+    ResponseEntity<ApiResponse<PageResponse<RoleRes>>> getAllByPaged(
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false) String scopeType,
             @PageableDefault(sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(200, "GET_ROLES_SUCCESS",
-                roleService.getAll(pageable)));
+                roleService.getAll(keyword, scopeType, pageable)));
     }
 
     @PostMapping

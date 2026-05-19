@@ -20,5 +20,5 @@ public class AccountRes {
     LocalDateTime lockedAt;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
-    List<String> roles;
+    List<RoleRes> roles;
 }

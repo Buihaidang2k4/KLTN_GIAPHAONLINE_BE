@@ -1,12 +1,18 @@
 package com.codewithdang.kltn_giaphaonline.service.permission;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.CreatePermissionReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.UpdatePermissionReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
+import com.codewithdang.kltn_giaphaonline.dto.response.PermissionRes;
 import com.codewithdang.kltn_giaphaonline.entity.Permission;
 import com.codewithdang.kltn_giaphaonline.enums.RoleScopeType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
+import com.codewithdang.kltn_giaphaonline.mapper.PermissionMapper;
 import com.codewithdang.kltn_giaphaonline.repo.PermissionRepo;
 import com.codewithdang.kltn_giaphaonline.repo.RolePermissionRepo;
+import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
+import org.springframework.data.domain.Pageable;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -24,6 +30,8 @@ import java.util.List;
 public class PermissionServiceImpl implements PermissionService {
     PermissionRepo permissionRepo;
     RolePermissionRepo rolePermissionRepo;
+    PageMapper pageMapper;
+    PermissionMapper permissionMapper;
 
     @Override
     @Transactional
@@ -50,11 +58,15 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     @Transactional
     @PreAuthorize("hasRole('SYSTEM_ADMIN')")
-    public Permission updatePermission(CreatePermissionReq req) {
-        Permission permission = permissionRepo.findById(req.name())
+    public Permission updatePermission(String permissionName, UpdatePermissionReq req) {
+        Permission permission = permissionRepo.findById(permissionName)
                 .orElseThrow(() -> new AppException(ErrorCode.PERMISSION_NOT_EXISTED));
-        permission.setScopeType(RoleScopeType.valueOf(req.scopeType().trim().toUpperCase()));
-        permission.setDescription(req.description());
+
+        RoleScopeType scopeType = RoleScopeType.fromString(req.scopeType())
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_PERMISSION_SCOPE_MISMATCH));
+
+        permission.setScopeType(scopeType);
+        if (req.description() != null) permission.setDescription(req.description());
 
         return permissionRepo.save(permission);
     }
@@ -78,6 +90,29 @@ public class PermissionServiceImpl implements PermissionService {
     @Transactional(readOnly = true)
     public List<Permission> getPermissions() {
         return permissionRepo.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<PermissionRes> getAllPaged(String keyword, String scopeType, Pageable pageable) {
+        RoleScopeType scope = (scopeType != null && !scopeType.isBlank())
+                ? RoleScopeType.fromString(scopeType).orElse(null)
+                : null;
+        return pageMapper.toPageResponse(
+                permissionRepo.searchByNameAndScope(keyword, scope, pageable),
+                permissionMapper::toResponse
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PermissionRes> getAllByScopeType(String scopeType) {
+        RoleScopeType scope = (scopeType != null && !scopeType.isBlank())
+                ? RoleScopeType.fromString(scopeType).orElse(null)
+                : null;
+        return permissionRepo.findAllByScope(scope).stream()
+                .map(permissionMapper::toResponse)
+                .toList();
     }
 
     @Override

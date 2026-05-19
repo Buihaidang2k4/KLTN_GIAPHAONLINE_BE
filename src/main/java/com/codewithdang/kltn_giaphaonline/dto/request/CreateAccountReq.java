@@ -25,7 +25,6 @@ public record CreateAccountReq(
         )
         String phoneNumber,
 
-        @NotBlank(message = "FamilyName không được để trống")
         String familyName,
 
         @NotBlank(message = "Mật khẩu không được để trống")

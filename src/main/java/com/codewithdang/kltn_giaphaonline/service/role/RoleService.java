@@ -28,7 +28,7 @@ public interface RoleService {
 
     List<RoleRes> getCurrentRoleByFamilyId(Long familyId);
 
-    PageResponse<RoleRes> getAll(Pageable pageable);
+    PageResponse<RoleRes> getAll(String keyword, String scopeType, Pageable pageable);
 
     boolean isSystemAccount();
 }

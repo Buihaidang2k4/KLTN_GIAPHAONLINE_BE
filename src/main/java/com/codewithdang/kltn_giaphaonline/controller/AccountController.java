@@ -33,13 +33,12 @@ public class AccountController {
 
     @GetMapping
     ResponseEntity<ApiResponse<PageResponse<AccountRes>>> getAccounts(
-            @PageableDefault(
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable
-    ) {
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @RequestParam(required = false) String status,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(
-                ApiResponse.success(200, "GET_ACCOUNTS_SUCCESS", accountService.getAccounts(pageable))
+                ApiResponse.success(200, "GET_ACCOUNTS_SUCCESS",
+                        accountService.getAccounts(keyword, status, pageable))
         );
     }
 

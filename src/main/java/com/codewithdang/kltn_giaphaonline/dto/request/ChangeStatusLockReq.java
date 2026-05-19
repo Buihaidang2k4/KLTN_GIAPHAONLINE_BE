@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 
 public record ChangeStatusLockReq(
         AccountStatus accountStatus,
-        @NotNull
         String lockReason
 ) {
 }

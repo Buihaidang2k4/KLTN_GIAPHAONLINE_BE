@@ -25,7 +25,7 @@ public abstract class AccountMapper {
 
     public abstract Account toEntity(CreateAccountReq req);
 
-    @Mapping(target = "roles", source = "accountRoles", qualifiedByName = "mapAccountRoleToString")
+    @Mapping(target = "roles", source = "accountRoles", qualifiedByName = "mapAccountRoleToList")
     public abstract AccountRes toRes(Account account);
 
     @Mapping(target = "families", source = "ownedFamilies")
@@ -50,8 +50,8 @@ public abstract class AccountMapper {
                 .collect(Collectors.toSet());
     }
 
-    @Named("mapAccountRoleToString")
-    protected List<String> mapAccountRoleToString(Set<AccountRole> accountRoles) {
+    @Named("mapAccountRoleToList")
+    protected List<RoleRes> mapAccountRoleToList(Set<AccountRole> accountRoles) {
         if (accountRoles == null || accountRoles.isEmpty()) {
             return Collections.emptyList();
         }
@@ -59,7 +59,7 @@ public abstract class AccountMapper {
         return accountRoles.stream()
                 .map(AccountRole::getRole)
                 .filter(Objects::nonNull)
-                .map(role -> role.getName())
+                .map(role -> roleMapper.toRes(role))
                 .collect(Collectors.toList());
     }
 }
