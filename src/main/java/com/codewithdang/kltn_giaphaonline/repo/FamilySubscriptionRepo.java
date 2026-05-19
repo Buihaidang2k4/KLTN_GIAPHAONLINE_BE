@@ -19,4 +19,6 @@ public interface FamilySubscriptionRepo extends JpaRepository<FamilySubscription
     Optional<FamilySubscription> findFirstByFamily_FamilyIdOrderByCreatedAtDesc(Long familyId);
 
     Optional<FamilySubscription> findByFamily_FamilyId(Long familyFamilyId);
+
+    long countByStatus(SubscriptionStatus status);
 }

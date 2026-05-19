@@ -5,23 +5,38 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DashboardRes {
-    Long totalMembersInFamilyTree;
-    Long totalEvents;
-    Long totalAlbumMedias;
-    Long totalAchievement;
-    Long totalCustoms;
-    Long totalAdmin;
-    Long totalStorages;
-    Long totalUsedStorages;
-    String currentFamilyName;
-    String currentSubscriptionPlanName;
-    String currentSubscriptionPlanPrice;
-    LocalDate currentSubscriptionStartDate;
-    LocalDate currentSubscriptionEndDate;
+public class DashboardSystemRes {
+
+    // ==================== Tài khoản ====================
+    Long totalAccounts;
+    Long totalAccountsActive;
+    Long totalAccountsLocked;
+
+    // ==================== Gia phả ====================
+    Long totalFamilies;
+    Long totalFamiliesWithActiveSub;
+
+    // ==================== Subscription ====================
+    Long totalActiveSubscriptions;
+    Long totalExpiredSubscriptions;
+
+    // ==================== Doanh thu ====================
+    BigDecimal revenueThisMonth;
+    BigDecimal revenueLastMonth;
+    BigDecimal revenueTotal;
+
+    // ==================== Giao dịch ====================
+    Long totalPayments;
+    Long totalPaymentsSuccess;
+    Long totalPaymentsFailed;
+
+    // ==================== Tăng trưởng ====================
+    List<MonthlyStatRes> accountGrowth;   // số account mới theo tháng
+    List<MonthlyStatRes> revenueGrowth;   // doanh thu theo tháng
 }

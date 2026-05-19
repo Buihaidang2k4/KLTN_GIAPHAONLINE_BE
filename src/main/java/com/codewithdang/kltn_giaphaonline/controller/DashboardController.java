@@ -2,6 +2,7 @@ package com.codewithdang.kltn_giaphaonline.controller;
 
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.DashboardRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.DashboardSystemRes;
 import com.codewithdang.kltn_giaphaonline.service.dashboard.DashboardService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
@@ -25,6 +26,12 @@ public class DashboardController {
     @GetMapping("/family/{familyId}")
     public ResponseEntity<ApiResponse<DashboardRes>> getDataDashboard(@PathVariable Long familyId) {
         return ResponseEntity.ok(ApiResponse.success(200, "GET_DASHBOARD_SUCCESS",
-                dashboardService.getDataDashboard(familyId)));
+                dashboardService.getDataDashboardUser(familyId)));
+    }
+
+    @GetMapping("/system")
+    public ResponseEntity<ApiResponse<DashboardSystemRes>> getDataDashboardSystem() {
+        return ResponseEntity.ok(ApiResponse.success(200, "GET_DASHBOARD_SYSTEM_SUCCESS",
+                dashboardService.getDataDashboardSystem()));
     }
 }

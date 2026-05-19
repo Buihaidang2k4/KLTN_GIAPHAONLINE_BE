@@ -1,10 +1,14 @@
 package com.codewithdang.kltn_giaphaonline.service.dashboard;
 
 import com.codewithdang.kltn_giaphaonline.dto.response.DashboardRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.DashboardSystemRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.MonthlyStatRes;
 import com.codewithdang.kltn_giaphaonline.entity.Family;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyCategory;
 import com.codewithdang.kltn_giaphaonline.entity.FamilySubscription;
+import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
 import com.codewithdang.kltn_giaphaonline.enums.FamilyMemberStatus;
+import com.codewithdang.kltn_giaphaonline.enums.PaymentStatus;
 import com.codewithdang.kltn_giaphaonline.enums.SubscriptionStatus;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
@@ -16,6 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +42,8 @@ public class DashboardServiceImpl implements DashboardService {
     FamilySubscriptionRepo familySubscriptionRepo;
     AlbumMediaRepo albumMediaRepo;
     CeremonyRepo ceremonyRepo;
+    AccountRepo accountRepo;
+    PaymentRepo paymentRepo;
 
 
     /***
@@ -43,7 +53,7 @@ public class DashboardServiceImpl implements DashboardService {
      */
     @Override
     @Transactional(readOnly = true)
-    public DashboardRes getDataDashboard(Long familyId) {
+    public DashboardRes getDataDashboardUser(Long familyId) {
         Family family = familyRepo.findById(familyId)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
 
@@ -91,6 +101,72 @@ public class DashboardServiceImpl implements DashboardService {
                 .currentSubscriptionPlanPrice(planPrice)
                 .currentSubscriptionStartDate(startDate)
                 .currentSubscriptionEndDate(endDate)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DashboardSystemRes getDataDashboardSystem() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime twelveMonthsAgo = now.minusMonths(12).withDayOfMonth(1);
+        Instant twelveMonthsAgoInstant = twelveMonthsAgo.atZone(ZoneId.systemDefault()).toInstant();
+
+        int thisYear = now.getYear();
+        int thisMonth = now.getMonthValue();
+        int lastYear = now.minusMonths(1).getYear();
+        int lastMonth = now.minusMonths(1).getMonthValue();
+
+        // account
+        long totalAccounts = accountRepo.count();
+        long totalActive = accountRepo.countByAccountStatus(AccountStatus.ACTIVE);
+        long totalLocked = accountRepo.countByAccountStatus(AccountStatus.LOCKED);
+
+        // family
+        long totalFamilies = familyRepo.count();
+        long totalFamiliesWithSub = familySubscriptionRepo.countByStatus(SubscriptionStatus.ACTIVE);
+
+        // subscription
+        long totalActiveSub = familySubscriptionRepo.countByStatus(SubscriptionStatus.ACTIVE);
+        long totalExpiredSub = familySubscriptionRepo.countByStatus(SubscriptionStatus.EXPIRED);
+
+        // payment
+        long totalPayments = paymentRepo.count();
+        long totalSuccess = paymentRepo.countByStatus(PaymentStatus.SUCCESS);
+        long totalFailed = paymentRepo.countByStatus(PaymentStatus.FAILED);
+        BigDecimal revenueTotal = paymentRepo.sumTotalRevenue();
+        BigDecimal revenueThisMonth = paymentRepo.sumRevenueByMonth(thisYear, thisMonth);
+        BigDecimal revenueLastMonth = paymentRepo.sumRevenueByMonth(lastYear, lastMonth);
+
+        // account growth 12 tháng
+        List<MonthlyStatRes> accountGrowth = accountRepo
+                .countNewAccountsGroupByMonth(twelveMonthsAgo)
+                .stream()
+                .map(row -> new MonthlyStatRes((String) row[0], ((Number) row[1]).longValue(), null))
+                .toList();
+
+        // revenue growth 12 tháng
+        List<MonthlyStatRes> revenueGrowth = paymentRepo
+                .sumRevenueGroupByMonth(twelveMonthsAgoInstant)
+                .stream()
+                .map(row -> new MonthlyStatRes((String) row[0], null, new BigDecimal(row[1].toString())))
+                .toList();
+
+        return DashboardSystemRes.builder()
+                .totalAccounts(totalAccounts)
+                .totalAccountsActive(totalActive)
+                .totalAccountsLocked(totalLocked)
+                .totalFamilies(totalFamilies)
+                .totalFamiliesWithActiveSub(totalFamiliesWithSub)
+                .totalActiveSubscriptions(totalActiveSub)
+                .totalExpiredSubscriptions(totalExpiredSub)
+                .totalPayments(totalPayments)
+                .totalPaymentsSuccess(totalSuccess)
+                .totalPaymentsFailed(totalFailed)
+                .revenueTotal(revenueTotal)
+                .revenueThisMonth(revenueThisMonth)
+                .revenueLastMonth(revenueLastMonth)
+                .accountGrowth(accountGrowth)
+                .revenueGrowth(revenueGrowth)
                 .build();
     }
 

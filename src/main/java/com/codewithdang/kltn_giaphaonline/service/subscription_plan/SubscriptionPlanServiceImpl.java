@@ -1,16 +1,19 @@
 package com.codewithdang.kltn_giaphaonline.service.subscription_plan;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.SubscriptionPlanReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.SubscriptionPlanRes;
 import com.codewithdang.kltn_giaphaonline.entity.SubscriptionPlan;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
+import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.SubscriptionPlanMapper;
 import com.codewithdang.kltn_giaphaonline.repo.SubscriptionPlanRepo;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,17 @@ import java.util.List;
 public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     SubscriptionPlanRepo planRepo;
     SubscriptionPlanMapper planMapper;
+    PageMapper pageMapper;
+
+    @Override
+    @Transactional
+    public SubscriptionPlanRes activePlan(Long planId) {
+        SubscriptionPlan plan = planRepo.findById(planId)
+                .orElseThrow(() -> new AppException(ErrorCode.SUBSCRIPTION_PLAN_NOT_FOUND));
+
+        plan.setIsActive(!plan.getIsActive());
+        return planMapper.toRes(planRepo.save(plan));
+    }
 
     @Override
     @Transactional
@@ -110,11 +124,11 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SubscriptionPlanRes> getAllPlans() {
-        return planRepo.findAll()
-                .stream()
-                .map(planMapper::toRes)
-                .toList();
+    public PageResponse<SubscriptionPlanRes> getAllPlans(String keyword, Boolean isActive, Pageable pageable) {
+        return pageMapper.toPageResponse(
+                planRepo.searchPlans(keyword, isActive, pageable),
+                planMapper::toRes
+        );
     }
 
     @Override

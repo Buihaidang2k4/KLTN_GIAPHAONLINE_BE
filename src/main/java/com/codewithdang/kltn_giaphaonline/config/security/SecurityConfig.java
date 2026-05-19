@@ -80,7 +80,7 @@ public class SecurityConfig {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         // Cho phép Frontend của bạn truy cập
         corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
 

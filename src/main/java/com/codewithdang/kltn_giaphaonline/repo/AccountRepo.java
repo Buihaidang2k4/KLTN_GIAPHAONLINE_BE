@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -25,4 +26,9 @@ public interface AccountRepo extends JpaRepository<Account, Long> {
     Page<Account> searchByEmailAndStatus(@Param("keyword") String keyword,
                                          @Param("status") AccountStatus status,
                                          Pageable pageable);
+
+    long countByAccountStatus(AccountStatus status);
+
+    @Query(value = "SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COUNT(*) FROM accounts WHERE created_at >= :from GROUP BY TO_CHAR(created_at, 'YYYY-MM') ORDER BY month ASC", nativeQuery = true)
+    List<Object[]> countNewAccountsGroupByMonth(@Param("from") java.time.LocalDateTime from);
 }
