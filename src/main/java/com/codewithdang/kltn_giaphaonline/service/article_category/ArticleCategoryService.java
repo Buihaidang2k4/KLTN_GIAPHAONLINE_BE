@@ -16,5 +16,5 @@ public interface ArticleCategoryService {
 
     ArticleCategoryRes getCategoryById(Long articleCategoryId);
 
-    PageResponse<ArticleCategoryRes> getAll(Pageable pageable);
+    PageResponse<ArticleCategoryRes> getAll(String keyword, Pageable pageable);
 }

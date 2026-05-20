@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class MonthlyStatRes {
-    String month;        // "2026-01", "2026-02"...
-    Long count;          // số lượng (account mới, family mới...)
-    BigDecimal value;    // giá trị tiền (doanh thu)
+    String month;
+    Long count;
+    BigDecimal value;
 }

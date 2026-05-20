@@ -12,6 +12,7 @@ import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AlbumMediaRepo;
 import com.codewithdang.kltn_giaphaonline.repo.AlbumRepo;
 import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioService;
+import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioServiceImpl;
 import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -255,14 +256,13 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
     }
 
     private MediaType detectMediaType(MultipartFile file) {
-        java.lang.String type = file.getContentType();
+        String type = file.getContentType();
 
         if (type == null) return MediaType.OTHER;
 
         if (type.startsWith("image/")) return MediaType.IMAGE;
         if (type.startsWith("video/")) return MediaType.VIDEO;
-        if (type.contains("pdf") || type.contains("word") || type.contains("text"))
-            return MediaType.DOCUMENT;
+        if (MinioServiceImpl.DOCUMENT.contains(type)) return MediaType.DOCUMENT;
 
         return MediaType.OTHER;
     }

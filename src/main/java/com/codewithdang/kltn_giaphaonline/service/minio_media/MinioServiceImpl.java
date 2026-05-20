@@ -43,7 +43,23 @@ public class MinioServiceImpl implements MinioService {
     public static final List<String> DOCUMENT = List.of(
             "application/pdf",
             "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "text/plain",
+            "application/rtf",
+            "application/vnd.oasis.opendocument.text",
+            "application/vnd.apple.pages",
+            "application/x-abiword",
+            "application/vnd.wordperfect",
+            "text/markdown",
+            "application/epub+zip",
+            // Excel
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.oasis.opendocument.spreadsheet",
+            // PowerPoint
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.oasis.opendocument.presentation"
     );
 
     /**
@@ -69,7 +85,7 @@ public class MinioServiceImpl implements MinioService {
      */
     @Override
     public String uploadFile(MultipartFile file, String folder) {
-        validateFile(file, 20 * 1024 * 1024, DOCUMENT, ErrorCode.INVALID_DOCUMENT_TYPE);
+        validateFile(file, 50 * 1024 * 1024, DOCUMENT, ErrorCode.INVALID_DOCUMENT_TYPE);
         return executeUpload(file, folder);
     }
 
@@ -138,7 +154,7 @@ public class MinioServiceImpl implements MinioService {
 
         // Kiểm tra dung lượng
         if (file.getSize() > maxSize) {
-            throw new AppException(maxSize > 10 * 1024 * 1024 ? ErrorCode.VIDEO_TOO_LARGE : ErrorCode.FILE_TOO_LARGE);
+            throw new AppException(ErrorCode.FILE_TOO_LARGE);
         }
 
         // Kiểm tra định dạng

@@ -29,8 +29,8 @@ public class ArticleCategoryController {
 
     @PostMapping
     ResponseEntity<ApiResponse<ArticleCategoryRes>> create(@RequestBody @Valid CreateArticleCategoryReq req) {
-        return ResponseEntity.ok(
-                ApiResponse.success(200, "CREATE_ARTICLE_CATEGORY_SUCCESS", articleCategoryService.createCategory(req))
+        return ResponseEntity.status(201).body(
+                ApiResponse.success(201, "CREATE_ARTICLE_CATEGORY_SUCCESS", articleCategoryService.createCategory(req))
         );
     }
 
@@ -59,13 +59,11 @@ public class ArticleCategoryController {
 
     @GetMapping
     ResponseEntity<ApiResponse<PageResponse<ArticleCategoryRes>>> getAll(
-            @PageableDefault(
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable
-    ) {
+            @RequestParam(required = false, defaultValue = "") String keyword,
+            @PageableDefault(sort = "displayOrder", direction = Sort.Direction.ASC) Pageable pageable) {
         return ResponseEntity.ok(
-                ApiResponse.success(200, "GET_ALL_ARTICLE_CATEGORY_SUCCESS", articleCategoryService.getAll(pageable))
+                ApiResponse.success(200, "GET_ALL_ARTICLE_CATEGORY_SUCCESS",
+                        articleCategoryService.getAll(keyword, pageable))
         );
     }
 }

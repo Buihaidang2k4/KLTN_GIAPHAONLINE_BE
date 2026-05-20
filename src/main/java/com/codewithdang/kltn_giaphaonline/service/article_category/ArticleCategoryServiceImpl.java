@@ -92,8 +92,9 @@ public class ArticleCategoryServiceImpl implements ArticleCategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ArticleCategoryRes> getAll(Pageable pageable) {
-        Page<ArticleCategory> articleCategories = articleCategoryRepo.findAll(pageable);
-        return pageMapper.toPageResponse(articleCategories, articleCategoryMapper::toRes);
+    public PageResponse<ArticleCategoryRes> getAll(String keyword, Pageable pageable) {
+        return pageMapper.toPageResponse(
+                articleCategoryRepo.searchByName(keyword, pageable),
+                articleCategoryMapper::toRes);
     }
 }
