@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.service.tree.family_category;
 
+import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.FamilyCategoryReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyCategoryRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
@@ -7,6 +8,7 @@ import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Family;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyCategory;
 import com.codewithdang.kltn_giaphaonline.entity.Person;
+import com.codewithdang.kltn_giaphaonline.enums.AuditAction;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyCategoryMapper;
@@ -16,6 +18,7 @@ import com.codewithdang.kltn_giaphaonline.repo.FamilyCategoryRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.repo.PersonRelationshipRepo;
 import com.codewithdang.kltn_giaphaonline.repo.PersonRepo;
+import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +44,7 @@ public class FamilyCategoryServiceImpl implements FamilyCategoryService {
     PageMapper pageMapper;
     PersonRepo personRepo;
     PersonRelationshipRepo relationshipRepo;
+    AuditLogService auditLogService;
 
     @Override
     @Transactional
@@ -50,6 +55,15 @@ public class FamilyCategoryServiceImpl implements FamilyCategoryService {
         familyCategory.setFamily(family);
         familyCategory.setOwner(currentAccount);
         familyCategoryRepo.save(familyCategory);
+
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(familyId)
+                .actorAccountId(currentAccount.getAccountId())
+                .auditAction(AuditAction.FAMILY_CREATE.getLabel())
+                .newData(Map.of("Danh mục", familyCategory.getFamilyName()))
+                .entityId(familyCategory.getFamilyCategoryId().toString())
+                .build());
         return categoryMapper.toRes(familyCategory);
     }
 
@@ -58,18 +72,32 @@ public class FamilyCategoryServiceImpl implements FamilyCategoryService {
     public FamilyCategoryRes updateFamilyCategory(Long categoryId, FamilyCategoryReq req) {
         FamilyCategory category = familyCategoryRepo.findById(categoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_CATEGORY_NOT_EXISTED));
+        Account currentAccount = getCurrentAccount();
+        String oldCategoryName = category.getFamilyName();
 
         categoryMapper.updateEntityFromRequest(req, category);
         familyCategoryRepo.save(category);
+
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(category.getFamily().getFamilyId())
+                .actorAccountId(currentAccount.getAccountId())
+                .auditAction(AuditAction.FAMILY_UPDATE.getLabel())
+                .newData(Map.of("Danh mục", category.getFamilyName()))
+                .oldData(Map.of("Danh mục", oldCategoryName))
+                .entityId(category.getFamilyCategoryId().toString())
+                .build());
+
         return categoryMapper.toRes(category);
     }
 
     @Override
     @Transactional
     public void deleteFamilyCategory(Long id) {
-        if (!familyCategoryRepo.existsById(id)) {
-            throw new AppException(ErrorCode.FAMILY_CATEGORY_NOT_EXISTED);
-        }
+
+        FamilyCategory category = familyCategoryRepo.findById(id).orElseThrow(() ->
+                new AppException(ErrorCode.FAMILY_CATEGORY_NOT_EXISTED));
+        Account currentAccount = getCurrentAccount();
 
         // 1. lấy tất cả person trong category
         List<Person> persons = personRepo.findAllByFamilyCategory_FamilyCategoryId(id);
@@ -94,6 +122,15 @@ public class FamilyCategoryServiceImpl implements FamilyCategoryService {
 
         // 5. xóa category
         familyCategoryRepo.deleteById(id);
+
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(category.getFamily().getFamilyId())
+                .actorAccountId(currentAccount.getAccountId())
+                .auditAction(AuditAction.FAMILY_DELETE.getLabel())
+                .newData(Map.of("Danh mục", category.getFamilyName()))
+                .entityId(category.getFamilyCategoryId().toString())
+                .build());
     }
 
     @Override

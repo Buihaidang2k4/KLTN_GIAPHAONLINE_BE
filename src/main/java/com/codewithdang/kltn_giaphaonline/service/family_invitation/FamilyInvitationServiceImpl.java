@@ -8,6 +8,7 @@ import com.codewithdang.kltn_giaphaonline.dto.response.InviteInvitationMemberRes
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.*;
 import com.codewithdang.kltn_giaphaonline.enums.*;
+import com.codewithdang.kltn_giaphaonline.enums.AuditEntityType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyInvitationMapper;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -134,21 +136,14 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         // 5. Gửi thông báo
         handleNotificationDispatch(family, inviterAccount, invitedAccount, familyInvitation);
 
-        // audit log inviter member
-        auditLogService.log(
-                new CreateAuditLogReq(
-                        inviterAccount.getAccountId(),
-                        family.getFamilyId(),
-                        AuditAction.INVITE_MEMBER,
-                        "FamilyInvitation",
-                        String.valueOf(familyInvitation.getFamilyInvitationId()),
-                        null,
-                        buildInvitationDataMap(familyInvitation),
-                        null,
-                        null
-                )
-
-        );
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(family.getFamilyId())
+                .actorAccountId(inviterAccount.getAccountId())
+                .auditAction(AuditAction.INVITE_MEMBER.getLabel())
+                .entityType(AuditEntityType.FAMILY.name())
+                .newData(buildInvitationDataMap(familyInvitation))
+                .entityId(familyInvitation.getFamilyInvitationId().toString())
+                .build());
 
         return familyInvitationMapper.toRes(familyInvitation);
     }
@@ -188,20 +183,15 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         }
         updateInvitationStatus(familyInvitation, currentAccount, FamilyInvitationStatus.ACCEPTED);
 
-        // them audit log inviter member accept
-        auditLogService.log(
-                new CreateAuditLogReq(
-                        currentAccount.getAccountId(),
-                        familyInvitation.getFamily().getFamilyId(),
-                        AuditAction.ACCEPT_INVITATION,
-                        "FamilyInvitation",
-                        String.valueOf(familyInvitation.getFamilyInvitationId()),
-                        oldData,
-                        buildInvitationDataMap(familyInvitation),
-                        null,
-                        null
-                )
-        );
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(familyInvitation.getFamily().getFamilyId())
+                .actorAccountId(currentAccount.getAccountId())
+                .auditAction(AuditAction.ACCEPT_INVITATION.getLabel())
+                .entityType(AuditEntityType.FAMILY.name())
+                .oldData(oldData)
+                .newData(buildInvitationDataMap(familyInvitation))
+                .entityId(familyInvitation.getFamilyInvitationId().toString())
+                .build());
     }
 
     /***
@@ -230,17 +220,15 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
 
         updateInvitationStatus(invitation, currentAccount, FamilyInvitationStatus.DECLINED);
 
-        auditLogService.log(new CreateAuditLogReq(
-                currentAccount.getAccountId(),
-                invitation.getFamily().getFamilyId(),
-                AuditAction.REJECT_INVITATION,
-                "FamilyInvitation",
-                String.valueOf(invitation.getFamilyInvitationId()),
-                oldData,
-                buildInvitationDataMap(invitation),
-                null,
-                null
-        ));
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(invitation.getFamily().getFamilyId())
+                .actorAccountId(currentAccount.getAccountId())
+                .auditAction(AuditAction.REJECT_INVITATION.getLabel())
+                .entityType(AuditEntityType.FAMILY.name())
+                .oldData(oldData)
+                .newData(buildInvitationDataMap(invitation))
+                .entityId(invitation.getFamilyInvitationId().toString())
+                .build());
     }
 
     /***
@@ -269,17 +257,15 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         invitation.setHandledAt(Instant.now());
         invitationRepo.save(invitation);
 
-        auditLogService.log(new CreateAuditLogReq(
-                currentAccount.getAccountId(),
-                invitation.getFamily().getFamilyId(),
-                AuditAction.CANCEL_INVITATION,
-                "FamilyInvitation",
-                String.valueOf(invitation.getFamilyInvitationId()),
-                oldData,
-                buildInvitationDataMap(invitation),
-                null,
-                null
-        ));
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(invitation.getFamily().getFamilyId())
+                .actorAccountId(currentAccount.getAccountId())
+                .auditAction(AuditAction.CANCEL_INVITATION.getLabel())
+                .entityType(AuditEntityType.FAMILY.name())
+                .oldData(oldData)
+                .newData(buildInvitationDataMap(invitation))
+                .entityId(invitation.getFamilyInvitationId().toString())
+                .build());
     }
 
     private void handleNotificationDispatch(Family family, Account inviter, Account invited, FamilyInvitation invitation) {
@@ -364,17 +350,14 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
      */
     private Map<String, Object> buildInvitationDataMap(FamilyInvitation invitation) {
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("invitationId", invitation.getFamilyInvitationId());
-        data.put("familyId", invitation.getFamily().getFamilyId());
-        data.put("familyName", invitation.getFamily().getFamilyName());
-        data.put("message", invitation.getMessage());
-        data.put("invitedAccountId", invitation.getInvitedAccount() != null ? invitation.getInvitedAccount().getAccountId() : null);
-        data.put("invitedEmail", invitation.getInvitedEmail());
-        data.put("status", invitation.getInvitationStatus().name());
-        data.put("role", invitation.getRole().getName());
-        data.put("invitedBy", invitation.getInvitedByAccount().getAccountId());
-        data.put("expiredAt", invitation.getExpiredAt());
-        if (invitation.getHandledAt() != null) data.put("handledAt", invitation.getHandledAt());
+        data.put("Dòng họ", invitation.getFamily().getFamilyName());
+        data.put("Email được mời", invitation.getInvitedEmail());
+        data.put("Vai trò", invitation.getRole().getName());
+        data.put("Trạng thái", invitation.getInvitationStatus().name());
+        data.put("Người mời", invitation.getInvitedByAccount().getFullName());
+        if (invitation.getMessage() != null) data.put("Lời nhắn", invitation.getMessage());
+        if (invitation.getExpiredAt() != null) data.put("Hết hạn", invitation.getExpiredAt());
+        if (invitation.getHandledAt() != null) data.put("Xử lý lúc", invitation.getHandledAt());
         return data;
     }
 

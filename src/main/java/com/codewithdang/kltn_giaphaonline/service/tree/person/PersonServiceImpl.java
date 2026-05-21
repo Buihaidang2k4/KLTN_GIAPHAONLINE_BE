@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.service.tree.person;
 
+import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.PersonReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyTreeNodeRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PersonRes;
@@ -7,6 +8,8 @@ import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyCategory;
 import com.codewithdang.kltn_giaphaonline.entity.Person;
 import com.codewithdang.kltn_giaphaonline.entity.PersonRelationship;
+import com.codewithdang.kltn_giaphaonline.enums.AuditAction;
+import com.codewithdang.kltn_giaphaonline.enums.AuditEntityType;
 import com.codewithdang.kltn_giaphaonline.enums.Gender;
 import com.codewithdang.kltn_giaphaonline.enums.RelationType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
@@ -16,6 +19,7 @@ import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyCategoryRepo;
 import com.codewithdang.kltn_giaphaonline.repo.PersonRelationshipRepo;
 import com.codewithdang.kltn_giaphaonline.repo.PersonRepo;
+import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioService;
 import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
 import lombok.AccessLevel;
@@ -29,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +47,7 @@ public class PersonServiceImpl implements PersonService {
     AccountRepo accountRepo;
     PersonMapper personMapper;
     MinioService minioService;
+    AuditLogService auditLogService;
 
     @Override
     @Transactional
@@ -61,6 +67,14 @@ public class PersonServiceImpl implements PersonService {
 
         Person saved = personRepo.save(newPerson);
         incrementTotalPerson(category);
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .auditAction(AuditAction.NODE_CREATE.getLabel())
+                .actorAccountId(account.getAccountId())
+                .familyId(category.getFamily().getFamilyId())
+                .newData(Map.of("Tên thành viên: ", saved.getFullName()))
+                .entityId(saved.getPersonId().toString())
+                .build());
         return personMapper.toRes(saved);
     }
 
@@ -69,6 +83,7 @@ public class PersonServiceImpl implements PersonService {
     public PersonRes updatePerson(Long personId, PersonReq req) {
         Person person = personRepo.findById(personId)
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
+        Account account = getCurrentAccount();
 
         if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
             if (person.getAvatarPath() != null) minioService.deleteFile(person.getAvatarPath());
@@ -94,7 +109,18 @@ public class PersonServiceImpl implements PersonService {
         if (req.getBiography() != null) person.setBiography(req.getBiography());
         if (req.getSlug() != null) person.setSlug(req.getSlug());
 
-        return personMapper.toRes(personRepo.save(person));
+        person = personRepo.save(person);
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .auditAction(AuditAction.NODE_UPDATE.getLabel())
+                .actorAccountId(account.getAccountId())
+                .entityType(AuditEntityType.PERSON.name())
+                .familyId(person.getFamilyCategory() != null ? person.getFamilyCategory().getFamily().getFamilyId() : null)
+                .newData(Map.of("fullName", String.valueOf(person.getFullName())))
+                .entityId(person.getPersonId().toString())
+                .build());
+
+        return personMapper.toRes(person);
     }
 
     @Override
@@ -122,8 +148,6 @@ public class PersonServiceImpl implements PersonService {
         Person currentPerson = personRepo.findById(personId)
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
 
-//        if (currentPerson.getGender() != Gender.MALE)
-//            throw new AppException(ErrorCode.PERSON_MUST_BE_MALE_TO_ADD_ROOT);
         if (currentPerson.getFather() != null)
             throw new AppException(ErrorCode.PERSON_ALREADY_HAS_FATHER);
 
@@ -156,6 +180,15 @@ public class PersonServiceImpl implements PersonService {
 
         category.setGenerationOffset(category.getGenerationOffset() + 1);
         familyCategoryRepo.save(category);
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .auditAction(AuditAction.NODE_CREATE.getLabel())
+                .actorAccountId(currentAccount.getAccountId())
+                .entityType(AuditEntityType.PERSON.name())
+                .familyId(category.getFamily().getFamilyId())
+                .newData(Map.of("fullName", String.valueOf(newRoot.getFullName()), "type", "root"))
+                .entityId(newRoot.getPersonId().toString())
+                .build());
 
         return toNode(newRoot, Collections.emptyList(), true, category.getGenerationOffset());
     }
@@ -190,6 +223,15 @@ public class PersonServiceImpl implements PersonService {
                 .partner(partner)
                 .relationType(RelationType.SPOUSE)
                 .isPrimary(true)
+                .build());
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .auditAction(AuditAction.NODE_RELATION_CHANGE.getLabel())
+                .actorAccountId(account.getAccountId())
+                .entityType(AuditEntityType.PERSON.name())
+                .familyId(currentPerson.getFamilyCategory() != null ? currentPerson.getFamilyCategory().getFamily().getFamilyId() : null)
+                .newData(Map.of("fullName", String.valueOf(partner.getFullName()), "type", "partner"))
+                .entityId(partner.getPersonId().toString())
                 .build());
 
         Long offset = getOffset(currentPerson);
@@ -236,10 +278,18 @@ public class PersonServiceImpl implements PersonService {
 
         child = personRepo.save(child);
 
-        // chỉ tăng totalPerson nếu con thuộc dòng tộc
         if (childCategory != null) {
             incrementTotalPerson(childCategory);
         }
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .auditAction(AuditAction.NODE_CREATE.getLabel())
+                .actorAccountId(account.getAccountId())
+                .entityType(AuditEntityType.PERSON.name())
+                .familyId(childCategory != null ? childCategory.getFamily().getFamilyId() : null)
+                .newData(Map.of("fullName", String.valueOf(child.getFullName()), "type", "child"))
+                .entityId(child.getPersonId().toString())
+                .build());
 
         Long offset = getOffset(currentPerson);
         return toNode(child, Collections.emptyList(), true, offset);
@@ -260,10 +310,19 @@ public class PersonServiceImpl implements PersonService {
         relationshipRepo.deleteAllByPerson_PersonIdOrPartner_PersonId(personId, personId);
         personRepo.delete(person);
 
-        // chỉ giảm nếu thuộc dòng tộc
         if (category != null) {
             decrementTotalPerson(category);
         }
+
+        Account account = getCurrentAccount();
+        auditLogService.log(CreateAuditLogReq.builder()
+                .auditAction(AuditAction.NODE_DELETE.getLabel())
+                .actorAccountId(account.getAccountId())
+                .entityType(AuditEntityType.PERSON.name())
+                .familyId(category != null ? category.getFamily().getFamilyId() : null)
+                .newData(Map.of("fullName", String.valueOf(person.getFullName())))
+                .entityId(personId.toString())
+                .build());
     }
 
     @Override

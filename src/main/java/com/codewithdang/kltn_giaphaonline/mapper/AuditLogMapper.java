@@ -14,11 +14,16 @@ public interface AuditLogMapper {
     @Mapping(target = "auditId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "actor", source = "actorAccountId", qualifiedByName = "mapActor")
-    @Mapping(target = "action", expression = "java(req.action() != null ? req.action().name() : null)")
+    @Mapping(target = "action", source = "auditAction")
+    @Mapping(target = "entityType", source = "entityType")
+    @Mapping(target = "entityId", source = "entityId")
+    @Mapping(target = "familyId", source = "familyId")
+    @Mapping(target = "oldData", source = "oldData")
+    @Mapping(target = "newData", source = "newData")
+    @Mapping(target = "ipAddress", source = "ipAddress")
+    @Mapping(target = "userAgent", source = "userAgent")
     AuditLog toEntity(CreateAuditLogReq req);
 
-    @Mapping(target = "actorAccountId", source = "actor.accountId")
-    @Mapping(target = "actorName", source = "actor.fullName")
     @Mapping(target = "actorEmail", source = "actor.email")
     AuditLogRes toRes(AuditLog auditLog);
 

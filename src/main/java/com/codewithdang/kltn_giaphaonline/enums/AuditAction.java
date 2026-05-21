@@ -35,6 +35,24 @@ public enum AuditAction implements BaseEnum {
     NODE_DELETE("Xóa người khỏi cây"),
     NODE_RELATION_CHANGE("Thay đổi quan hệ"),
 
+
+    // album
+    ALBUM_CREATE("Tạo album"),
+    ALBUM_UPDATE("Cập nhật album"),
+    ALBUM_DELETE("Xóa album"),
+    ALBUM_IMAGE_UPLOAD("Tải lên ảnh"),
+    ALBUM_IMAGE_DELETE("Xóa ảnh"),
+
+    // event
+    EVENT_CREATE("Tạo sự kiện"),
+    EVENT_UPDATE("Cập nhật sự kiện"),
+    EVENT_DELETE("Xóa sự kiện"),
+
+    // ceremony
+    CEREMONY_CREATE("Tạo phong tục"),
+    CEREMONY_UPDATE("Cập nhật phong tục"),
+    CEREMONY_DELETE("Xóa phong tục"),
+
     // Giao dịch & Thanh toán (Gói dịch vụ)
     PAYMENT_SUCCESS("Thanh toán thành công"),
     PAYMENT_FAILED("Thanh toán thất bại"),

@@ -60,7 +60,7 @@ public class ArticleCategoryController {
     @GetMapping
     ResponseEntity<ApiResponse<PageResponse<ArticleCategoryRes>>> getAll(
             @RequestParam(required = false, defaultValue = "") String keyword,
-            @PageableDefault(sort = "displayOrder", direction = Sort.Direction.ASC) Pageable pageable) {
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(
                 ApiResponse.success(200, "GET_ALL_ARTICLE_CATEGORY_SUCCESS",
                         articleCategoryService.getAll(keyword, pageable))

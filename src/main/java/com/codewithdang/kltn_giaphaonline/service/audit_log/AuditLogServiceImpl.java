@@ -4,6 +4,7 @@ import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AuditLogRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.AuditLog;
+import com.codewithdang.kltn_giaphaonline.enums.AuditEntityType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.AuditLogMapper;
@@ -32,21 +33,25 @@ public class AuditLogServiceImpl implements AuditLogService {
     public void log(CreateAuditLogReq req) {
         if (req == null) return;
 
-        if (req.action() == null)
-            throw new AppException(ErrorCode.ACTION_IS_EMPTY, "Audit action must not be null");
+        if (req.getAuditAction() == null || req.getAuditAction().isBlank()) {
+            log.warn("Audit action is empty, skipping log");
+            return;
+        }
 
-        if (req.entityType() == null || req.entityType().isBlank())
-            throw new AppException(ErrorCode.ENTITY_TYPE_IS_EMPTY, "Audit entityType must not be blank");
+        // entityType mặc định là FAMILY nếu không truyền
+        if (req.getEntityType() == null || req.getEntityType().isBlank()) {
+            req.setEntityType(AuditEntityType.FAMILY.name());
+        }
 
         try {
             AuditLog auditLog = auditLogMapper.toEntity(req);
             auditLogRepo.save(auditLog);
 
             log.info("Audit logged: action={}, entityType={}, entityId={}",
-                    req.action(), req.entityType(), req.entityId());
+                    req.getAuditAction(), req.getEntityType(), req.getEntityType());
         } catch (Exception e) {
             log.error("Failed to write audit log. action={}, entityType={}, entityId={}",
-                    req.action(), req.entityType(), req.entityId(), e);
+                    req.getAuditAction(), req.getEntityType(), req.getEntityId(), e);
         }
     }
 

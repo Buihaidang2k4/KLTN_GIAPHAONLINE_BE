@@ -90,29 +90,29 @@ public class AppInitConfig {
 
             // create account
             // USER
-            if (!accountRepo.existsByEmail("user@gmail.com")) {
-
-                Account accountUser = Account.builder()
-                        .fullName("USER")
-                        .email("user@gmail.com")
-                        .passwordHash(passwordEncoder.encode("user@123"))
-                        .accountStatus(AccountStatus.ACTIVE)
-                        .build();
-
-                accountUser = accountRepo.save(accountUser);
-                Role roleUser = roleRepo.findById(RoleEnums.FAMILY_ADMIN.name())
-                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
-
-
-                AccountRole accountRoleUser = AccountRole.builder()
-                        .id(new AccountRoleId(accountUser.getAccountId(), roleUser.getName()))
-                        .account(accountUser)
-                        .role(roleUser)
-                        .build();
-
-                accountRoleRepo.save(accountRoleUser);
-                accountUser.setAccountRoles(new HashSet<>(Set.of(accountRoleUser)));
-            }
+//            if (!accountRepo.existsByEmail("user@gmail.com")) {
+//
+//                Account accountUser = Account.builder()
+//                        .fullName("USER")
+//                        .email("user@gmail.com")
+//                        .passwordHash(passwordEncoder.encode("user@123"))
+//                        .accountStatus(AccountStatus.ACTIVE)
+//                        .build();
+//
+//                accountUser = accountRepo.save(accountUser);
+//                Role roleUser = roleRepo.findById(RoleEnums.FAMILY_ADMIN.name())
+//                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+//
+//
+//                AccountRole accountRoleUser = AccountRole.builder()
+//                        .id(new AccountRoleId(accountUser.getAccountId(), roleUser.getName()))
+//                        .account(accountUser)
+//                        .role(roleUser)
+//                        .build();
+//
+//                accountRoleRepo.save(accountRoleUser);
+//                accountUser.setAccountRoles(new HashSet<>(Set.of(accountRoleUser)));
+//            }
 
             // ADMIN
             if (!accountRepo.existsByEmail("admin@gmail.com")) {

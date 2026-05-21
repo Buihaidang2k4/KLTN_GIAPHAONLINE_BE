@@ -1,16 +1,20 @@
 package com.codewithdang.kltn_giaphaonline.service.album;
 
 
+import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AlbumMediaRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Album;
 import com.codewithdang.kltn_giaphaonline.entity.AlbumMedia;
+import com.codewithdang.kltn_giaphaonline.enums.AuditAction;
+import com.codewithdang.kltn_giaphaonline.enums.AuditEntityType;
 import com.codewithdang.kltn_giaphaonline.enums.MediaType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AlbumMediaRepo;
 import com.codewithdang.kltn_giaphaonline.repo.AlbumRepo;
+import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioService;
 import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioServiceImpl;
 import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
@@ -35,7 +39,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -47,6 +53,7 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
     AlbumMediaRepo albumMediaRepo;
     MinioService minioService;
     PageMapper pageMapper;
+    AuditLogService auditLogService;
 
 
     @Override
@@ -114,6 +121,14 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
             album.setCoverPath(objectName);
         }
         albumRepo.save(album);
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(album.getFamily().getFamilyId())
+                .auditAction(AuditAction.ALBUM_IMAGE_UPLOAD.getLabel())
+                .entityType(AuditEntityType.FAMILY.name())
+                .newData(buildMediaDataMap(albumMedia))
+                .entityId(albumMedia.getAlbumMediaId().toString())
+                .build());
 
         return toRes(albumMedia);
     }
@@ -228,6 +243,14 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
         album.setTotalSize(Math.max(0L, currentSize - mediaSize));
 
         albumRepo.save(album);
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(album.getFamily().getFamilyId())
+                .auditAction(AuditAction.ALBUM_IMAGE_DELETE.getLabel())
+                .entityType(AuditEntityType.FAMILY.name())
+                .oldData(buildMediaDataMap(albumMedia))
+                .entityId(mediaId.toString())
+                .build());
     }
 
 
@@ -253,6 +276,15 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
                 .fileSizeBytes(media.getFileSizeBytes())
                 .mediaType(media.getMediaType())
                 .build();
+    }
+
+    private Map<String, Object> buildMediaDataMap(AlbumMedia media) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("Tiêu đề", String.valueOf(media.getTitle()));
+        data.put("Loại", media.getMediaType() != null ? media.getMediaType().name() : null);
+        data.put("Kích thước", media.getFileSizeBytes() != null ? media.getFileSizeBytes() + " bytes" : null);
+        data.put("Album", media.getAlbum().getTitle());
+        return data;
     }
 
     private MediaType detectMediaType(MultipartFile file) {

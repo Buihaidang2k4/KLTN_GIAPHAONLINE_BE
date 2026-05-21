@@ -5,8 +5,6 @@ import java.util.Map;
 
 public record AuditLogRes(
         Long auditId,
-        Long actorAccountId,
-        String actorName,
         String actorEmail,
         Long familyId,
         String action,

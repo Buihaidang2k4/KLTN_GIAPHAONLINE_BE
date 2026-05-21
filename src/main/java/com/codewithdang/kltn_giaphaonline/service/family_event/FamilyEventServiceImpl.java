@@ -1,5 +1,6 @@
 package com.codewithdang.kltn_giaphaonline.service.family_event;
 
+import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.FamilyEventReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateFamilyEventReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyEventRes;
@@ -7,6 +8,8 @@ import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Family;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyEvent;
+import com.codewithdang.kltn_giaphaonline.enums.AuditAction;
+import com.codewithdang.kltn_giaphaonline.enums.AuditEntityType;
 import com.codewithdang.kltn_giaphaonline.enums.CalendarType;
 import com.codewithdang.kltn_giaphaonline.enums.RepeatType;
 import com.codewithdang.kltn_giaphaonline.enums.SearchEventOptionEnum;
@@ -17,6 +20,7 @@ import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyEventRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
+import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
 import com.codewithdang.kltn_giaphaonline.utils.LunarSolarConverter;
 import lombok.AccessLevel;
@@ -32,7 +36,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +52,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
     FamilyRepo familyRepo;
     AccountService accountService;
     NotificationService notificationService;
+    AuditLogService auditLogService;
 
     @Override
     @Transactional
@@ -71,6 +78,15 @@ public class FamilyEventServiceImpl implements FamilyEventService {
 
         FamilyEvent savedEvent = familyEventRepo.save(event);
 
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(familyId)
+                .actorAccountId(account.getAccountId())
+                .auditAction(AuditAction.EVENT_CREATE.getLabel())
+                .entityType(AuditEntityType.FAMILY.name())
+                .newData(buildEventDataMap(savedEvent))
+                .entityId(savedEvent.getFamilyEventId().toString())
+                .build());
+
         return familyEventMapper.toDto(savedEvent);
     }
 
@@ -83,6 +99,8 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         if (!event.getFamily().getFamilyId().equals(familyId)) {
             throw new AppException(ErrorCode.FAMILY_EVENT_NOT_IN_FAMILY);
         }
+
+        Map<String, Object> oldData = buildEventDataMap(event);
 
         familyEventMapper.updateEvent(req, event);
 
@@ -97,6 +115,17 @@ public class FamilyEventServiceImpl implements FamilyEventService {
 
         FamilyEvent savedEvent = familyEventRepo.save(event);
 
+        Account account = accountService.getCurrentAccount();
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(familyId)
+                .actorAccountId(account.getAccountId())
+                .auditAction(AuditAction.EVENT_UPDATE.getLabel())
+                .entityType(AuditEntityType.FAMILY.name())
+                .oldData(oldData)
+                .newData(buildEventDataMap(savedEvent))
+                .entityId(savedEvent.getFamilyEventId().toString())
+                .build());
+
         return familyEventMapper.toDto(savedEvent);
     }
 
@@ -107,7 +136,19 @@ public class FamilyEventServiceImpl implements FamilyEventService {
                 .findByFamily_FamilyIdAndFamilyEventId(familyId, eventId)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_EVENT_NOT_EXISTED));
 
+        Account account = accountService.getCurrentAccount();
+        Map<String, Object> oldData = buildEventDataMap(event);
+
         familyEventRepo.delete(event);
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(familyId)
+                .actorAccountId(account.getAccountId())
+                .auditAction(AuditAction.EVENT_DELETE.getLabel())
+                .entityType(AuditEntityType.FAMILY.name())
+                .oldData(oldData)
+                .entityId(eventId.toString())
+                .build());
     }
 
     @Override
@@ -196,6 +237,17 @@ public class FamilyEventServiceImpl implements FamilyEventService {
      * - calendarType null => SOLAR
      * - YEARLY => year = null
      */
+    private Map<String, Object> buildEventDataMap(FamilyEvent event) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("Tên sự kiện", String.valueOf(event.getEventName()));
+        data.put("Ngày", event.getDay() + "/" + event.getMonth() + (event.getYear() != null ? "/" + event.getYear() : ""));
+        data.put("Lịch", event.getCalendarType() != null ? event.getCalendarType().name() : null);
+        data.put("Lặp lại", event.getRepeatType() != null ? event.getRepeatType().name() : null);
+        if (event.getLocation() != null) data.put("Vị trí", event.getLocation());
+        if (event.getNote() != null) data.put("Ghi chú", event.getNote());
+        return data;
+    }
+
     private void normalizeEvent(FamilyEvent event) {
         if (event.getRepeatType() == null) {
             event.setRepeatType(RepeatType.NONE);
