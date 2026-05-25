@@ -33,7 +33,18 @@ public class MinioServiceImpl implements MinioService {
     int expire;
 
     public static final List<String> IMAGE = List.of(
-            "image/jpeg", "image/png", "image/jpg", "image/webp"
+            "image/jpeg",
+            "image/png",
+            "image/jpg",
+            "image/webp",
+            "image/gif",
+            "image/bmp",
+            "image/svg+xml",
+            "image/tiff",
+            "image/x-icon",
+            "image/heic",
+            "image/heif",
+            "image/avif"
     );
 
     public static final List<String> VIDEO = List.of(

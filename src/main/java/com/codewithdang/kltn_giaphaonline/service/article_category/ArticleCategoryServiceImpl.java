@@ -10,6 +10,8 @@ import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.ArticleCategoryMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.ArticleCategoryRepo;
+import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioService;
+import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
 import com.codewithdang.kltn_giaphaonline.utils.SlugUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -29,18 +31,19 @@ public class ArticleCategoryServiceImpl implements ArticleCategoryService {
     ArticleCategoryRepo articleCategoryRepo;
     PageMapper pageMapper;
     ArticleCategoryMapper articleCategoryMapper;
+    MinioService minioService;
 
     @Override
     @Transactional
     @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
     public ArticleCategoryRes createCategory(CreateArticleCategoryReq req) {
 
-        if (articleCategoryRepo.existsByName(req.name()))
+        if (articleCategoryRepo.existsByName(req.getName()))
             throw new AppException(ErrorCode.ARTICLE_CATEGORY_EXISTED);
 
         ArticleCategory articleCategory = articleCategoryMapper.toEntity(req);
-        articleCategory.setSlug(SlugUtil.toSlug(req.name()));
-        articleCategory.setDescription(req.description());
+        articleCategory.setSlug(SlugUtil.toSlug(req.getName()));
+        articleCategory.setDescription(req.getDescription());
 
         articleCategory = articleCategoryRepo.save(articleCategory);
         return articleCategoryMapper.toRes(articleCategory);

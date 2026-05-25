@@ -194,6 +194,54 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
                 .build());
     }
 
+    @Override
+    @Transactional
+    public void acceptInvitationForNewAccount(String token, Account account) {
+        FamilyInvitation familyInvitation = invitationRepo.findByInviteToken(token)
+                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
+
+        if (!account.getEmail().equalsIgnoreCase(familyInvitation.getInvitedEmail()))
+            throw new AppException(ErrorCode.INVALID_INVITATION_RECIPIENT);
+
+        if (familyInvitation.getInvitationStatus() != FamilyInvitationStatus.PENDING)
+            throw new AppException(ErrorCode.INVITATION_ALREADY_HANDLED);
+
+        if (familyInvitation.getExpiredAt() != null && familyInvitation.getExpiredAt().isBefore(Instant.now()))
+            throw new AppException(ErrorCode.INVITATION_EXPIRED);
+
+        Map<String, Object> oldData = buildInvitationDataMap(familyInvitation);
+
+        Family family = familyInvitation.getFamily();
+        Role role = familyInvitation.getRole();
+
+        FamilyMember member = familyMemberRepo
+                .findByFamily_FamilyIdAndAccount_AccountId(family.getFamilyId(), account.getAccountId())
+                .orElse(FamilyMember.builder()
+                        .id(new FamilyMemberId(family.getFamilyId(), account.getAccountId()))
+                        .family(family)
+                        .account(account)
+                        .build());
+
+        member.setRole(role);
+        member.setStatus(FamilyMemberStatus.ACTIVE);
+        member.setJoinedAt(Instant.now());
+        member.setRemovedAt(null);
+
+        familyMemberRepo.save(member);
+
+        updateInvitationStatus(familyInvitation, account, FamilyInvitationStatus.ACCEPTED);
+
+        auditLogService.log(CreateAuditLogReq.builder()
+                .familyId(familyInvitation.getFamily().getFamilyId())
+                .actorAccountId(account.getAccountId())
+                .auditAction(AuditAction.ACCEPT_INVITATION.getLabel())
+                .entityType(AuditEntityType.FAMILY.name())
+                .oldData(oldData)
+                .newData(buildInvitationDataMap(familyInvitation))
+                .entityId(familyInvitation.getFamilyInvitationId().toString())
+                .build());
+    }
+
     /***
      * Reject a received family invitation
      * @param inviteToken

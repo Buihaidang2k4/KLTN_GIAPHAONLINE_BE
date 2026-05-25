@@ -15,6 +15,8 @@ public interface FamilyInvitationService {
 
     void acceptInvitation(String token);
 
+    void acceptInvitationForNewAccount(String token, com.codewithdang.kltn_giaphaonline.entity.Account account);
+
     void rejectInvitation(String inviteToken);
 
     void cancelInvitation(Long invitationId);

@@ -192,12 +192,15 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     private ArticleRes toRes(Article a) {
+        String thumbnailUrl = a.getThumbnailUrl() != null ? minioService.getPresignedUrl(a.getThumbnailUrl()) : null;
+
+
         return ArticleRes.builder()
                 .articleId(a.getArticleId())
                 .slug(a.getSlug())
                 .title(a.getTitle())
                 .summary(a.getSummary())
-                .thumbnailUrl(a.getThumbnailUrl())
+                .thumbnailUrl(thumbnailUrl)
                 .content(a.getContent())
                 .viewCount(a.getViewCount())
                 .isFeatured(a.getIsFeatured())

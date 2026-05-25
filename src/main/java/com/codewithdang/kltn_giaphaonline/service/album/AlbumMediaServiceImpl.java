@@ -4,6 +4,7 @@ package com.codewithdang.kltn_giaphaonline.service.album;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.AlbumMediaRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
+import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Album;
 import com.codewithdang.kltn_giaphaonline.entity.AlbumMedia;
 import com.codewithdang.kltn_giaphaonline.enums.AuditAction;
@@ -12,6 +13,7 @@ import com.codewithdang.kltn_giaphaonline.enums.MediaType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
+import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.AlbumMediaRepo;
 import com.codewithdang.kltn_giaphaonline.repo.AlbumRepo;
 import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
@@ -25,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,13 +58,15 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
     MinioService minioService;
     PageMapper pageMapper;
     AuditLogService auditLogService;
-
+    AccountRepo accountRepo;
 
     @Override
     @Transactional
     public AlbumMediaRes uploadMedia(Long albumId, MultipartFile file) throws IOException {
         Album album = albumRepo.findById(albumId)
                 .orElseThrow(() -> new AppException(ErrorCode.ALBUM_NOT_FOUND));
+
+        Account currentAccount = getCurrentAccount();
 
         MediaType mediaType = detectMediaType(file);
         String objectName;
@@ -124,6 +130,7 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
 
         auditLogService.log(CreateAuditLogReq.builder()
                 .familyId(album.getFamily().getFamilyId())
+                .actorAccountId(currentAccount.getAccountId())
                 .auditAction(AuditAction.ALBUM_IMAGE_UPLOAD.getLabel())
                 .entityType(AuditEntityType.FAMILY.name())
                 .newData(buildMediaDataMap(albumMedia))
@@ -226,7 +233,7 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
                 .orElseThrow(() -> new AppException(ErrorCode.ALBUM_MEDIA_NOT_FOUND));
 
         Album album = albumMedia.getAlbum();
-
+        Account currentAccount = getCurrentAccount();
         // xoa minio
         minioService.deleteFile(albumMedia.getMediaPath());
         if (albumMedia.getMediaPath().equals(album.getCoverPath())) {
@@ -246,6 +253,7 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
 
         auditLogService.log(CreateAuditLogReq.builder()
                 .familyId(album.getFamily().getFamilyId())
+                .actorAccountId(currentAccount.getAccountId())
                 .auditAction(AuditAction.ALBUM_IMAGE_DELETE.getLabel())
                 .entityType(AuditEntityType.FAMILY.name())
                 .oldData(buildMediaDataMap(albumMedia))
@@ -329,5 +337,12 @@ public class AlbumMediaServiceImpl implements AlbumMediaService {
         } catch (Exception e) {
             throw new RuntimeException("Cannot generate thumbnail", e);
         }
+    }
+
+    private Account getCurrentAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return accountRepo.findByEmail(currentUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
     }
 }

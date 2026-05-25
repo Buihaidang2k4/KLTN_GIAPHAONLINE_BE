@@ -13,5 +13,7 @@ public class ArticleCategoryRes {
     String slug;
     String description;
     Integer displayOrder;
+    String thumbnailPath;
+    String thumbnailUrl;
     Instant createdAt;
 }

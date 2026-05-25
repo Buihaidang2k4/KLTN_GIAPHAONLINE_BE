@@ -30,8 +30,6 @@ public class ArticleCategory {
     @Column(name = "slug", unique = true, length = 150)
     String slug;
 
-    String thumbnailPath;
-
     String description;
 
     @Column(name = "display_order")
