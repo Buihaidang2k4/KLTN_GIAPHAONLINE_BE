@@ -52,15 +52,16 @@ public class AuthController {
         );
     }
 
-    @PostMapping("/register-by-invitation")
+    @PostMapping("/register-by-invitation/{token}")
     public ResponseEntity<ApiResponse<Void>> registerByInvitation(
+            @PathVariable("token") String token,
             @RequestBody @Valid RegisterByInvitationReq request,
             HttpServletRequest httpServletRequest
     ) {
         String remoteAddr = httpServletRequest.getRemoteAddr();
         String userAgent = httpServletRequest.getHeader("User-Agent");
 
-        authService.registerByInvitation(request, remoteAddr, userAgent);
+        authService.registerByInvitation(token, request, remoteAddr, userAgent);
 
         return ResponseEntity.ok(
                 ApiResponse.success(200,

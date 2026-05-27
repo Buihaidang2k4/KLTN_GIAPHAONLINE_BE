@@ -187,51 +187,38 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     @Transactional
-    public void registerByInvitation(RegisterByInvitationReq req, String requestedIp, String userAgent) {
-        String email = req.email().trim().toLowerCase();
-        String invitationToken = req.invitationToken();
+    public void registerByInvitation(String token, RegisterByInvitationReq req, String requestedIp, String userAgent) {
+        FamilyInvitation familyInvitation = familyInvitationRepo.findByInviteToken(token).orElseThrow(
+                () -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED)
+        );
 
-        FamilyInvitation invitation = familyInvitationRepo.findByInviteToken(invitationToken)
-                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
-
-        if (invitation.getInvitationStatus() != FamilyInvitationStatus.PENDING)
+        if (familyInvitation.getInvitationStatus() != FamilyInvitationStatus.PENDING)
             throw new AppException(ErrorCode.INVITATION_ALREADY_HANDLED);
 
-        if (invitation.getExpiredAt() != null && invitation.getExpiredAt().isBefore(Instant.now()))
+        if (familyInvitation.getExpiredAt() != null && familyInvitation.getExpiredAt().isBefore(Instant.now()))
             throw new AppException(ErrorCode.INVITATION_EXPIRED);
 
-        if (!invitation.getInvitedEmail().equalsIgnoreCase(email))
-            throw new AppException(ErrorCode.INVALID_INVITATION_RECIPIENT);
+        String email = familyInvitation.getInvitedEmail();
 
         if (accountRepo.existsByEmail(email)) throw new AppException(ErrorCode.ACCOUNT_EXISTED);
 
         if (!req.password().equals(req.confirmPassword())) throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
 
+        // Tạo tài khoản ở trạng thái ACTIVE luôn (do đã xác thực qua email nhận lời mời)
         Account account = Account.builder()
                 .email(email)
                 .phoneNumber(req.phoneNumber())
                 .passwordHash(passwordEncoder.encode(req.password()))
                 .fullName(req.fullName())
-                .accountStatus(AccountStatus.PENDING)
+                .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
         accountRepo.save(account);
 
         roleService.assignRoleToAccount(account, RoleEnums.FAMILY_ADMIN);
 
-        // chấp nhận lời mời và add vào family member
-        familyInvitationService.acceptInvitationForNewAccount(invitationToken, account);
-
-        // tạo token xác thực email như luồng register thường
-        AccountVerificationToken verificationToken =
-                verificationTokenService.createVerificationToken(account, requestedIp, userAgent);
-
-        eventPublisher.publishEvent(new UserRegisteredEvent(
-                account.getAccountId(),
-                account.getEmail(),
-                account.getFullName(),
-                verificationToken.getToken()
-        ));
+        // Chấp nhận lời mời và add vào family member
+        familyInvitationService.acceptInvitationForNewAccount(token, account);
     }
 
 

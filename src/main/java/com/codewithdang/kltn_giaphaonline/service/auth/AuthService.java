@@ -18,7 +18,7 @@ public interface AuthService {
 
     RegisterRes register(RegisterReq registerReq, String requestedIp, String userAgent);
 
-    void registerByInvitation(RegisterByInvitationReq req, String requestedIp, String userAgent);
+    void registerByInvitation(String token, RegisterByInvitationReq req, String requestedIp, String userAgent);
 
     void refreshToken(HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException;
 

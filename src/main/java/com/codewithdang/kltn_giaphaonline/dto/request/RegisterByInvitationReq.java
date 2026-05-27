@@ -5,15 +5,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public record RegisterByInvitationReq(
-        @NotBlank(message = "TOKEN_INVITATION_REQUIRED")
-        String tokenInvitation,
-
         @NotBlank(message = "FULL_NAME_REQUIRED")
         String fullName,
-
-        @NotBlank(message = "EMAIL_REQUIRED")
-        @Email(message = "EMAIL_INVALID")
-        String email,
 
         String phoneNumber,
 
@@ -21,9 +14,6 @@ public record RegisterByInvitationReq(
         String password,
 
         @NotBlank(message = "CONFIRM_PASSWORD_REQUIRED")
-        String confirmPassword,
-
-        @NotBlank(message = "INVITATION_TOKEN_REQUIRED")
-        String invitationToken
+        String confirmPassword
 ) {
 }
