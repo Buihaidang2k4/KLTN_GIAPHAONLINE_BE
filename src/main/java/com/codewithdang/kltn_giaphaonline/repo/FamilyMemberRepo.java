@@ -36,4 +36,6 @@ public interface FamilyMemberRepo extends JpaRepository<FamilyMember, Long> {
     List<FamilyMember> findByAccount_AccountIdAndFamily_FamilyId(Long accountAccountId, Long familyFamilyId);
 
     long countByFamily_FamilyIdAndRole_NameAndStatus(Long familyId, String roleName, FamilyMemberStatus status);
+
+    List<FamilyMember> findByFamily_FamilyIdAndStatus(Long familyFamilyId, FamilyMemberStatus status);
 }

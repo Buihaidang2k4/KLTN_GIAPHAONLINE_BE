@@ -37,7 +37,7 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
     @Override
     @Transactional(readOnly = true)
     public List<FamilyMemberRes> getFamilyMemberByFamilyId(Long familyId) {
-        List<FamilyMember> familyMember = familyMemberRepo.findByFamily_FamilyId(familyId);
+        List<FamilyMember> familyMember = familyMemberRepo.findByFamily_FamilyIdAndStatus(familyId, FamilyMemberStatus.ACTIVE);
         return familyMember.stream().map(memberMapper::toRes).toList();
     }
 
@@ -94,54 +94,6 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
         return saveOrUpdateMembership(family, account, role);
     }
 
-//    @Override
-//    @Transactional
-//    public FamilyMember addMember(Long familyId, Long accountId, String roleName) {
-//        Family family = familyRepo.findById(familyId)
-//                .orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
-//
-//        Account account = accountRepo.findById(accountId)
-//                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
-//
-//        if (account.getAccountStatus() != AccountStatus.ACTIVE) {
-//            throw new AppException(ErrorCode.ACCOUNT_STATUS_IS_NOT_ACTIVE);
-//        }
-//
-//        Role role = roleRepo.findByName(roleName)
-//                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
-//
-//        if (role.getScopeType() != RoleScopeType.FAMILY) {
-//            throw new AppException(ErrorCode.ROLE_IS_NOT_WITHIN_THE_SCOPE_OF_THE_GENEALOGY);
-//        }
-//
-//        FamilyMember existingMember = familyMemberRepo
-//                .findByFamily_FamilyIdAndAccount_AccountId(familyId, accountId)
-//                .orElse(null);
-//
-//        if (existingMember != null) {
-//            if (existingMember.getStatus() == FamilyMemberStatus.ACTIVE) {
-//                throw new AppException(ErrorCode.THIS_ACCOUNT_IS_ALREADY_A_MEMBER_OF_THE_FAMILY);
-//            }
-//
-//            existingMember.setRole(role);
-//            existingMember.setStatus(FamilyMemberStatus.ACTIVE);
-//            existingMember.setJoinedAt(Instant.now());
-//            existingMember.setRemovedAt(null);
-//
-//            return familyMemberRepo.save(existingMember);
-//        }
-//
-//        FamilyMember member = FamilyMember.builder()
-//                .id(new FamilyMemberId(familyId, accountId))
-//                .family(family)
-//                .account(account)
-//                .role(role)
-//                .status(FamilyMemberStatus.ACTIVE)
-//                .joinedAt(Instant.now())
-//                .build();
-//
-//        return familyMemberRepo.save(member);
-//    }
 
     @Override
     @Transactional

@@ -204,7 +204,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (!req.password().equals(req.confirmPassword())) throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
 
-        // Tạo tài khoản ở trạng thái ACTIVE luôn (do đã xác thực qua email nhận lời mời)
+        // Tạo tài khoản ở trạng thái ACTIVE 
         Account account = Account.builder()
                 .email(email)
                 .phoneNumber(req.phoneNumber())

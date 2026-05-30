@@ -27,7 +27,9 @@ public class InvitationAccountListener {
         String invitationLink = UriComponentsBuilder
                 .fromHttpUrl(frontendProperties.getBaseUrl()) // url
                 .path(frontendProperties.getVerifyEndpoint())
-                .queryParam("token", event.getInvitationToken())
+//                .queryParam("token", event.getInvitationToken())
+                .path("/")
+                .path(event.getInvitationToken())
                 .toUriString();
 
         EmailInvitationAccount invitationAccount = EmailInvitationAccount.builder()
