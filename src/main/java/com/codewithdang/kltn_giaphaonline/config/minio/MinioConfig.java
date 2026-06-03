@@ -20,17 +20,18 @@ public class MinioConfig {
 
     @Bean
     public MinioClient minioClient() {
-        try {
-            MinioClient client = MinioClient.builder()
-                    .endpoint(url)
-                    .credentials(accessKey, secretKey)
-                    .build();
+        MinioClient client = MinioClient.builder()
+                .endpoint(url)
+                .credentials(accessKey, secretKey)
+                .build();
 
-            log.info("Connected MiniO Successfully , url {}", url);
-            return client;
+        try {
+            client.listBuckets();
+            log.info("Connected MinIO Successfully");
         } catch (Exception e) {
-            log.error("Có lỗi xảy ra khi kết nối tới minio {}", e.getMessage());
-            throw new RuntimeException(e);
+            log.error("Cannot connect MinIO", e);
         }
+
+        return client;
     }
 }

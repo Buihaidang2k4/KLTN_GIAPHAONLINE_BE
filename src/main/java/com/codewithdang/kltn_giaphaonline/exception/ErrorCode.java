@@ -63,7 +63,7 @@ public enum ErrorCode {
     INVALID_LINK_URL(1311, "Invalid link is null", HttpStatus.BAD_REQUEST),
     INVALID_URL_FORMAT(1312, "Invalid URL format or is null", HttpStatus.BAD_REQUEST),
     URL_TOO_LONG(1313, "URL too long", HttpStatus.BAD_REQUEST),
-    
+
 
     // audit
     ACTION_IS_EMPTY(1500, "Audit action must not be blank", HttpStatus.BAD_REQUEST),
@@ -158,7 +158,12 @@ public enum ErrorCode {
     PERSON_RELATIONSHIP_NOT_FOUND(3201, "Person relationship not found", NOT_FOUND),
     PERSON_ALREADY_HAS_FATHER(3202, "Person already has a father", BAD_REQUEST),
     PERSON_MUST_BE_MALE_TO_ADD_ROOT(3203, "Only male person can add a parent as root", BAD_REQUEST),
-    PERSON_HAS_CHILDREN_CANNOT_DELETE(3204, "Cannot delete person who has children", BAD_REQUEST);
+    PERSON_HAS_CHILDREN_CANNOT_DELETE(3204, "Cannot delete person who has children", BAD_REQUEST),
+
+
+    // feedback
+    FEEDBACK_NOT_FOUND(3300, "Feedback not found", NOT_FOUND),
+    FEEDBACK_IS_EXISTED(3301, "Feedback is existed", BAD_REQUEST);
 
 
     final int code;

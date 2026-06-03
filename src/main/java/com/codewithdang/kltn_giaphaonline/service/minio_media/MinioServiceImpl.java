@@ -153,8 +153,8 @@ public class MinioServiceImpl implements MinioService {
             log.info("Upload thành công: {}", fileName);
             return fileName;
         } catch (Exception e) {
-            log.error("Lỗi thực thi upload Minio: {}", e.getMessage());
-            throw new RuntimeException("Lỗi hệ thống lưu trữ: " + e.getMessage());
+            log.error("Error executing upload Minio: {}", e.getMessage());
+            throw new RuntimeException("Error save: " + e.getMessage());
         }
     }
 

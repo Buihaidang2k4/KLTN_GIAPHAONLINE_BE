@@ -1,16 +1,15 @@
-package com.codewithdang.kltn_giaphaonline.event.listener;
+package com.codewithdang.kltn_giaphaonline.events.listener;
 
 import com.codewithdang.kltn_giaphaonline.config.fe.FrontendProperties;
 import com.codewithdang.kltn_giaphaonline.dto.event.UserRegisteredEvent;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailVerifyAccount;
-import com.codewithdang.kltn_giaphaonline.event.producer.EmailProducer;
+import com.codewithdang.kltn_giaphaonline.events.producer.EmailProducer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @RequiredArgsConstructor
@@ -18,17 +17,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class UserRegisteredListener {
 
     EmailProducer emailProducer;
-    FrontendProperties frontendProperties;
 
     // The event only begins after the transaction is complete.
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(UserRegisteredEvent event) {
 
-//        String verifyUrl = UriComponentsBuilder
-//                .fromHttpUrl(frontendProperties.getBaseUrl()) // url
-//                .path(frontendProperties.getVerifyEndpoint())
-//                .queryParam("token", event.verificationToken())
-//                .toUriString();
 
         EmailVerifyAccount emailVerifyAccount =
                 EmailVerifyAccount.builder()

@@ -1,4 +1,94 @@
 package com.codewithdang.kltn_giaphaonline.service.feedback;
 
-public interface FeedbackService {
+
+import com.codewithdang.kltn_giaphaonline.dto.request.FeedbackHandleReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.FeedbackReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.FeedbackRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
+import com.codewithdang.kltn_giaphaonline.entity.Account;
+import com.codewithdang.kltn_giaphaonline.entity.Feedback;
+import com.codewithdang.kltn_giaphaonline.enums.FeedbackStatus;
+import com.codewithdang.kltn_giaphaonline.exception.AppException;
+import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
+import com.codewithdang.kltn_giaphaonline.mapper.FeedbackMapper;
+import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
+import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
+import com.codewithdang.kltn_giaphaonline.repo.FeedbackRepo;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
+public class FeedbackServiceImpl implements FeedbackService {
+    FeedbackRepo feedbackRepo;
+    FeedbackMapper feedbackMapper;
+    PageMapper pageMapper;
+    AccountRepo accountRepo;
+
+    @Override
+    @Transactional
+    public FeedbackRes CreateFeedback(FeedbackReq req) {
+        Account account = getCurrentAccount();
+        Feedback feedback = feedbackMapper.toEntity(req);
+        feedback.setStatus(FeedbackStatus.PENDING);
+        feedback.setAccount(account);
+        feedback = feedbackRepo.save(feedback);
+        return feedbackMapper.toRes(feedback);
+    }
+
+    @Override
+    @Transactional
+    public FeedbackRes handleFeedback(Long feedbackId, FeedbackHandleReq req) {
+        Feedback feedback = feedbackRepo.findById(feedbackId).orElseThrow(() ->
+                new AppException(ErrorCode.FEEDBACK_NOT_FOUND));
+        feedbackMapper.updateEntityFromRequest(req, feedback);
+        feedback.setResolvedAt(LocalDateTime.now());
+        feedback = feedbackRepo.save(feedback);
+        return feedbackMapper.toRes(feedback);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FeedbackRes getFeedbackById(Long id) {
+        Feedback feedback = feedbackRepo.findById(id).orElseThrow(() -> new AppException(ErrorCode.FEEDBACK_NOT_FOUND));
+        return feedbackMapper.toRes(feedback);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<FeedbackRes> getAllByCurrentAccount(String subject, Pageable pageable) {
+        Account account = getCurrentAccount();
+        Page<Feedback> feedbacks = (subject != null && !subject.isBlank())
+                ? feedbackRepo.findAllByAccount_AccountIdAndSubjectContainingIgnoreCase(account.getAccountId(), subject, pageable)
+                : feedbackRepo.findAllByAccount_AccountId(account.getAccountId(), pageable);
+        return pageMapper.toPageResponse(feedbacks, feedbackMapper::toRes);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<FeedbackRes> getAll(String keyword, Pageable pageable) {
+        String k = (keyword != null && !keyword.isBlank()) ? keyword : null;
+        Page<Feedback> feedbacks = (k != null)
+                ? feedbackRepo.searchByKeyword(k, pageable)
+                : feedbackRepo.findAll(pageable);
+        return pageMapper.toPageResponse(feedbacks, feedbackMapper::toRes);
+    }
+
+    private Account getCurrentAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return accountRepo.findByEmail(currentUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+    }
 }

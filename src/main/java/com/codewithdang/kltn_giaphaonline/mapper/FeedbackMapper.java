@@ -1,22 +1,17 @@
 package com.codewithdang.kltn_giaphaonline.mapper;
 
-import com.codewithdang.kltn_giaphaonline.dto.request.AlbumReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.CeremonyReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.CeremonyUpdateReq;
-import com.codewithdang.kltn_giaphaonline.dto.response.AlbumRes;
-import com.codewithdang.kltn_giaphaonline.dto.response.CeremonyRes;
-import com.codewithdang.kltn_giaphaonline.entity.Album;
-import com.codewithdang.kltn_giaphaonline.entity.Ceremony;
+import com.codewithdang.kltn_giaphaonline.dto.request.FeedbackHandleReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.FeedbackReq;
+import com.codewithdang.kltn_giaphaonline.dto.response.FeedbackRes;
+import com.codewithdang.kltn_giaphaonline.entity.Feedback;
 import org.mapstruct.*;
+@Mapper(componentModel = "spring")
+public interface FeedbackMapper {
+    Feedback toEntity(FeedbackReq req);
 
-@Mapper(componentModel = "spring", uses = {CeremonyTimelineMapper.class})
-public interface AlbumMapper {
-    Album toEntity(AlbumReq req);
-
-    @Mapping(target = "familyId", source = "family.familyId")
-    @Mapping(target = "createdByAccountId", source = "createdByAccount.accountId")
-    AlbumRes toRes(Album album);
+    @Mapping(target = "email", source = "account.email")
+    FeedbackRes toRes(Feedback feedback);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEntityFromRequest(AlbumReq req, @MappingTarget Album entity);
+    void updateEntityFromRequest(FeedbackHandleReq req, @MappingTarget Feedback entity);
 }

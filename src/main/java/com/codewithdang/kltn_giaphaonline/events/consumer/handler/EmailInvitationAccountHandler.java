@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.event.consumer.handler;
+package com.codewithdang.kltn_giaphaonline.events.consumer.handler;
 
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailInvitationAccount;
 import lombok.extern.slf4j.Slf4j;

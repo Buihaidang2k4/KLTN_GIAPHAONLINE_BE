@@ -1,8 +1,8 @@
-package com.codewithdang.kltn_giaphaonline.event.listener;
+package com.codewithdang.kltn_giaphaonline.events.listener;
 
 import com.codewithdang.kltn_giaphaonline.config.fe.FrontendProperties;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.ResetPasswordEmail;
-import com.codewithdang.kltn_giaphaonline.event.producer.EmailProducer;
+import com.codewithdang.kltn_giaphaonline.events.producer.EmailProducer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

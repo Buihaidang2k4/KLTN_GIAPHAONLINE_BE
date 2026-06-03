@@ -1,8 +1,8 @@
-package com.codewithdang.kltn_giaphaonline.event.consumer;
+package com.codewithdang.kltn_giaphaonline.events.consumer;
 
 import com.codewithdang.kltn_giaphaonline.config.rabbitmq.RabbitMQConfig;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.*;
-import com.codewithdang.kltn_giaphaonline.event.consumer.handler.*;
+import com.codewithdang.kltn_giaphaonline.events.consumer.handler.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

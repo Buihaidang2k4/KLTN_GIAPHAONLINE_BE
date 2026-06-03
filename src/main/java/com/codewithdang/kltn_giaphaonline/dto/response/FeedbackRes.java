@@ -1,27 +1,22 @@
 package com.codewithdang.kltn_giaphaonline.dto.response;
 
-import com.codewithdang.kltn_giaphaonline.entity.Family;
+import com.codewithdang.kltn_giaphaonline.enums.FeedbackStatus;
+import com.codewithdang.kltn_giaphaonline.enums.FeedbackType;
 import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
 
 @Data
 @Builder
-public class AccountDetailsRes {
-    Long accountId;
+public class FeedbackRes {
+    Long feedbackId;
     String email;
-    String fullName;
-    String phoneNumber;
-    String avatarPath;
-    String avatarUrl;
-    String accountStatus;
-    String lockReason;
-    LocalDateTime lockedAt;
+    FeedbackType type;
+    String subject;
+    String content;
+    FeedbackStatus status;
+    String adminResponse;
     LocalDateTime createdAt;
-    LocalDateTime updatedAt;
-    Set<RoleRes> roles;
-    Set<FamilyRes> families;
+    LocalDateTime resolvedAt;
 }

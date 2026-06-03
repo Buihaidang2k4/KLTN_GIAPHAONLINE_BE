@@ -1,8 +1,8 @@
-package com.codewithdang.kltn_giaphaonline.event.listener;
+package com.codewithdang.kltn_giaphaonline.events.listener;
 
 import com.codewithdang.kltn_giaphaonline.config.fe.FrontendProperties;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailInvitationAccount;
-import com.codewithdang.kltn_giaphaonline.event.producer.EmailProducer;
+import com.codewithdang.kltn_giaphaonline.events.producer.EmailProducer;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,7 +27,6 @@ public class InvitationAccountListener {
         String invitationLink = UriComponentsBuilder
                 .fromHttpUrl(frontendProperties.getBaseUrl()) // url
                 .path(frontendProperties.getVerifyEndpoint())
-//                .queryParam("token", event.getInvitationToken())
                 .path("/")
                 .path(event.getInvitationToken())
                 .toUriString();

@@ -44,7 +44,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
+//    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
     public ArticleRes createArticle(ArticleReq req) {
         String slug = SlugUtil.toSlug(req.getTitle());
         if (articleRepo.existsBySlug(slug))
@@ -81,7 +81,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
+//    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
     public ArticleRes updateArticle(Long articleId, ArticleReq req) {
         Article article = getArticleOrThrow(articleId);
 
@@ -116,7 +116,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
+//    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
     public void deleteArticle(Long articleId) {
         Article article = getArticleOrThrow(articleId);
         articleRepo.delete(article);
@@ -148,7 +148,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
+//    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
     public ArticleRes publish(Long articleId) {
         Article article = getArticleOrThrow(articleId);
         article.setStatus(ArticleStatus.PUBLISHED);
@@ -158,7 +158,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
+//    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
     public ArticleRes unpublish(Long articleId) {
         Article article = getArticleOrThrow(articleId);
         article.setStatus(ArticleStatus.DRAFT);
@@ -168,7 +168,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
+//    @PreAuthorize("hasAuthority('SYS_CONTENT_MANAGE')")
     public ArticleRes toggleFeatured(Long articleId) {
         Article article = getArticleOrThrow(articleId);
         article.setIsFeatured(!Boolean.TRUE.equals(article.getIsFeatured()));

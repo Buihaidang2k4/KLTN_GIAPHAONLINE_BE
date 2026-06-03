@@ -1,4 +1,4 @@
-package com.codewithdang.kltn_giaphaonline.event.producer;
+package com.codewithdang.kltn_giaphaonline.events.producer;
 
 import com.codewithdang.kltn_giaphaonline.config.rabbitmq.RabbitMQConfig;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailBase;
@@ -10,16 +10,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class EmailProducer {
     RabbitTemplate rabbitTemplate;
 
-    public void sendEmail(EmailBase email){
+    public void sendEmail(EmailBase email) {
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EMAIL_EXCHANGE,
                 RabbitMQConfig.EMAIL_ROUTING_KEY,
                 email
         );
     }
-
 }
