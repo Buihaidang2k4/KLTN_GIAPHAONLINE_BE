@@ -12,19 +12,20 @@ import com.codewithdang.kltn_giaphaonline.mapper.NotificationMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.NotificationRepo;
+import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -35,6 +36,7 @@ public class NotificationServiceImpl implements NotificationService {
     AccountRepo accountRepo;
     PageMapper pageMapper;
     SimpMessagingTemplate messagingTemplate;
+    SecurityUtils securityUtils;
 
     @Override
     @Transactional
@@ -148,7 +150,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void markAllAsRead() {
-        Account currentAccount = getCurrentAccount();
+        Account currentAccount = securityUtils.getCurrentAccount();
         // mark all
         notificationRepo.markAllAsRead(currentAccount.getAccountId(), Instant.now());
     }
@@ -187,13 +189,6 @@ public class NotificationServiceImpl implements NotificationService {
                 .actionUrl(notification.getActionUrl())
                 .build();
         messagingTemplate.convertAndSendToUser(recipientUsername, "/queue/notifications", res);
-    }
-
-
-    private Account getCurrentAccount() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-        return accountRepo.findByEmail(currentUsername)
-                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+        log.info("PUSHHHH _ NOTIFICATION _ SUCCESS");
     }
 }

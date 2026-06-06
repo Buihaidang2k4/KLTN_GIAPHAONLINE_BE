@@ -124,7 +124,7 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
         notificationService.createNotification(
                 targetAccountId,
                 actorAccountId,
-                NotificationType.FAMILY_ROLE_CHANGED,
+                NotificationType.FAMILY_MEMBER_ROLE_CHANGED,
                 "Vai trò trong gia phả đã được cập nhật",
                 "Vai trò của bạn trong gia phả đã được đổi thành " + newRole.getName(),
                 familyId,

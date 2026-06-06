@@ -6,13 +6,19 @@ import com.codewithdang.kltn_giaphaonline.dto.request.FeedbackReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.FeedbackRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
+import com.codewithdang.kltn_giaphaonline.entity.AccountRole;
 import com.codewithdang.kltn_giaphaonline.entity.Feedback;
 import com.codewithdang.kltn_giaphaonline.enums.FeedbackStatus;
+import com.codewithdang.kltn_giaphaonline.enums.NotificationType;
+import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FeedbackMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
+import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
+import com.codewithdang.kltn_giaphaonline.repo.AccountRoleRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FeedbackRepo;
+import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
 import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,6 +29,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +41,8 @@ public class FeedbackServiceImpl implements FeedbackService {
     FeedbackMapper feedbackMapper;
     PageMapper pageMapper;
     SecurityUtils securityUtils;
+    NotificationService notificationService;
+    AccountRoleRepo accountRoleRepo;
 
     @Override
     @Transactional
@@ -42,6 +52,10 @@ public class FeedbackServiceImpl implements FeedbackService {
         feedback.setStatus(FeedbackStatus.PENDING);
         feedback.setAccount(account);
         feedback = feedbackRepo.save(feedback);
+
+        // notification admin
+        notifyAdminsAboutNewFeedback(account, feedback);
+
         return feedbackMapper.toRes(feedback);
     }
 
@@ -83,4 +97,22 @@ public class FeedbackServiceImpl implements FeedbackService {
         return pageMapper.toPageResponse(feedbacks, feedbackMapper::toRes);
     }
 
+    private void notifyAdminsAboutNewFeedback(Account sender, Feedback feedback) {
+        List<Account> accountsAdmin = accountRoleRepo.findAllByRole_Name(RoleEnums.FAMILY_ADMIN.name()).stream()
+                .map(AccountRole::getAccount)
+                .collect(Collectors.toList());
+
+        for (Account admin : accountsAdmin) {
+            notificationService.createNotification(
+                    admin.getAccountId(),
+                    sender.getAccountId(),
+                    NotificationType.FEEDBACK_ADMIN,
+                    "Phản hồi mới",
+                    "Người dùng " + sender.getFullName() + " đã gửi phản hồi: " + feedback.getSubject(),
+                    feedback.getFeedbackId(),
+                    "FEEDBACK",
+                    "/admin/feedbacks/" + feedback.getFeedbackId()
+            );
+        }
+    }
 }

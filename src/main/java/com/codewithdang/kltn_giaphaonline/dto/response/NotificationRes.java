@@ -8,6 +8,8 @@ import java.time.Instant;
 
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NotificationRes {
     Long notificationId;
