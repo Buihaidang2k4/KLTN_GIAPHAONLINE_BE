@@ -62,10 +62,8 @@ public class NotificationController {
     }
 
     @PatchMapping("/read-all")
-    public ApiResponse<Void> markAllAsRead(
-            @RequestParam Long recipientAccountId
-    ) {
-        notificationService.markAllAsRead(recipientAccountId);
+    public ApiResponse<Void> markAllAsRead() {
+        notificationService.markAllAsRead();
         return ApiResponse.success(200, "Đã đánh dấu tất cả thông báo là đã đọc", null);
     }
 

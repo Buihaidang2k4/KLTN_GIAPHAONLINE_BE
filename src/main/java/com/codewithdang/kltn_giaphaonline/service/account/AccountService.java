@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 public interface AccountService {
-    Account getCurrentAccount();
 
     AccountRes createAccount(CreateAccountReq req);
 

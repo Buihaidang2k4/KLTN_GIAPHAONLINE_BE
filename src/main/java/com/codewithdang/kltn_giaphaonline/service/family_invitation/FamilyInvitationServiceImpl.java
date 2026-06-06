@@ -18,6 +18,7 @@ import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
 import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import com.codewithdang.kltn_giaphaonline.service.family_member.FamilyMemberService;
 import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
+import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -53,6 +54,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     FamilyMemberService familyMemberService;
     AuditLogService auditLogService;
     PageMapper pageMapper;
+    SecurityUtils securityUtils;
 
     /***
      * list of invitations sent by the current user.
@@ -61,7 +63,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
      */
     @Override
     public PageResponse<InviteInvitationMemberRes> getMyInvitationsSent(Pageable pageable) {
-        Account currentAccount = getCurrentAccount();
+        Account currentAccount = securityUtils.getCurrentAccount();
 
         Page<FamilyInvitation> invitationsSentPage = invitationRepo.findByInvitedByAccount_AccountId(currentAccount.getAccountId(), pageable);
         return pageMapper.toPageResponse(
@@ -77,7 +79,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
      */
     @Override
     public PageResponse<InviteInvitationMemberRes> getMyInvitationsReceived(Pageable pageable) {
-        Account currentAccount = getCurrentAccount();
+        Account currentAccount = securityUtils.getCurrentAccount();
         Page<FamilyInvitation> invitationReceivedPage = invitationRepo.findByInvitedEmailIgnoreCase(currentAccount.getEmail(), pageable);
 
         return pageMapper.toPageResponse(invitationReceivedPage, familyInvitationMapper::toRes);
@@ -94,7 +96,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     public InviteInvitationMemberRes inviteMember(
             Long familyId, CreateFamilyInvitationReq invitationReq
     ) {
-        Account inviterAccount = getCurrentAccount();
+        Account inviterAccount = securityUtils.getCurrentAccount();
 
         Family family = familyRepo.findById(familyId).orElseThrow(
                 () -> new AppException(ErrorCode.FAMILY_NOT_EXISTED)
@@ -155,7 +157,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     @Override
     @Transactional
     public void acceptInvitation(String token) {
-        Account currentAccount = getCurrentAccount();
+        Account currentAccount = securityUtils.getCurrentAccount();
 
         FamilyInvitation familyInvitation = invitationRepo.findByInviteToken(token)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
@@ -249,7 +251,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     @Override
     @Transactional
     public void rejectInvitation(String inviteToken) {
-        Account currentAccount = getCurrentAccount();
+        Account currentAccount = securityUtils.getCurrentAccount();
 
         FamilyInvitation invitation = invitationRepo.findByInviteToken(inviteToken)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
@@ -286,7 +288,7 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
     @Override
     @Transactional
     public void cancelInvitation(Long invitationId) {
-        Account currentAccount = getCurrentAccount();
+        Account currentAccount = securityUtils.getCurrentAccount();
 
         FamilyInvitation invitation = invitationRepo.findById(invitationId).orElseThrow(() -> new AppException(ErrorCode.FAMILY_INVITATION_NOT_EXISTED));
 
@@ -407,13 +409,5 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         if (invitation.getExpiredAt() != null) data.put("Hết hạn", invitation.getExpiredAt());
         if (invitation.getHandledAt() != null) data.put("Xử lý lúc", invitation.getHandledAt());
         return data;
-    }
-
-    //
-    private Account getCurrentAccount() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-        return accountRepo.findByEmail(currentUsername)
-                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
     }
 }

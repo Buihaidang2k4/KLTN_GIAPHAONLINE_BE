@@ -17,6 +17,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +34,7 @@ public class NotificationServiceImpl implements NotificationService {
     NotificationMapper notificationMapper;
     AccountRepo accountRepo;
     PageMapper pageMapper;
+    SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional
@@ -55,6 +59,10 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         notification = notificationRepo.save(notification);
+
+        // send realtime
+        sendRealtimeNotification(notification);
+
         return notificationMapper.toRes(notification);
     }
 
@@ -91,6 +99,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         notification = notificationRepo.save(notification);
+        sendRealtimeNotification(notification);
         return notificationMapper.toRes(notification);
     }
 
@@ -138,9 +147,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
-    public void markAllAsRead(Long recipientAccountId) {
+    public void markAllAsRead() {
+        Account currentAccount = getCurrentAccount();
         // mark all
-        notificationRepo.markAllAsRead(recipientAccountId, Instant.now());
+        notificationRepo.markAllAsRead(currentAccount.getAccountId(), Instant.now());
     }
 
     @Override
@@ -153,5 +163,37 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         notificationRepo.delete(notification);
+    }
+
+
+    private void sendRealtimeNotification(Notification notification) {
+        String recipientUsername = notification.getRecipient().getFullName();
+        String senderUsername = notification.getSender() != null
+                ? notification.getSender().getFullName()
+                : null;
+
+        NotificationRes res = NotificationRes.builder()
+                .notificationId(notification.getNotificationId())
+                .recipientAccountId(notification.getRecipient().getAccountId())
+                .senderAccountId(notification.getSender() != null ? notification.getSender().getAccountId() : null)
+                .senderName(senderUsername)
+                .recipientName(recipientUsername)
+                .type(notification.getType())
+                .title(notification.getTitle())
+                .isRead(notification.getIsRead())
+                .content(notification.getContent())
+                .referenceId(notification.getReferenceId())
+                .referenceType(notification.getReferenceType())
+                .actionUrl(notification.getActionUrl())
+                .build();
+        messagingTemplate.convertAndSendToUser(recipientUsername, "/queue/notifications", res);
+    }
+
+
+    private Account getCurrentAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        return accountRepo.findByEmail(currentUsername)
+                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
     }
 }

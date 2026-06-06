@@ -28,8 +28,11 @@ public class MinioConfig {
         try {
             client.listBuckets();
             log.info("Connected MinIO Successfully");
+            log.error("MinIO URL: {}", url);
+            log.error("MinIO Access Key: {}", accessKey);
         } catch (Exception e) {
             log.error("Cannot connect MinIO", e);
+            log.error("MinIO URL: {}", url);
         }
 
         return client;

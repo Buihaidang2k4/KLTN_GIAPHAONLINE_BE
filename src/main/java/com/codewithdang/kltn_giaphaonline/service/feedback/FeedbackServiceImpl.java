@@ -12,15 +12,13 @@ import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FeedbackMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
-import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FeedbackRepo;
+import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,12 +32,12 @@ public class FeedbackServiceImpl implements FeedbackService {
     FeedbackRepo feedbackRepo;
     FeedbackMapper feedbackMapper;
     PageMapper pageMapper;
-    AccountRepo accountRepo;
+    SecurityUtils securityUtils;
 
     @Override
     @Transactional
     public FeedbackRes CreateFeedback(FeedbackReq req) {
-        Account account = getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
         Feedback feedback = feedbackMapper.toEntity(req);
         feedback.setStatus(FeedbackStatus.PENDING);
         feedback.setAccount(account);
@@ -68,7 +66,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<FeedbackRes> getAllByCurrentAccount(String subject, Pageable pageable) {
-        Account account = getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
         Page<Feedback> feedbacks = (subject != null && !subject.isBlank())
                 ? feedbackRepo.findAllByAccount_AccountIdAndSubjectContainingIgnoreCase(account.getAccountId(), subject, pageable)
                 : feedbackRepo.findAllByAccount_AccountId(account.getAccountId(), pageable);
@@ -85,10 +83,4 @@ public class FeedbackServiceImpl implements FeedbackService {
         return pageMapper.toPageResponse(feedbacks, feedbackMapper::toRes);
     }
 
-    private Account getCurrentAccount() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-        return accountRepo.findByEmail(currentUsername)
-                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
-    }
 }

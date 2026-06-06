@@ -23,6 +23,7 @@ import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
 import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
 import com.codewithdang.kltn_giaphaonline.utils.LunarSolarConverter;
+import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -50,9 +51,9 @@ public class FamilyEventServiceImpl implements FamilyEventService {
     FamilyEventMapper familyEventMapper;
     PageMapper pageMapper;
     FamilyRepo familyRepo;
-    AccountService accountService;
     NotificationService notificationService;
     AuditLogService auditLogService;
+    SecurityUtils securityUtils;
 
     @Override
     @Transactional
@@ -60,7 +61,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         Family family = familyRepo.findById(familyId)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
 
-        Account account = accountService.getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
 
         FamilyEvent event = familyEventMapper.toEntity(req);
 
@@ -115,7 +116,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
 
         FamilyEvent savedEvent = familyEventRepo.save(event);
 
-        Account account = accountService.getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
         auditLogService.log(CreateAuditLogReq.builder()
                 .familyId(familyId)
                 .actorAccountId(account.getAccountId())
@@ -136,7 +137,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
                 .findByFamily_FamilyIdAndFamilyEventId(familyId, eventId)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_EVENT_NOT_EXISTED));
 
-        Account account = accountService.getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
         Map<String, Object> oldData = buildEventDataMap(event);
 
         familyEventRepo.delete(event);

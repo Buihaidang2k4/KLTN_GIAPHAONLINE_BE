@@ -22,6 +22,7 @@ import com.codewithdang.kltn_giaphaonline.repo.PersonRepo;
 import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioService;
 import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
+import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -48,6 +49,7 @@ public class PersonServiceImpl implements PersonService {
     PersonMapper personMapper;
     MinioService minioService;
     AuditLogService auditLogService;
+    SecurityUtils securityUtils;
 
     @Override
     @Transactional
@@ -55,7 +57,7 @@ public class PersonServiceImpl implements PersonService {
         FamilyCategory category = familyCategoryRepo.findById(categoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_CATEGORY_NOT_EXISTED));
 
-        Account account = getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
         Person newPerson = personMapper.toEntity(req);
         newPerson.setFamilyCategory(category);
         newPerson.setCreatedByAccount(account);
@@ -83,7 +85,7 @@ public class PersonServiceImpl implements PersonService {
     public PersonRes updatePerson(Long personId, PersonReq req) {
         Person person = personRepo.findById(personId)
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
-        Account account = getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
 
         if (req.getAvatar() != null && !req.getAvatar().isEmpty()) {
             if (person.getAvatarPath() != null) minioService.deleteFile(person.getAvatarPath());
@@ -152,7 +154,7 @@ public class PersonServiceImpl implements PersonService {
             throw new AppException(ErrorCode.PERSON_ALREADY_HAS_FATHER);
 
         FamilyCategory category = currentPerson.getFamilyCategory();
-        Account currentAccount = getCurrentAccount();
+        Account currentAccount = securityUtils.getCurrentAccount();
 
         Long minGen = personRepo.findAllByFamilyCategory_FamilyCategoryId(category.getFamilyCategoryId())
                 .stream()
@@ -199,7 +201,7 @@ public class PersonServiceImpl implements PersonService {
         Person currentPerson = personRepo.findById(personId)
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
 
-        Account account = getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
 
         Person partner = personMapper.toEntity(req);
         if (currentPerson.getGender() == Gender.MALE) partner.setGender(Gender.FEMALE);
@@ -244,7 +246,7 @@ public class PersonServiceImpl implements PersonService {
         Person currentPerson = personRepo.findById(personId)
                 .orElseThrow(() -> new AppException(ErrorCode.PERSON_NOT_FOUND));
 
-        Account account = getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
 
         Person partner = null;
         if (req.getPartnerId() != null) {
@@ -314,7 +316,7 @@ public class PersonServiceImpl implements PersonService {
             decrementTotalPerson(category);
         }
 
-        Account account = getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
         auditLogService.log(CreateAuditLogReq.builder()
                 .auditAction(AuditAction.NODE_DELETE.getLabel())
                 .actorAccountId(account.getAccountId())
@@ -392,9 +394,4 @@ public class PersonServiceImpl implements PersonService {
                 .build();
     }
 
-    private Account getCurrentAccount() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return accountRepo.findByEmail(auth.getName())
-                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
-    }
 }

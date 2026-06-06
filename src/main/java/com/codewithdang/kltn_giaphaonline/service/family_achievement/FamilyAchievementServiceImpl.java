@@ -19,6 +19,7 @@ import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
 import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioService;
 import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
+import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -42,7 +43,7 @@ public class FamilyAchievementServiceImpl implements FamilyAchievementService {
     PageMapper pageMapper;
     MinioService minioService;
     AuditLogService auditLogService;
-    AccountService accountService;
+    SecurityUtils securityUtils;
 
     @Override
     @Transactional
@@ -58,7 +59,7 @@ public class FamilyAchievementServiceImpl implements FamilyAchievementService {
 
         auditLogService.log(CreateAuditLogReq.builder()
                 .familyId(familyId)
-                .actorAccountId(accountService.getCurrentAccount().getAccountId())
+                .actorAccountId(securityUtils.getCurrentAccount().getAccountId())
                 .auditAction(AuditAction.FAMILY_UPDATE.getLabel())
                 .entityType(AuditEntityType.FAMILY.name())
                 .newData(buildDataMap(achievement))
@@ -90,7 +91,7 @@ public class FamilyAchievementServiceImpl implements FamilyAchievementService {
 
         auditLogService.log(CreateAuditLogReq.builder()
                 .familyId(familyId)
-                .actorAccountId(accountService.getCurrentAccount().getAccountId())
+                .actorAccountId(securityUtils.getCurrentAccount().getAccountId())
                 .auditAction(AuditAction.FAMILY_UPDATE.getLabel())
                 .entityType(AuditEntityType.FAMILY.name())
                 .oldData(oldData)
@@ -117,7 +118,7 @@ public class FamilyAchievementServiceImpl implements FamilyAchievementService {
 
         auditLogService.log(CreateAuditLogReq.builder()
                 .familyId(familyId)
-                .actorAccountId(accountService.getCurrentAccount().getAccountId())
+                .actorAccountId(securityUtils.getCurrentAccount().getAccountId())
                 .auditAction(AuditAction.FAMILY_UPDATE.getLabel())
                 .entityType(AuditEntityType.FAMILY.name())
                 .oldData(oldData)

@@ -29,7 +29,7 @@ public interface NotificationService {
 
     NotificationRes markAsRead(Long notificationId, Long recipientAccountId);
 
-    void markAllAsRead(Long recipientAccountId);
+    void markAllAsRead();
 
     void deleteNotification(Long notificationId, Long recipientAccountId);
 }

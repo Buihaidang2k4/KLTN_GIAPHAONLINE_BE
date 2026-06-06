@@ -257,17 +257,6 @@ public class AccountServiceImpl implements AccountService {
 
     }
 
-
-    @Override
-    @Transactional(readOnly = true)
-    public Account getCurrentAccount() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-        return accountRepo.findByEmail(currentUsername)
-                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
-    }
-
-
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AccountRes> getAccounts(String keyword, String status, Pageable pageable) {

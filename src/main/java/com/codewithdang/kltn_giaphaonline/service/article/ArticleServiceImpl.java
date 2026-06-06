@@ -15,6 +15,7 @@ import com.codewithdang.kltn_giaphaonline.repo.ArticleCategoryRepo;
 import com.codewithdang.kltn_giaphaonline.repo.ArticleRepo;
 import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioService;
 import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
+import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import com.codewithdang.kltn_giaphaonline.utils.SlugUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +23,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,9 +37,9 @@ public class ArticleServiceImpl implements ArticleService {
 
     ArticleRepo articleRepo;
     ArticleCategoryRepo articleCategoryRepo;
-    AccountRepo accountRepo;
     MinioService minioService;
     PageMapper pageMapper;
+    SecurityUtils securityUtils;
 
     @Override
     @Transactional
@@ -73,7 +72,7 @@ public class ArticleServiceImpl implements ArticleService {
                 .metaDescription(req.getMetaDescription())
                 .status(ArticleStatus.DRAFT)
                 .articleCategory(category)
-                .createdByAccount(getCurrentAccount())
+                .createdByAccount(securityUtils.getCurrentAccount())
                 .build();
 
         return toRes(articleRepo.save(article));
@@ -219,8 +218,6 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     private Account getCurrentAccount() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return accountRepo.findByEmail(auth.getName())
-                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+        return securityUtils.getCurrentAccount();
     }
 }

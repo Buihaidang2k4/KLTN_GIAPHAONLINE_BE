@@ -15,6 +15,7 @@ import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyMemberRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.service.family_member.FamilyMemberService;
+import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import com.codewithdang.kltn_giaphaonline.utils.SlugUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class FamilyServiceImpl implements FamilyService {
     FamilyMemberService familyMemberService;
     AccountRepo accountRepo;
     FamilyMemberRepo familyMemberRepo;
+    SecurityUtils securityUtils;
 
     @Override
     @Transactional
@@ -73,7 +75,7 @@ public class FamilyServiceImpl implements FamilyService {
     @Override
     public FamilyRes getFamilyById(Long familyId) {
         Family family = familyRepo.findById(familyId).orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
-        Account account = getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
         boolean isMember = familyMemberRepo.existsByFamilyAndAccount(family, account);
         if (!isMember) throw new AppException(ErrorCode.UNAUTHORIZED);
         return familyMapper.toRes(family);
@@ -89,7 +91,7 @@ public class FamilyServiceImpl implements FamilyService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<FamilyRes> getFamiliesByCurrentAccount(Pageable pageable) {
-        Account account = getCurrentAccount();
+        Account account = securityUtils.getCurrentAccount();
         log.info("account current: {}", account.getAccountId());
         Page<FamilyMember> familyMembers = familyMemberRepo.findAllByAccount(account, pageable);
         log.info("List family members found for account {}: {}", account.getEmail(), familyMembers.getContent());
@@ -100,10 +102,5 @@ public class FamilyServiceImpl implements FamilyService {
                 familyMapper::toRes);
     }
 
-    private Account getCurrentAccount() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = authentication.getName();
-        return accountRepo.findByEmail(currentUsername)
-                .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
-    }
+
 }
