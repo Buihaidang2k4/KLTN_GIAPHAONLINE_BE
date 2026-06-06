@@ -120,7 +120,7 @@ public class SecurityConfig {
                         totalAuthorities.add(new SimpleGrantedAuthority(permission.name()));
                     });
 
-                    log.info("Mapped Role [{}] to {} permissions", cleanRoleName, roleEnum.getPermissionEnums().size());
+//                    log.info("Mapped Role [{}] to {} permissions", cleanRoleName, roleEnum.getPermissionEnums().size());
                 } catch (IllegalArgumentException e) {
                     log.warn("Role [{}] not found in RoleEnums, skipping permission mapping", cleanRoleName);
                 }

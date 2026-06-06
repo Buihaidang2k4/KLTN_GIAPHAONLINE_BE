@@ -5,12 +5,15 @@ import com.codewithdang.kltn_giaphaonline.dto.response.NotificationRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Notification;
+import com.codewithdang.kltn_giaphaonline.entity.FamilyMember;
+import com.codewithdang.kltn_giaphaonline.enums.FamilyMemberStatus;
 import com.codewithdang.kltn_giaphaonline.enums.NotificationType;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.NotificationMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AccountRepo;
+import com.codewithdang.kltn_giaphaonline.repo.FamilyMemberRepo;
 import com.codewithdang.kltn_giaphaonline.repo.NotificationRepo;
 import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import lombok.AccessLevel;
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -34,6 +38,7 @@ public class NotificationServiceImpl implements NotificationService {
     NotificationRepo notificationRepo;
     NotificationMapper notificationMapper;
     AccountRepo accountRepo;
+    FamilyMemberRepo familyMemberRepo;
     PageMapper pageMapper;
     SimpMessagingTemplate messagingTemplate;
     SecurityUtils securityUtils;
@@ -69,6 +74,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @Transactional
     public NotificationRes createNotification(
             Long recipientAccountId,
             Long senderAccountId,
@@ -107,37 +113,51 @@ public class NotificationServiceImpl implements NotificationService {
 
 
     @Override
-    @Transactional(readOnly = true)
-    public PageResponse<NotificationRes> getNotifications(Long recipientAccountId, Pageable pageable) {
-        Page<Notification> notificationPage = notificationRepo.findByRecipient_AccountIdOrderByCreatedAtDesc(recipientAccountId, pageable);
-        return pageMapper.toPageResponse(notificationPage, notificationMapper::toRes);
+    @Transactional
+    public void createFamilyNotification(Long familyId, Long senderAccountId,
+                                         NotificationType type, String title, String content,
+                                         Long referenceId, String referenceType, String actionUrl) {
+        List<FamilyMember> members = familyMemberRepo.findByFamily_FamilyIdAndStatus(familyId, FamilyMemberStatus.ACTIVE);
+        if (members.isEmpty()) return;
+
+        Account sender = (senderAccountId != null)
+                ? accountRepo.findById(senderAccountId).orElse(null)
+                : null;
+
+        List<Notification> notifications = members.stream()
+                .filter(m -> !m.getAccount().getAccountId().equals(senderAccountId))
+                .map(m -> Notification.builder()
+                        .recipient(m.getAccount())
+                        .sender(sender)
+                        .type(type)
+                        .title(title)
+                        .content(content)
+                        .isRead(false)
+                        .referenceId(referenceId)
+                        .referenceType(referenceType)
+                        .actionUrl(actionUrl)
+                        .build())
+                .toList();
+
+        notificationRepo.saveAll(notifications);
+        notifications.forEach(this::sendRealtimeNotification);
+        log.info("Sent family notification to {} members in family {}", notifications.size(), familyId);
     }
 
-    // get notification isRead = false
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<NotificationRes> getUnreadNotifications(Long recipientAccountId, Pageable pageable) {
-        Page<Notification> notificationPage = notificationRepo.findByRecipient_AccountIdAndIsReadOrderByCreatedAtDesc(
-                recipientAccountId, false, pageable
-        );
+    public PageResponse<NotificationRes> getNotificationsByCurrentAccount(Pageable pageable) {
+        Account currentAccount = securityUtils.getCurrentAccount();
+        Page<Notification> notificationPage = notificationRepo.findByRecipient_AccountIdOrderByCreatedAtDesc(currentAccount.getAccountId(), pageable);
         return pageMapper.toPageResponse(notificationPage, notificationMapper::toRes);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long countUnreadNotifications(Long recipientAccountId) {
-        return notificationRepo.countByRecipient_AccountIdAndIsRead(recipientAccountId, false);
     }
 
     @Override
     @Transactional
-    public NotificationRes markAsRead(Long notificationId, Long recipientAccountId) {
+    public NotificationRes markAsRead(Long notificationId) {
+
         Notification notification = notificationRepo.findById(notificationId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_EXISTED));
-
-        if (!notification.getRecipient().getAccountId().equals(recipientAccountId)) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
 
         if (Boolean.FALSE.equals(notification.getIsRead())) {
             notification.setIsRead(true);
@@ -151,25 +171,21 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public void markAllAsRead() {
         Account currentAccount = securityUtils.getCurrentAccount();
-        // mark all
         notificationRepo.markAllAsRead(currentAccount.getAccountId(), Instant.now());
     }
 
     @Override
-    public void deleteNotification(Long notificationId, Long recipientAccountId) {
+    @Transactional
+    public void deleteNotification(Long notificationId) {
         Notification notification = notificationRepo.findById(notificationId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_EXISTED));
-
-        if (!notification.getRecipient().getAccountId().equals(recipientAccountId)) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
-
         notificationRepo.delete(notification);
     }
 
 
     private void sendRealtimeNotification(Notification notification) {
-        String recipientUsername = notification.getRecipient().getFullName();
+        String recipientEmail = notification.getRecipient().getEmail();
+        String recipientName = notification.getRecipient().getFullName();
         String senderUsername = notification.getSender() != null
                 ? notification.getSender().getFullName()
                 : null;
@@ -179,7 +195,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .recipientAccountId(notification.getRecipient().getAccountId())
                 .senderAccountId(notification.getSender() != null ? notification.getSender().getAccountId() : null)
                 .senderName(senderUsername)
-                .recipientName(recipientUsername)
+                .recipientName(recipientName)
                 .type(notification.getType())
                 .title(notification.getTitle())
                 .isRead(notification.getIsRead())
@@ -188,7 +204,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .referenceType(notification.getReferenceType())
                 .actionUrl(notification.getActionUrl())
                 .build();
-        messagingTemplate.convertAndSendToUser(recipientUsername, "/queue/notifications", res);
-        log.info("PUSHHHH _ NOTIFICATION _ SUCCESS");
+        messagingTemplate.convertAndSendToUser(recipientEmail, "/queue/notifications", res);
+        log.info("PUSHHHH _ NOTIFICATION _ SUCCESS to user: {}", recipientEmail);
     }
 }

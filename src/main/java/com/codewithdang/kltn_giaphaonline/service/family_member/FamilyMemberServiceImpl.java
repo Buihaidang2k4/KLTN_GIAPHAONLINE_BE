@@ -136,7 +136,6 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
     @Override
     @Transactional
     public void removeMember(Long familyId, Long targetAccountId, Long actorAccountId) {
-        // validate actor quyền quản lý member
         validateFamilyAdmin(familyId, actorAccountId);
 
         if (targetAccountId.equals(actorAccountId)) {
@@ -148,9 +147,7 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
 
         FamilyMember targetMember = getActiveMember(familyId, targetAccountId);
 
-        targetMember.setStatus(FamilyMemberStatus.REMOVED);
-        targetMember.setRemovedAt(Instant.now());
-        familyMemberRepo.save(targetMember);
+        familyMemberRepo.delete(targetMember);
 
         notificationService.createNotification(
                 targetAccountId,

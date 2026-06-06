@@ -10,6 +10,11 @@ import org.springframework.data.domain.Pageable;
 public interface NotificationService {
     NotificationRes createNotification(NotificationReq request);
 
+    void createFamilyNotification(Long familyId, Long senderAccountId,
+                                  NotificationType type, String title, String content,
+                                  Long referenceId, String referenceType, String actionUrl);
+
+
     NotificationRes createNotification(
             Long recipientAccountId,
             Long senderAccountId,
@@ -21,15 +26,11 @@ public interface NotificationService {
             String actionUrl
     );
 
-    PageResponse<NotificationRes> getNotifications(Long recipientAccountId, Pageable pageable);
+    PageResponse<NotificationRes> getNotificationsByCurrentAccount(Pageable pageable);
 
-    PageResponse<NotificationRes> getUnreadNotifications(Long recipientAccountId, Pageable pageable);
-
-    long countUnreadNotifications(Long recipientAccountId);
-
-    NotificationRes markAsRead(Long notificationId, Long recipientAccountId);
+    NotificationRes markAsRead(Long notificationId);
 
     void markAllAsRead();
 
-    void deleteNotification(Long notificationId, Long recipientAccountId);
+    void deleteNotification(Long notificationId);
 }

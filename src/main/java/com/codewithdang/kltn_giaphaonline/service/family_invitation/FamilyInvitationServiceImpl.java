@@ -185,6 +185,17 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         }
         updateInvitationStatus(familyInvitation, currentAccount, FamilyInvitationStatus.ACCEPTED);
 
+        notificationService.createNotification(
+                familyInvitation.getInvitedByAccount().getAccountId(),
+                currentAccount.getAccountId(),
+                NotificationType.FAMILY_MEMBER_ADDED_OR_REJECT,
+                "Lời mời được chấp nhận",
+                currentAccount.getFullName() + " đã chấp nhận lời mời tham gia " + familyInvitation.getFamily().getFamilyName(),
+                familyInvitation.getFamilyInvitationId(),
+                "FAMILY_INVITATION",
+                "/families/" + familyInvitation.getFamily().getFamilyId() + "/members"
+        );
+
         auditLogService.log(CreateAuditLogReq.builder()
                 .familyId(familyInvitation.getFamily().getFamilyId())
                 .actorAccountId(currentAccount.getAccountId())
@@ -269,6 +280,17 @@ public class FamilyInvitationServiceImpl implements FamilyInvitationService {
         Map<String, Object> oldData = buildInvitationDataMap(invitation);
 
         updateInvitationStatus(invitation, currentAccount, FamilyInvitationStatus.DECLINED);
+
+        notificationService.createNotification(
+                invitation.getInvitedByAccount().getAccountId(),
+                currentAccount.getAccountId(),
+                NotificationType.FAMILY_MEMBER_ADDED_OR_REJECT,
+                "Lời mời bị từ chối",
+                currentAccount.getFullName() + " đã từ chối lời mời tham gia " + invitation.getFamily().getFamilyName(),
+                invitation.getFamilyInvitationId(),
+                "FAMILY_INVITATION",
+                "/families/" + invitation.getFamily().getFamilyId() + "/invitations"
+        );
 
         auditLogService.log(CreateAuditLogReq.builder()
                 .familyId(invitation.getFamily().getFamilyId())

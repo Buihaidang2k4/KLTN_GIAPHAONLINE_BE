@@ -16,4 +16,6 @@ public interface FeedbackService {
     PageResponse<FeedbackRes> getAllByCurrentAccount(String subject, Pageable pageable);
 
     PageResponse<FeedbackRes> getAll(String keyword, Pageable pageable);
+
+    void deleteFeedback(Long feedbackId);
 }

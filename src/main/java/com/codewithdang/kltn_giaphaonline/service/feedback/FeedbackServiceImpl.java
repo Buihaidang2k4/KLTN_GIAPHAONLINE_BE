@@ -8,6 +8,7 @@ import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.AccountRole;
 import com.codewithdang.kltn_giaphaonline.entity.Feedback;
+import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
 import com.codewithdang.kltn_giaphaonline.enums.FeedbackStatus;
 import com.codewithdang.kltn_giaphaonline.enums.NotificationType;
 import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
@@ -62,11 +63,25 @@ public class FeedbackServiceImpl implements FeedbackService {
     @Override
     @Transactional
     public FeedbackRes handleFeedback(Long feedbackId, FeedbackHandleReq req) {
+        Account account = securityUtils.getCurrentAccount();
+
         Feedback feedback = feedbackRepo.findById(feedbackId).orElseThrow(() ->
                 new AppException(ErrorCode.FEEDBACK_NOT_FOUND));
         feedbackMapper.updateEntityFromRequest(req, feedback);
         feedback.setResolvedAt(LocalDateTime.now());
         feedback = feedbackRepo.save(feedback);
+
+        notificationService.createNotification(
+                feedback.getAccount().getAccountId(),
+                account.getAccountId(),
+                NotificationType.FEEDBACK_USER,
+                "Phản hồi của bạn đã được xử lý",
+                "Feedback \"" + feedback.getSubject() + "\" đã được phản hồi: " + req.getAdminResponse(),
+                feedback.getFeedbackId(),
+                "FEEDBACK",
+                "/feedbacks/" + feedback.getFeedbackId()
+        );
+
         return feedbackMapper.toRes(feedback);
     }
 
@@ -97,9 +112,17 @@ public class FeedbackServiceImpl implements FeedbackService {
         return pageMapper.toPageResponse(feedbacks, feedbackMapper::toRes);
     }
 
+    @Override
+    @Transactional
+    public void deleteFeedback(Long feedbackId) {
+        if (feedbackRepo.existsById(feedbackId))
+            feedbackRepo.deleteById(feedbackId);
+    }
+
     private void notifyAdminsAboutNewFeedback(Account sender, Feedback feedback) {
-        List<Account> accountsAdmin = accountRoleRepo.findAllByRole_Name(RoleEnums.FAMILY_ADMIN.name()).stream()
+        List<Account> accountsAdmin = accountRoleRepo.findAllByRole_Name(RoleEnums.SYSTEM_ADMIN.name()).stream()
                 .map(AccountRole::getAccount)
+                .filter(account -> account.getAccountStatus() == AccountStatus.ACTIVE)
                 .collect(Collectors.toList());
 
         for (Account admin : accountsAdmin) {

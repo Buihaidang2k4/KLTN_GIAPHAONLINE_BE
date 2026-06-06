@@ -7,6 +7,7 @@ import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Family;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyMember;
+import com.codewithdang.kltn_giaphaonline.enums.FamilyMemberStatus;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyMapper;
@@ -92,11 +93,8 @@ public class FamilyServiceImpl implements FamilyService {
     @Transactional(readOnly = true)
     public PageResponse<FamilyRes> getFamiliesByCurrentAccount(Pageable pageable) {
         Account account = securityUtils.getCurrentAccount();
-        log.info("account current: {}", account.getAccountId());
-        Page<FamilyMember> familyMembers = familyMemberRepo.findAllByAccount(account, pageable);
-        log.info("List family members found for account {}: {}", account.getEmail(), familyMembers.getContent());
+        Page<FamilyMember> familyMembers = familyMemberRepo.findAllByAccountAndStatus(account, FamilyMemberStatus.ACTIVE, pageable);
         Page<Family> familyPage = familyMembers.map(FamilyMember::getFamily);
-        log.info("Found {} families for account {}", familyPage.getTotalElements(), account.getEmail());
         return pageMapper.toPageResponse(
                 familyPage,
                 familyMapper::toRes);

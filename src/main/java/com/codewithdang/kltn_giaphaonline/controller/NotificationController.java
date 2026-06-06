@@ -22,43 +22,22 @@ public class NotificationController {
 
     @GetMapping
     public ApiResponse<PageResponse<NotificationRes>> getMyNotifications(
-            @RequestParam Long recipientAccountId,
             @PageableDefault(
                     sort = "createdAt",
                     direction = Sort.Direction.DESC
             ) Pageable pageable
     ) {
         return ApiResponse.success(200, "Lấy danh sách thông báo thành công",
-                notificationService.getNotifications(recipientAccountId, pageable));
+                notificationService.getNotificationsByCurrentAccount(pageable));
     }
 
-    @GetMapping("/unread")
-    public ApiResponse<PageResponse<NotificationRes>> getUnreadNotifications(
-            @RequestParam Long recipientAccountId,
-            @PageableDefault(
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable
-    ) {
-        return ApiResponse.success(200, "Lấy danh sách thông báo chưa đọc thành công",
-                notificationService.getUnreadNotifications(recipientAccountId, pageable));
-    }
-
-    @GetMapping("/unread-count")
-    public ApiResponse<Long> countUnreadNotifications(
-            @RequestParam Long recipientAccountId
-    ) {
-        return ApiResponse.success(200, "Truy vấn số lượng thông báo chưa đọc thành công",
-                notificationService.countUnreadNotifications(recipientAccountId));
-    }
 
     @PatchMapping("/{notificationId}/read")
     public ApiResponse<NotificationRes> markAsRead(
-            @PathVariable Long notificationId,
-            @RequestParam Long recipientAccountId
+            @PathVariable Long notificationId
     ) {
         return ApiResponse.success(200, "Đã đánh dấu thông báo là đã đọc",
-                notificationService.markAsRead(notificationId, recipientAccountId));
+                notificationService.markAsRead(notificationId));
     }
 
     @PatchMapping("/read-all")
@@ -69,10 +48,9 @@ public class NotificationController {
 
     @DeleteMapping("/{notificationId}")
     public ApiResponse<Void> deleteNotification(
-            @PathVariable Long notificationId,
-            @RequestParam Long recipientAccountId
+            @PathVariable Long notificationId
     ) {
-        notificationService.deleteNotification(notificationId, recipientAccountId);
+        notificationService.deleteNotification(notificationId);
         return ApiResponse.success(200, "Xóa thông báo thành công", null);
     }
 }
