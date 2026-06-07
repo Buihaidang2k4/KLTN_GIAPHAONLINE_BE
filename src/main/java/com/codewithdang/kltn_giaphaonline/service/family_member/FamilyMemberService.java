@@ -13,9 +13,9 @@ public interface FamilyMemberService {
 
     FamilyMember addMember(Long familyId, Long accountId, String roleName);
 
-    void updateMemberRole(Long familyId, Long targetAccountId, UpdateFamilyMemberRoleReq memberRoleReq, Long actorAccountId);
+    void updateMemberRole(Long familyId, Long targetAccountId, UpdateFamilyMemberRoleReq memberRoleReq);
 
-    void removeMember(Long familyId, Long targetAccountId, Long actorAccountId);
+    void removeMember(Long familyId, Long targetAccountId);
 
     boolean isActiveMember(Long familyId, Long accountId);
 }

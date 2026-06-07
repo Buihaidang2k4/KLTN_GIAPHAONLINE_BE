@@ -12,6 +12,7 @@ import com.codewithdang.kltn_giaphaonline.repo.FamilyMemberRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.repo.RoleRepo;
 import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
+import com.codewithdang.kltn_giaphaonline.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,6 +34,7 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
     RoleRepo roleRepo;
     NotificationService notificationService;
     FamilyMemberMapper memberMapper;
+    SecurityUtils securityUtils;
 
     @Override
     @Transactional(readOnly = true)
@@ -97,12 +99,13 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
 
     @Override
     @Transactional
-    public void updateMemberRole(Long familyId, Long targetAccountId, UpdateFamilyMemberRoleReq memberRoleReq, Long actorAccountId) {
+    public void updateMemberRole(Long familyId, Long targetAccountId, UpdateFamilyMemberRoleReq memberRoleReq) {
+        Account actorAccount = securityUtils.getCurrentAccount();
         // validate actor quyền quản lý member
-        validateFamilyAdmin(familyId, actorAccountId);
+        validateFamilyAdmin(familyId, actorAccount.getAccountId());
 
         // tìm member target
-        if (targetAccountId.equals(actorAccountId)) {
+        if (targetAccountId.equals(actorAccount.getAccountId())) {
             throw new AppException(ErrorCode.CANNOT_UPDATE_YOUR_OWN_ROLE);
         }
 
@@ -123,7 +126,7 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
 
         notificationService.createNotification(
                 targetAccountId,
-                actorAccountId,
+                actorAccount.getAccountId(),
                 NotificationType.FAMILY_MEMBER_ROLE_CHANGED,
                 "Vai trò trong gia phả đã được cập nhật",
                 "Vai trò của bạn trong gia phả đã được đổi thành " + newRole.getName(),
@@ -135,10 +138,11 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
 
     @Override
     @Transactional
-    public void removeMember(Long familyId, Long targetAccountId, Long actorAccountId) {
-        validateFamilyAdmin(familyId, actorAccountId);
+    public void removeMember(Long familyId, Long targetAccountId) {
+        Account actorAccount = securityUtils.getCurrentAccount();
+        validateFamilyAdmin(familyId, actorAccount.getAccountId());
 
-        if (targetAccountId.equals(actorAccountId)) {
+        if (targetAccountId.equals(actorAccount.getAccountId())) {
             throw new AppException(ErrorCode.CANNOT_UPDATE_YOUR_OWN_ROLE);
         }
 
@@ -146,12 +150,11 @@ public class FamilyMemberServiceImpl implements FamilyMemberService {
                 .orElseThrow(() -> new AppException(ErrorCode.FAMILY_NOT_EXISTED));
 
         FamilyMember targetMember = getActiveMember(familyId, targetAccountId);
-
         familyMemberRepo.delete(targetMember);
 
         notificationService.createNotification(
                 targetAccountId,
-                actorAccountId,
+                actorAccount.getAccountId(),
                 NotificationType.FAMILY_MEMBER_REMOVED,
                 "Bạn đã bị xóa khỏi gia phả",
                 "Bạn đã bị xóa khỏi gia phả " + family.getFamilyName(),

@@ -3,6 +3,8 @@ package com.codewithdang.kltn_giaphaonline.service.family_subscription;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilySubscriptionCheckQuotaRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilySubscriptionRes;
 import com.codewithdang.kltn_giaphaonline.entity.*;
+import com.codewithdang.kltn_giaphaonline.enums.FamilyMemberStatus;
+import com.codewithdang.kltn_giaphaonline.enums.NotificationType;
 import com.codewithdang.kltn_giaphaonline.enums.RoleEnums;
 import com.codewithdang.kltn_giaphaonline.enums.SubscriptionStatus;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
@@ -10,8 +12,10 @@ import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilySubscriptionMapper;
 import com.codewithdang.kltn_giaphaonline.repo.AlbumRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyCategoryRepo;
+import com.codewithdang.kltn_giaphaonline.repo.FamilyMemberRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilySubscriptionRepo;
+import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
 import com.codewithdang.kltn_giaphaonline.service.subscription_plan.SubscriptionPlanServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -35,6 +39,8 @@ public class FamilySubscriptionServiceImpl implements FamilySubscriptionService 
     FamilyCategoryRepo familyCategoryRepo;
     FamilySubscriptionMapper subscriptionMapper;
     AlbumRepo albumRepo;
+    NotificationService notificationService;
+    FamilyMemberRepo familyMemberRepo;
 
     /***
      * active subscription khi payment thanh cong
@@ -116,6 +122,22 @@ public class FamilySubscriptionServiceImpl implements FamilySubscriptionService 
         for (FamilySubscription sub : subscriptions) {
             sub.setStatus(SubscriptionStatus.EXPIRED);
             sub.setExpiredAt(Instant.now());
+
+            Long familyId = sub.getFamily().getFamilyId();
+            String familyName = sub.getFamily().getFamilyName();
+            String planName = sub.getSubscriptionPlan() != null ? sub.getSubscriptionPlan().getNamePlan() : "";
+
+            familyMemberRepo.findByFamily_FamilyIdAndStatus(familyId, FamilyMemberStatus.ACTIVE)
+                    .forEach(member -> notificationService.createNotification(
+                            member.getAccount().getAccountId(),
+                            null,
+                            NotificationType.SUBSCRIPTION_EXPIRED,
+                            "Gói dịch vụ đã hết hạn",
+                            "Gói " + planName + " của gia phả " + familyName + " đã hết hạn. Vui lòng gia hạn để tiếp tục sử dụng.",
+                            familyId,
+                            "FAMILY_SUBSCRIPTION",
+                            "/families/" + familyId + "/subscription"
+                    ));
         }
 
         familySubscriptionRepo.saveAll(subscriptions);

@@ -31,10 +31,9 @@ public class FamilyMemberController {
     public ResponseEntity<ApiResponse<Void>> updateMemberRole(
             @PathVariable Long familyId,
             @PathVariable Long targetAccountId,
-            @RequestParam Long actorAccountId,
             @RequestBody @Valid UpdateFamilyMemberRoleReq request
     ) {
-        familyMemberService.updateMemberRole(familyId, targetAccountId, request, actorAccountId);
+        familyMemberService.updateMemberRole(familyId, targetAccountId, request);
 
         return ResponseEntity.ok(
                 ApiResponse.success(200, "UPDATE_MEMBER_ROLE_SUCCESS", null)
@@ -44,13 +43,9 @@ public class FamilyMemberController {
     @DeleteMapping("/{familyId}/accounts/{targetAccountId}")
     public ResponseEntity<ApiResponse<Void>> removeMember(
             @PathVariable Long familyId,
-            @PathVariable Long targetAccountId,
-            @RequestParam Long actorAccountId
+            @PathVariable Long targetAccountId
     ) {
-        familyMemberService.removeMember(familyId, targetAccountId, actorAccountId);
-
-        return ResponseEntity.ok(
-                ApiResponse.success(200, "REMOVE_MEMBER_SUCCESS", null)
-        );
+        familyMemberService.removeMember(familyId, targetAccountId);
+        return ResponseEntity.ok(ApiResponse.success(200, "REMOVE_MEMBER_SUCCESS", null));
     }
 }
