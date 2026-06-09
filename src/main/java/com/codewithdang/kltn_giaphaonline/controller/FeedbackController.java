@@ -58,4 +58,10 @@ public class FeedbackController {
         return ApiResponse.success(200, "Lấy danh sách feedback thành công",
                 feedbackService.getAll(keyword, pageable));
     }
+
+    @DeleteMapping("/{feedbackId}")
+    public ApiResponse<Void> deleteFeedback(@PathVariable Long feedbackId) {
+        feedbackService.deleteFeedback(feedbackId);
+        return ApiResponse.success(200, "Xóa feedback thành công", null);
+    }
 }
