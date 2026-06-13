@@ -12,6 +12,7 @@ public enum NotificationType implements BaseEnum {
     FAMILY_MEMBER_REMOVED("Thông báo khi người dùng bị xóa khỏi gia phả"),
     FAMILY_MEMBER_ROLE_CHANGED("Thông báo khi người dùng được thay đổi quyền trong gia phả"),
     FAMILY_EVENT_UPCOMING("Thông báo sự kiện sắp tới "),
+    FAMILY_EVENT_TODAY("Thông báo sự kiện diễn ra hôm nay"),
     FEEDBACK_USER("Thông báo feedback của bạn đã được phản hồi "),
     SUBSCRIPTION_EXPIRES("Thông báo gói dịch vụ sắp hết hạn"),
     SUBSCRIPTION_EXPIRED("Thông báo gói dịch vụ đã hết hạn"),

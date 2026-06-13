@@ -1,0 +1,31 @@
+<div th:fragment="main-content" style="text-align: center; padding: 10px 0;">
+    <h2 style="color: #2c3e50; font-size: 24px; margin-bottom: 10px;">
+        <span th:if="${isToday}">📅 Sự kiện diễn ra hôm nay!</span>
+        <span th:unless="${isToday}">🔔 Nhắc nhở sự kiện sắp tới</span>
+    </h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin-bottom: 10px;">
+        Xin chào <strong th:text="${recipientName}"></strong>,
+    </p>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+        <span th:if="${isToday}">Hôm nay gia đình <strong th:text="${familyName}"></strong> có sự kiện:</span>
+        <span th:unless="${isToday}">Gia đình <strong th:text="${familyName}"></strong> có sự kiện sắp diễn ra:</span>
+    </p>
+
+    <div style="background-color: #f4f7fb; border-left: 4px solid #4A6FA5; border-radius: 6px;
+                padding: 16px 24px; margin: 0 auto 24px; text-align: left; max-width: 420px;">
+        <p style="margin: 0 0 8px; font-size: 18px; font-weight: bold; color: #2c3e50;"
+           th:text="${eventName}"></p>
+        <p style="margin: 0; color: #666; font-size: 15px;">
+            📆 <span th:text="${eventDate}"></span>
+        </p>
+    </div>
+
+    <a th:href="${eventUrl}"
+       style="background-color: #4A6FA5; color: #ffffff; padding: 13px 28px;
+              text-decoration: none; border-radius: 5px; font-weight: bold;
+              display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        Xem chi tiết sự kiện
+    </a>
+</div>

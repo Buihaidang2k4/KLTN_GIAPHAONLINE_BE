@@ -71,8 +71,8 @@ public enum RoleEnums {
             RoleScopeType.FAMILY,
             Set.of(
                     // Quyền chỉnh sửa dữ liệu
+                    FAM_WRITE,
                     NODE_WRITE,
-                    NODE_DELETE,
                     RELATIONSHIP_MANAGE,
                     POST_MANAGE,
                     EVENT_MANAGE,

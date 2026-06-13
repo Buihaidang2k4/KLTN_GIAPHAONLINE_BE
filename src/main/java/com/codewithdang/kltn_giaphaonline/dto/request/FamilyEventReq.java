@@ -29,9 +29,6 @@ public class FamilyEventReq {
     @Min(1)
     @Max(31)
     Integer day;
-    @NotNull(message = "Month is required")
-    @Min(1)
-    @Max(12)
     Integer month;
     Integer year;
     FamilyEventStatus status;

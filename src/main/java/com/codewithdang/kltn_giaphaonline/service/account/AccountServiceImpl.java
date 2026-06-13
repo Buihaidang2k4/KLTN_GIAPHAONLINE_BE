@@ -19,14 +19,16 @@ import com.codewithdang.kltn_giaphaonline.service.family.FamilyService;
 import com.codewithdang.kltn_giaphaonline.service.minio_media.MinioService;
 import com.codewithdang.kltn_giaphaonline.service.role.RoleService;
 import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,7 +36,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -260,11 +264,8 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AccountRes> getAccounts(String keyword, String status, Pageable pageable) {
-        AccountStatus accountStatus = (status != null && !status.isBlank())
-                ? AccountStatus.valueOf(status.trim().toUpperCase())
-                : null;
-
-        Page<Account> accountPage = accountRepo.searchByEmailAndStatus(keyword, accountStatus, pageable);
+        Page<Account> accountPage = accountRepo.findAll(
+                makeQueryAccount(keyword, status), pageable);
 
         return pageMapper.toPageResponse(accountPage, account -> {
             AccountRes res = accountMapper.toRes(account);
@@ -297,5 +298,24 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
 
         return accountMapper.toDetailsRes(account);
+    }
+
+
+    private Specification<Account> makeQueryAccount(String keyword, String status) {
+        return (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (StringUtils.isNoneBlank(keyword)) {
+                Predicate emailPredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), "%" + keyword.trim().toLowerCase() + "%");
+                Predicate fullNamePredicate = criteriaBuilder.like(criteriaBuilder.lower(root.get("fullName")), "%" + keyword.trim().toLowerCase() + "%");
+                predicates.add(criteriaBuilder.or(emailPredicate, fullNamePredicate));
+            }
+
+            if (StringUtils.isNotBlank(status)) {
+                predicates.add(criteriaBuilder.equal(root.get("accountStatus"), AccountStatus.valueOf(status.toUpperCase())));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
     }
 }

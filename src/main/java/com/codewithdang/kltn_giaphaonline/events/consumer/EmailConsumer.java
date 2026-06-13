@@ -3,6 +3,7 @@ package com.codewithdang.kltn_giaphaonline.events.consumer;
 import com.codewithdang.kltn_giaphaonline.config.rabbitmq.RabbitMQConfig;
 import com.codewithdang.kltn_giaphaonline.dto.request.email.*;
 import com.codewithdang.kltn_giaphaonline.events.consumer.handler.*;
+import com.codewithdang.kltn_giaphaonline.events.consumer.handler.EmailFamilyEventReminderHandler;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -25,6 +26,7 @@ public class EmailConsumer {
     EmailVerifyAccountHandler emailVerifyAccountHandler;
     EmailInvitationAccountHandler emailInvitationAccountHandler;
     EmailForgotPasswordOTPHandler passwordOTPHandler;
+    EmailFamilyEventReminderHandler emailFamilyEventReminderHandler;
 
     @RabbitHandler
     public void handleEmail(EmailOTP email) {
@@ -54,6 +56,12 @@ public class EmailConsumer {
     public void handleForgotPasswordEmail(ResetPasswordEmail resetPasswordEmail) {
         log.info("Received forgot password email for {}", resetPasswordEmail.getToEmail());
         safeHandle(() -> passwordOTPHandler.handle(resetPasswordEmail), "Forgot Password OTP");
+    }
+
+    @RabbitHandler
+    public void handleFamilyEventReminder(EmailFamilyEventReminder email) {
+        log.info("Received family event reminder email for {}", email.getToEmail());
+        safeHandle(() -> emailFamilyEventReminderHandler.handle(email), "Family Event Reminder");
     }
 
     @RabbitHandler(isDefault = true)

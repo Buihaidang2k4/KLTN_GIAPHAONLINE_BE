@@ -39,5 +39,15 @@ public interface FamilyEventRepo extends JpaRepository<FamilyEvent, Long> {
     // find events whose next occurrence is on or before given date
     List<FamilyEvent> findAllByNextOccurrenceDateLessThanEqual(LocalDate date);
 
+    // find events whose next occurrence is exactly on given date (today or upcoming reminder)
+    @Query("""
+            SELECT e FROM FamilyEvent e
+            WHERE e.nextOccurrenceDate BETWEEN :fromDate AND :toDate
+            """)
+    List<FamilyEvent> findAllByNextOccurrenceDateBetween(
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate
+    );
+
     long countByFamily_FamilyId(Long familyId);
 }

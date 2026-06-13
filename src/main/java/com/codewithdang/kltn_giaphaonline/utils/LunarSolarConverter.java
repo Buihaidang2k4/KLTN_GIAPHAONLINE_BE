@@ -45,6 +45,41 @@ public class LunarSolarConverter {
         return jdToDate(jd);
     }
 
+    /**
+     * Chuyển ngày dương lịch sang âm lịch, trả về int[]{lunarDay, lunarMonth, lunarYear}
+     */
+    public static int[] solarToLunar(LocalDate solar) {
+        int dd = solar.getDayOfMonth();
+        int mm = solar.getMonthValue();
+        int yy = solar.getYear();
+
+        int dayNumber = jdFromDate(dd, mm, yy);
+        int k = (int) Math.floor((dayNumber - 2415021.076998695) / 29.530588853);
+        int monthStart = getNewMoonDay(k + 1);
+        if (monthStart > dayNumber) {
+            monthStart = getNewMoonDay(k);
+        }
+
+        int a11 = getLunarMonth11(yy);
+        int b11;
+        int lunarYear;
+        if (a11 >= monthStart) {
+            lunarYear = yy;
+            a11 = getLunarMonth11(yy - 1);
+        } else {
+            lunarYear = yy + 1;
+            b11 = getLunarMonth11(yy + 1);
+            a11 = b11;
+        }
+
+        int lunarDay = dayNumber - monthStart + 1;
+        int diff = (int) Math.floor((monthStart - a11) / 29.0);
+        int lunarMonth = diff + 11;
+        if (lunarMonth >= 13) lunarMonth -= 12;
+
+        return new int[]{lunarDay, lunarMonth, lunarYear};
+    }
+
     // ==================== private helpers ====================
 
     private static int jdFromDate(int dd, int mm, int yy) {

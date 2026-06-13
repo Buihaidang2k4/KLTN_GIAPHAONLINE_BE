@@ -1,6 +1,8 @@
 package com.codewithdang.kltn_giaphaonline.service.family_event;
 
+import com.codewithdang.kltn_giaphaonline.config.fe.FrontendProperties;
 import com.codewithdang.kltn_giaphaonline.dto.request.CreateAuditLogReq;
+import com.codewithdang.kltn_giaphaonline.dto.request.email.EmailFamilyEventReminder;
 import com.codewithdang.kltn_giaphaonline.dto.request.FamilyEventReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.UpdateFamilyEventReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyEventRes;
@@ -8,18 +10,15 @@ import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.entity.Account;
 import com.codewithdang.kltn_giaphaonline.entity.Family;
 import com.codewithdang.kltn_giaphaonline.entity.FamilyEvent;
-import com.codewithdang.kltn_giaphaonline.enums.AuditAction;
-import com.codewithdang.kltn_giaphaonline.enums.AuditEntityType;
-import com.codewithdang.kltn_giaphaonline.enums.CalendarType;
-import com.codewithdang.kltn_giaphaonline.enums.RepeatType;
-import com.codewithdang.kltn_giaphaonline.enums.SearchEventOptionEnum;
+import com.codewithdang.kltn_giaphaonline.enums.*;
+import com.codewithdang.kltn_giaphaonline.events.producer.EmailProducer;
 import com.codewithdang.kltn_giaphaonline.exception.AppException;
 import com.codewithdang.kltn_giaphaonline.exception.ErrorCode;
 import com.codewithdang.kltn_giaphaonline.mapper.FamilyEventMapper;
 import com.codewithdang.kltn_giaphaonline.mapper.PageMapper;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyEventRepo;
+import com.codewithdang.kltn_giaphaonline.repo.FamilyMemberRepo;
 import com.codewithdang.kltn_giaphaonline.repo.FamilyRepo;
-import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
 import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import com.codewithdang.kltn_giaphaonline.service.notification.NotificationService;
 import com.codewithdang.kltn_giaphaonline.utils.LunarSolarConverter;
@@ -51,9 +50,12 @@ public class FamilyEventServiceImpl implements FamilyEventService {
     FamilyEventMapper familyEventMapper;
     PageMapper pageMapper;
     FamilyRepo familyRepo;
-    NotificationService notificationService;
     AuditLogService auditLogService;
     SecurityUtils securityUtils;
+    NotificationService notificationService;
+    EmailProducer emailProducer;
+    FrontendProperties frontendProperties;
+    FamilyMemberRepo familyMemberRepo;
 
     @Override
     @Transactional
@@ -190,10 +192,9 @@ public class FamilyEventServiceImpl implements FamilyEventService {
     }
 
     /**
-     * Chạy mỗi ngày lúc 00:00 để cập nhật nextOccurrenceDate cho sự kiện YEARLY đã qua.
-     * Gửi thông báo email cho các thành viên gia đình sự kiện sắp tới 30 ngày
+     * Chạy mỗi ngày lúc 00:01 để cập nhật nextOccurrenceDate cho sự kiện đã qua.
      */
-    @Scheduled(cron = "0 0 0 * * ?")
+    @Scheduled(cron = "0 1 0 * * ?")
     @Transactional
     public void refreshNextOccurrenceDates() {
         LocalDate today = LocalDate.now();
@@ -201,23 +202,19 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         List<FamilyEvent> dueEvents =
                 familyEventRepo.findAllByNextOccurrenceDateLessThanEqual(today);
 
-        if (dueEvents == null || dueEvents.isEmpty()) {
-            return;
-        }
+        if (dueEvents == null || dueEvents.isEmpty()) return;
 
         List<FamilyEvent> updatedEvents = new ArrayList<>();
 
         for (FamilyEvent event : dueEvents) {
             try {
-                if (event.getRepeatType() != RepeatType.YEARLY) {
-                    // event một lần đã qua → set null để không load lại mỗi ngày
+                if (event.getRepeatType() == RepeatType.NONE) {
                     event.setNextOccurrenceDate(null);
                     updatedEvents.add(event);
                     continue;
                 }
 
                 LocalDate nextDate = computeNextOccurrence(event, today.plusDays(1));
-
                 if (nextDate != null) {
                     event.setNextOccurrenceDate(nextDate);
                     updatedEvents.add(event);
@@ -230,6 +227,95 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         if (!updatedEvents.isEmpty()) {
             familyEventRepo.saveAll(updatedEvents);
         }
+    }
+
+    /**
+     * Chạy mỗi ngày lúc 07:00:
+     * - Gửi thông báo hôm nay nếu nextOccurrenceDate == today
+     * - Gửi thông báo nhắc trước nếu hôm nay đúng ngày reminder của sự kiện
+     */
+    @Scheduled(cron = "0 0 7 * * ?")
+    @Transactional(readOnly = true)
+    public void sendEventReminders() {
+        LocalDate today = LocalDate.now();
+        // lấy tất cả event trong 30 ngày tới (bao phủ max MONTH_1)
+        List<FamilyEvent> upcomingEvents =
+                familyEventRepo.findAllByNextOccurrenceDateBetween(today, today.plusDays(30));
+
+        if (upcomingEvents == null || upcomingEvents.isEmpty()) return;
+
+        for (FamilyEvent event : upcomingEvents) {
+            try {
+                LocalDate nextDate = event.getNextOccurrenceDate();
+                boolean isToday = nextDate.isEqual(today);
+                boolean isReminderDay = isReminderDue(event.getReminderType(), nextDate, today);
+
+                if (isToday) {
+                    sendEventNotification(event, true);
+                } else if (isReminderDay) {
+                    sendEventNotification(event, false);
+                }
+            } catch (Exception ex) {
+                log.error("Failed to send reminder for event {}: {}", event.getFamilyEventId(), ex.getMessage(), ex);
+            }
+        }
+    }
+
+    /**
+     * Kiểm tra hôm nay có phải ngày nhắc trước theo reminderType không.
+     * Ví dụ: DAY_3 → nextDate - 3 ngày == today
+     */
+    private boolean isReminderDue(ReminderEventType reminderType, LocalDate nextDate, LocalDate today) {
+        if (reminderType == null) return false;
+        LocalDate reminderDate = switch (reminderType) {
+            case DAY_1   -> nextDate.minusDays(1);
+            case DAY_3   -> nextDate.minusDays(3);
+            case DAY_7   -> nextDate.minusDays(7);
+            case DAY_15  -> nextDate.minusDays(15);
+            case MONTH_1 -> nextDate.minusMonths(1);
+        };
+        return reminderDate.isEqual(today);
+    }
+
+    private void sendEventNotification(FamilyEvent event, boolean isToday) {
+        Long familyId = event.getFamily().getFamilyId();
+        String eventDate = event.getNextOccurrenceDate().toString();
+        String familyName = event.getFamily().getFamilyName();
+        String eventUrl = frontendProperties.getBaseUrl() + "/family/" + familyId + "/events/" + event.getFamilyEventId();
+        ReminderEventType reminder = event.getReminderType();
+
+        NotificationType notifType = isToday ? NotificationType.FAMILY_EVENT_TODAY : NotificationType.FAMILY_EVENT_UPCOMING;
+        String title = isToday
+                ? "Sự kiện hôm nay: " + event.getEventName()
+                : "Nhắc nhở: " + event.getEventName() + " - " + (reminder != null ? reminder.getLabel() : "");
+        String content = isToday
+                ? "Sự kiện '" + event.getEventName() + "' diễn ra hôm nay " + eventDate
+                : "Sự kiện '" + event.getEventName() + "' sẽ diễn ra vào ngày " + eventDate
+                  + (reminder != null ? " (" + reminder.getLabel() + ")" : "");
+
+        notificationService.createFamilyNotification(
+                familyId, null, notifType, title, content,
+                event.getFamilyEventId(), "FAMILY_EVENT", eventUrl
+        );
+
+        familyMemberRepo.findByFamily_FamilyIdAndStatus(familyId, FamilyMemberStatus.ACTIVE)
+                .forEach(member -> emailProducer.sendEmail(
+                        EmailFamilyEventReminder.builder()
+                                .toEmail(member.getAccount().getEmail())
+                                .subject(isToday
+                                        ? "[Gia Phả] Sự kiện hôm nay: " + event.getEventName()
+                                        : "[Gia Phả] " + (reminder != null ? reminder.getLabel() : "Nhắc nhở") + ": " + event.getEventName())
+                                .recipientName(member.getAccount().getFullName())
+                                .eventName(event.getEventName())
+                                .eventDate(eventDate)
+                                .familyName(familyName)
+                                .eventUrl(eventUrl)
+                                .isToday(isToday)
+                                .build()
+                ));
+
+        log.info("Sent {} notification for event {} (family {})",
+                isToday ? "today" : "reminder-" + reminder, event.getFamilyEventId(), familyId);
     }
 
     /**
@@ -258,7 +344,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
             event.setCalendarType(CalendarType.SOLAR);
         }
 
-        if (event.getRepeatType() == RepeatType.YEARLY) {
+        if (event.getRepeatType() == RepeatType.YEARLY || event.getRepeatType() == RepeatType.MONTHLY) {
             event.setYear(null);
         }
     }
@@ -284,37 +370,45 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         Integer month = event.getMonth();
         Integer year = event.getYear();
 
-        if (day == null || month == null) {
+        if (day == null) {
             return null;
         }
 
+        RepeatType repeatType = event.getRepeatType() == null ? RepeatType.NONE : event.getRepeatType();
+
         if (event.getCalendarType() == CalendarType.LUNAR) {
-            return computeLunarYearlyOccurrence(day, month, fromDate, event.getRepeatType());
+            if (repeatType == RepeatType.MONTHLY) {
+                return computeLunarMonthlyOccurrence(day, fromDate);
+            }
+            return computeLunarYearlyOccurrence(day, month, fromDate, repeatType);
         }
 
-        RepeatType repeatType = event.getRepeatType() == null
-                ? RepeatType.NONE
-                : event.getRepeatType();
-
         try {
+            if (repeatType == RepeatType.MONTHLY) {
+                // tính toán ngày dương lịch
+                return computeSolarMonthlyOccurrence(day, fromDate);
+            }
+            if (month == null) {
+                return null;
+            }
             if (repeatType == RepeatType.YEARLY) {
                 return computeYearlyOccurrence(day, month, fromDate);
             }
-
             return computeOneTimeOccurrence(day, month, year, fromDate);
-
         } catch (DateTimeException ex) {
             log.warn(
                     "Invalid event date. eventId={}, day={}, month={}, year={}",
-                    event.getFamilyEventId(),
-                    day,
-                    month,
-                    year
+                    event.getFamilyEventId(), day, month, year
             );
             return null;
         }
     }
 
+    /*
+    Tính ngày diễn ra tiếp theo của sự kiện dựa vào fromDate.
+    Xử lý riêng cho lịch Âm/Dương, loại lặp lại (YEARLY hay NONE).
+    Trả về null nếu không còn dịp tiếp theo hoặc dữ liệu không hợp lệ.
+     */
     private LocalDate computeOneTimeOccurrence(
             Integer day,
             Integer month,
@@ -330,6 +424,10 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         return candidate.isBefore(fromDate) ? null : candidate;
     }
 
+    /*
+    Tính ngày diễn ra cho sự kiện một lần (NONE):
+    nếu ngày đó không qua fromDate thì trả về chính ngày đó, nếu đã qua trả null.
+     */
     private LocalDate computeYearlyOccurrence(
             Integer day,
             Integer month,
@@ -344,6 +442,10 @@ public class FamilyEventServiceImpl implements FamilyEventService {
         return candidate.plusYears(1);
     }
 
+    /*
+    Tính ngày diễn ra cho sự kiện lặp hàng năm (YEARLY) theo lịch Dương: 
+    nếu ngày tháng trong năm hiện tại chưa qua fromDate thì dùng năm hiện tại, nếu qua rồi thì dùng năm sau.
+     */
     private LocalDate computeLunarYearlyOccurrence(
             Integer lunarDay,
             Integer lunarMonth,
@@ -351,8 +453,7 @@ public class FamilyEventServiceImpl implements FamilyEventService {
             RepeatType repeatType
     ) {
         try {
-            // thử convert sang năm âm tương ứng với năm dương hiện tại
-            // năm âm xấp xỉ = năm dương (chỉ lệch 1-2 tháng đầu năm)
+            // năm âm xấp xỉ = năm dương
             LocalDate candidate = LunarSolarConverter.lunarToSolar(
                     lunarDay, lunarMonth, fromDate.getYear(), false);
 
@@ -364,10 +465,52 @@ public class FamilyEventServiceImpl implements FamilyEventService {
             return LunarSolarConverter.lunarToSolar(
                     lunarDay, lunarMonth, fromDate.getYear() + 1, false);
 
+
         } catch (Exception e) {
             log.warn("Cannot convert lunar date {}/{} for year {}: {}",
                     lunarDay, lunarMonth, fromDate.getYear(), e.getMessage());
             return null;
         }
     }
+
+    /*
+        Tính ngày dương lịch cho lặp lại theo tháng
+     */
+    private LocalDate computeSolarMonthlyOccurrence(Integer day, LocalDate fromDate) {
+        try {
+            LocalDate candidate = LocalDate.of(fromDate.getYear(), fromDate.getMonthValue(), day);
+            if (!candidate.isBefore(fromDate)) {
+                return candidate;
+            }
+        } catch (DateTimeException ignored) {
+            log.error("Ngày không tồn tại : {}", ignored.getMessage());
+        }
+        LocalDate nextMonth = fromDate.plusMonths(1).withDayOfMonth(1);
+        return nextMonth.withDayOfMonth(Math.min(day, nextMonth.lengthOfMonth()));
+    }
+
+    /*
+        Tính chuyển đổi ngày âm lịch sang dương lịch theo hàng tháng
+     */
+    private LocalDate computeLunarMonthlyOccurrence(Integer lunarDay, LocalDate fromDate) {
+        for (int offset = 0; offset <= 3; offset++) {
+            LocalDate probe = fromDate.plusMonths(offset);
+            try {
+                // lấy tháng âm chính xác từ ngày dương
+                int[] lunar = LunarSolarConverter.solarToLunar(probe);
+                int lunarMonth = lunar[1];
+                int lunarYear = lunar[2];
+                LocalDate candidate = LunarSolarConverter.lunarToSolar(lunarDay, lunarMonth, lunarYear, false);
+                if (!candidate.isBefore(fromDate)) {
+                    return candidate;
+                }
+            } catch (Exception ignored) {
+                log.debug("Invalid lunar date: {}/{}", lunarDay, probe);
+            }
+        }
+        log.warn("Cannot compute lunar monthly occurrence for lunarDay={}", lunarDay);
+        return null;
+    }
+
+
 }
