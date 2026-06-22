@@ -250,9 +250,8 @@
 
                         <path>
                             <groupId>org.mapstruct</groupId>
-                            <artifactId>mapstruct</artifactId>
+                            <artifactId>mapstruct-processor</artifactId>
                             <version>${org.mapstruct.version}</version>
-                            <!--                            <scope>provided</scope>-->
                         </path>
                         <path>
                             <groupId>org.projectlombok</groupId>

@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", uses = {RoleMapper.class})
 public abstract class AccountMapper {
-
     @Autowired
     protected RoleMapper roleMapper;
 

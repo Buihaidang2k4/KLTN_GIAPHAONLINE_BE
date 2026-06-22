@@ -235,43 +235,53 @@ public class FamilyEventServiceImpl implements FamilyEventService {
      * - Gửi thông báo nhắc trước nếu hôm nay đúng ngày reminder của sự kiện
      */
     @Scheduled(cron = "0 0 7 * * ?")
-    @Transactional(readOnly = true)
+    @Transactional
     public void sendEventReminders() {
         LocalDate today = LocalDate.now();
-        // lấy tất cả event trong 30 ngày tới (bao phủ max MONTH_1)
+        log.info("Running sendEventReminders for date={}", today);
+        // lấy tất cả event trong 30 ngày tới
         List<FamilyEvent> upcomingEvents =
                 familyEventRepo.findAllByNextOccurrenceDateBetween(today, today.plusDays(30));
 
-        if (upcomingEvents == null || upcomingEvents.isEmpty()) return;
+        if (upcomingEvents == null || upcomingEvents.isEmpty()) {
+            log.info("No upcoming events found between {} and {}", today, today.plusDays(30));
+            return;
+        }
+
+        log.info("Found {} upcoming events between {} and {}", upcomingEvents.size(), today, today.plusDays(30));
 
         for (FamilyEvent event : upcomingEvents) {
-            try {
-                LocalDate nextDate = event.getNextOccurrenceDate();
-                boolean isToday = nextDate.isEqual(today);
-                boolean isReminderDay = isReminderDue(event.getReminderType(), nextDate, today);
+            LocalDate nextDate = event.getNextOccurrenceDate();
+            if (nextDate == null) {
+                log.warn("Skipping event {} because nextOccurrenceDate is null", event.getFamilyEventId());
+                continue;
+            }
 
-                if (isToday) {
-                    sendEventNotification(event, true);
-                } else if (isReminderDay) {
-                    sendEventNotification(event, false);
-                }
-            } catch (Exception ex) {
-                log.error("Failed to send reminder for event {}: {}", event.getFamilyEventId(), ex.getMessage(), ex);
+            boolean isToday = nextDate.isEqual(today);
+            boolean isReminderDay = isReminderDue(event.getReminderType(), nextDate, today);
+
+            log.info("Event {} nextDate={} reminderType={} => isToday={} isReminderDay={}",
+                    event.getFamilyEventId(), nextDate, event.getReminderType(), isToday, isReminderDay);
+
+            if (isToday) {
+                sendEventNotification(event, true);
+            } else if (isReminderDay) {
+                sendEventNotification(event, false);
             }
         }
     }
 
     /**
      * Kiểm tra hôm nay có phải ngày nhắc trước theo reminderType không.
-     * Ví dụ: DAY_3 → nextDate - 3 ngày == today
+     * DAY_3 → nextDate - 3 ngày == today
      */
     private boolean isReminderDue(ReminderEventType reminderType, LocalDate nextDate, LocalDate today) {
         if (reminderType == null) return false;
         LocalDate reminderDate = switch (reminderType) {
-            case DAY_1   -> nextDate.minusDays(1);
-            case DAY_3   -> nextDate.minusDays(3);
-            case DAY_7   -> nextDate.minusDays(7);
-            case DAY_15  -> nextDate.minusDays(15);
+            case DAY_1 -> nextDate.minusDays(1);
+            case DAY_3 -> nextDate.minusDays(3);
+            case DAY_7 -> nextDate.minusDays(7);
+            case DAY_15 -> nextDate.minusDays(15);
             case MONTH_1 -> nextDate.minusMonths(1);
         };
         return reminderDate.isEqual(today);
@@ -293,26 +303,29 @@ public class FamilyEventServiceImpl implements FamilyEventService {
                 : "Sự kiện '" + event.getEventName() + "' sẽ diễn ra vào ngày " + eventDate
                   + (reminder != null ? " (" + reminder.getLabel() + ")" : "");
 
+        // notification in app
         notificationService.createFamilyNotification(
                 familyId, null, notifType, title, content,
                 event.getFamilyEventId(), "FAMILY_EVENT", eventUrl
         );
 
+        // notification in email
         familyMemberRepo.findByFamily_FamilyIdAndStatus(familyId, FamilyMemberStatus.ACTIVE)
-                .forEach(member -> emailProducer.sendEmail(
-                        EmailFamilyEventReminder.builder()
-                                .toEmail(member.getAccount().getEmail())
-                                .subject(isToday
-                                        ? "[Gia Phả] Sự kiện hôm nay: " + event.getEventName()
-                                        : "[Gia Phả] " + (reminder != null ? reminder.getLabel() : "Nhắc nhở") + ": " + event.getEventName())
-                                .recipientName(member.getAccount().getFullName())
-                                .eventName(event.getEventName())
-                                .eventDate(eventDate)
-                                .familyName(familyName)
-                                .eventUrl(eventUrl)
-                                .isToday(isToday)
-                                .build()
-                ));
+                .forEach(member ->
+                        emailProducer.sendEmail(
+                                EmailFamilyEventReminder.builder()
+                                        .toEmail(member.getAccount().getEmail())
+                                        .subject(isToday
+                                                ? "[Gia Phả] Sự kiện hôm nay: " + event.getEventName()
+                                                : "[Gia Phả] " + (reminder != null ? reminder.getLabel() : "Nhắc nhở") + ": " + event.getEventName())
+                                        .recipientName(member.getAccount().getFullName())
+                                        .eventName(event.getEventName())
+                                        .eventDate(eventDate)
+                                        .familyName(familyName)
+                                        .eventUrl(eventUrl)
+                                        .isToday(isToday)
+                                        .build()
+                        ));
 
         log.info("Sent {} notification for event {} (family {})",
                 isToday ? "today" : "reminder-" + reminder, event.getFamilyEventId(), familyId);

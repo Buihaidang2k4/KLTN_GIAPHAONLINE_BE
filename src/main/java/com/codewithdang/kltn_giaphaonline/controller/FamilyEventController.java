@@ -7,6 +7,7 @@ import com.codewithdang.kltn_giaphaonline.dto.response.FamilyEventRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.enums.SearchEventOptionEnum;
 import com.codewithdang.kltn_giaphaonline.service.family_event.FamilyEventService;
+import com.codewithdang.kltn_giaphaonline.service.family_event.FamilyEventServiceImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -26,6 +27,13 @@ import org.springframework.web.bind.annotation.*;
 public class FamilyEventController {
 
     FamilyEventService familyEventService;
+    FamilyEventServiceImpl familyEventServiceIm;
+
+    @GetMapping("/send-reminders")
+    public ResponseEntity<String> testSendReminders() {
+        familyEventServiceIm.sendEventReminders();
+        return ResponseEntity.ok("Reminders sent");
+    }
 
     @PostMapping("/family/{familyId}")
     public ResponseEntity<ApiResponse<FamilyEventRes>> createEvent(

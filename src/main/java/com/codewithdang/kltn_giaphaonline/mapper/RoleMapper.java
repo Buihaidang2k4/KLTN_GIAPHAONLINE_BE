@@ -8,7 +8,6 @@ import com.codewithdang.kltn_giaphaonline.entity.RolePermission;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
-import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
@@ -16,7 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {PermissionMapper.class})
 public abstract class RoleMapper {
     @Autowired
     protected PermissionMapper permissionMapper;

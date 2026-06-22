@@ -6,10 +6,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 
+import java.util.TimeZone;
+
+
 @EnableScheduling
 @SpringBootApplication
 public class KltnGiaphaonlineApplication {
     public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         SpringApplication.run(KltnGiaphaonlineApplication.class, args);
     }
 
