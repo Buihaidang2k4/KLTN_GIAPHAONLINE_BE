@@ -1,8 +1,12 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
+import com.codewithdang.kltn_giaphaonline.config.annotation.OperatorAction;
+import com.codewithdang.kltn_giaphaonline.constants.ApiPath;
+import com.codewithdang.kltn_giaphaonline.constants.MessageConstantsVi;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.AuditLogRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
+import com.codewithdang.kltn_giaphaonline.enums.CommonEnums;
 import com.codewithdang.kltn_giaphaonline.service.audit_log.AuditLogService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
@@ -16,7 +20,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("${api.prefix}/audit-logs")
+@RequestMapping(ApiPath.AuditLog.BASE)
 @RequiredArgsConstructor
 @Validated
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -24,7 +28,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuditLogController {
     AuditLogService auditLogService;
 
-    @GetMapping("/family/{familyId}")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @GetMapping(ApiPath.AuditLog.BY_FAMILY)
     public ResponseEntity<ApiResponse<PageResponse<AuditLogRes>>> getByFamily(
             @PathVariable Long familyId,
             @PageableDefault(
@@ -32,23 +37,25 @@ public class AuditLogController {
                     direction = Sort.Direction.DESC
             ) Pageable pageable
     ) {
-        return ResponseEntity.ok(ApiResponse.success(200, "GET_LOG_BY_FAMILY_SUCCESS", auditLogService.getByFamilyId(familyId, pageable)));
+        return ResponseEntity.ok(ApiResponse.success(200, MessageConstantsVi.AuditLog.GET_LOG_BY_FAMILY_SUCCESS, auditLogService.getByFamilyId(familyId, pageable)));
     }
 
-    @GetMapping("/entity")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @GetMapping(ApiPath.AuditLog.BY_ENTITY)
     public ResponseEntity<ApiResponse<PageResponse<AuditLogRes>>> getByEntity(
             @RequestParam String entityType,
             @RequestParam String entityId,
             Pageable pageable
     ) {
-        return ResponseEntity.ok(ApiResponse.success(200, "GET_LOG_BY_ENTITY", auditLogService.getByEntity(entityType, entityId, pageable)));
+        return ResponseEntity.ok(ApiResponse.success(200, MessageConstantsVi.AuditLog.GET_LOG_BY_ENTITY_SUCCESS, auditLogService.getByEntity(entityType, entityId, pageable)));
     }
 
-    @GetMapping("/actor/{accountId}")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @GetMapping(ApiPath.AuditLog.BY_ACTOR)
     public ResponseEntity<ApiResponse<PageResponse<AuditLogRes>>> getByActor(
             @PathVariable Long accountId,
             Pageable pageable
     ) {
-        return ResponseEntity.ok(ApiResponse.success(200, "GET_LOG_BY_ACTOR_SUCCESS", auditLogService.getByActor(accountId, pageable)));
+        return ResponseEntity.ok(ApiResponse.success(200, MessageConstantsVi.AuditLog.GET_LOG_BY_ACTOR_SUCCESS, auditLogService.getByActor(accountId, pageable)));
     }
 }

@@ -23,14 +23,6 @@ public class RedisConfig {
     @Value("${app.redis.password}")
     private String redisPassword;
 
-    @Bean
-    JedisConnectionFactory jedisConnectionFactory() {
-        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(redisHost, redisPort);
-        if (redisPassword != null && !redisPassword.isEmpty()) {
-            redisStandaloneConfiguration.setPassword(redisPassword);
-        }
-        return new JedisConnectionFactory(redisStandaloneConfiguration);
-    }
 
     @Bean
     @Primary

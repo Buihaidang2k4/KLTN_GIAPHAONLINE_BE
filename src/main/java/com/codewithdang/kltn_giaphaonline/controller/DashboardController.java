@@ -1,8 +1,12 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
+import com.codewithdang.kltn_giaphaonline.config.annotation.OperatorAction;
+import com.codewithdang.kltn_giaphaonline.constants.ApiPath;
+import com.codewithdang.kltn_giaphaonline.constants.MessageConstantsVi;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.DashboardRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.DashboardSystemRes;
+import com.codewithdang.kltn_giaphaonline.enums.CommonEnums;
 import com.codewithdang.kltn_giaphaonline.service.dashboard.DashboardService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
@@ -15,23 +19,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("${api.prefix}/dashboard")
+@RequestMapping(ApiPath.Dashboard.BASE)
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Tag(name = "Dashboard")
+@Tag(name = "Dashboard Management")
 public class DashboardController {
 
     DashboardService dashboardService;
 
-    @GetMapping("/family/{familyId}")
-    public ResponseEntity<ApiResponse<DashboardRes>> getDataDashboard(@PathVariable Long familyId) {
-        return ResponseEntity.ok(ApiResponse.success(200, "GET_DASHBOARD_SUCCESS",
+    @OperatorAction(CommonEnums.Operator.READ)
+    @GetMapping(ApiPath.Dashboard.FAMILY)
+    public ResponseEntity<ApiResponse<DashboardRes>> getDashboard(@PathVariable Long familyId) {
+        return ResponseEntity.ok(ApiResponse.success(200, MessageConstantsVi.Dashboard.GET_DASHBOARD_SUCCESS,
                 dashboardService.getDataDashboardUser(familyId)));
     }
 
-    @GetMapping("/system")
-    public ResponseEntity<ApiResponse<DashboardSystemRes>> getDataDashboardSystem() {
-        return ResponseEntity.ok(ApiResponse.success(200, "GET_DASHBOARD_SYSTEM_SUCCESS",
+    @OperatorAction(CommonEnums.Operator.READ)
+    @GetMapping(ApiPath.Dashboard.SYSTEM)
+    public ResponseEntity<ApiResponse<DashboardSystemRes>> getDashboardAdmin() {
+        return ResponseEntity.ok(ApiResponse.success(200, MessageConstantsVi.Dashboard.GET_DASHBOARD_SYSTEM_SUCCESS,
                 dashboardService.getDataDashboardSystem()));
     }
 }

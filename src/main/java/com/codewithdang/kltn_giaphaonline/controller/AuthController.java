@@ -1,5 +1,8 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
+import com.codewithdang.kltn_giaphaonline.config.annotation.OperatorAction;
+import com.codewithdang.kltn_giaphaonline.constants.ApiPath;
+import com.codewithdang.kltn_giaphaonline.constants.MessageConstantsVi;
 import com.codewithdang.kltn_giaphaonline.dto.request.LoginReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterByInvitationReq;
 import com.codewithdang.kltn_giaphaonline.dto.request.RegisterReq;
@@ -7,6 +10,7 @@ import com.codewithdang.kltn_giaphaonline.dto.request.ResetPasswordReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.LoginRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.RegisterRes;
+import com.codewithdang.kltn_giaphaonline.enums.CommonEnums;
 import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
 import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
 import com.codewithdang.kltn_giaphaonline.service.auth.AuthService;
@@ -25,7 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import java.text.ParseException;
 
 @RestController
-@RequestMapping("${api.prefix}/auth")
+@RequestMapping(ApiPath.Auth.BASE)
 @RequiredArgsConstructor
 @Validated
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -34,25 +38,28 @@ public class AuthController {
     AuthService authService;
     AccountVerificationTokenService verificationTokenService;
 
-    @PostMapping("/login")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @PostMapping(ApiPath.Auth.LOGIN)
     ResponseEntity<ApiResponse<LoginRes>> login(@Valid @RequestBody LoginReq loginReq,
                                                 HttpServletResponse response
     ) throws ParseException {
         return ResponseEntity.ok(
-                ApiResponse.success(200, "LOGIN_SUCCESS", authService.authenticate(loginReq, response))
+                ApiResponse.success(200, MessageConstantsVi.Auth.LOGIN_SUCCESS, authService.authenticate(loginReq, response))
         );
     }
 
-    @PostMapping("/register")
+    @OperatorAction(CommonEnums.Operator.CREATE)
+    @PostMapping(ApiPath.Auth.REGISTER)
     ResponseEntity<ApiResponse<RegisterRes>> register(@Valid @RequestBody RegisterReq registerReq, HttpServletRequest request) {
         String requestIp = request.getRemoteAddr();
         String userAgent = request.getHeader("User-Agent");
         return ResponseEntity.ok(
-                ApiResponse.success(200, "REGISTER_SUCCESS", authService.register(registerReq, requestIp, userAgent))
+                ApiResponse.success(200, MessageConstantsVi.Auth.REGISTER_SUCCESS, authService.register(registerReq, requestIp, userAgent))
         );
     }
 
-    @PostMapping("/register-by-invitation/{token}")
+    @OperatorAction(CommonEnums.Operator.CREATE)
+    @PostMapping(ApiPath.Auth.REGISTER_BY_INVITATION)
     public ResponseEntity<ApiResponse<Void>> registerByInvitation(
             @PathVariable("token") String token,
             @RequestBody @Valid RegisterByInvitationReq request,
@@ -65,50 +72,54 @@ public class AuthController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(200,
-                        "Đăng ký tài khoản thành công. Vui lòng kiểm tra email để xác thực tài khoản.",
+                        MessageConstantsVi.Auth.REGISTER_BY_INVITATION_SUCCESS,
                         null)
         );
     }
 
-
-    @PostMapping("/refresh-token")
+    @OperatorAction(CommonEnums.Operator.UPDATE)
+    @PostMapping(ApiPath.Auth.REFRESH_TOKEN)
     ResponseEntity<ApiResponse<Void>> refreshToken(HttpServletRequest request,
                                                    HttpServletResponse response
     ) throws ParseException, JOSEException {
         authService.refreshToken(request, response);
         return ResponseEntity.ok(
-                ApiResponse.success(200, "REFRESH_TOKEN_SUCCESS", null)
+                ApiResponse.success(200, MessageConstantsVi.Auth.REFRESH_TOKEN_SUCCESS, null)
         );
     }
 
-    @PostMapping("/introspect")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @PostMapping(ApiPath.Auth.INTROSPECT)
     ResponseEntity<ApiResponse<?>> introspect(HttpServletRequest request
     ) throws ParseException, JOSEException {
         var intro = authService.introspect(authService.getTokenFromCookie(request, "access_token"));
         return ResponseEntity.ok(
-                ApiResponse.success(200, "INTROSPECT_SUCCESS", intro)
+                ApiResponse.success(200, MessageConstantsVi.Auth.INTROSPECT_SUCCESS, intro)
         );
     }
 
-    @PostMapping("/logout")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @PostMapping(ApiPath.Auth.LOGOUT)
     ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request,
                                              HttpServletResponse response
     ) throws ParseException {
         authService.logout(request, response);
         return ResponseEntity.ok(
-                ApiResponse.success(200, "LOGOUT_SUCCESS", null)
+                ApiResponse.success(200, MessageConstantsVi.Auth.LOGOUT_SUCCESS, null)
         );
     }
 
-    @PostMapping("/verify-account/{token-verify}")
+    @OperatorAction(CommonEnums.Operator.UPDATE)
+    @PostMapping(ApiPath.Auth.VERIFY_ACCOUNT)
     ResponseEntity<ApiResponse<Void>> verifyAccount(@PathVariable("token-verify") String token) {
         verificationTokenService.verifyAccount(token);
         return ResponseEntity.ok(
-                ApiResponse.success(200, "VERIFY_ACCOUNT_SUCCESS", null)
+                ApiResponse.success(200, MessageConstantsVi.Auth.VERIFY_ACCOUNT_SUCCESS, null)
         );
     }
 
-    @PostMapping("/re-send-token-verify/{email}")
+    @OperatorAction(CommonEnums.Operator.CREATE)
+    @PostMapping(ApiPath.Auth.RESEND_TOKEN_VERIFY)
     ResponseEntity<ApiResponse<Void>> reRendTokenVerifyAccount(@PathVariable("email") String email,
                                                                HttpServletRequest request
     ) {
@@ -116,47 +127,48 @@ public class AuthController {
         String userAgent = request.getHeader("User-Agent");
         verificationTokenService.reSendVerificationToken(email, requestIp, userAgent);
         return ResponseEntity.ok(
-                ApiResponse.success(200, "RESEND_TOKEN_VERIFY_ACCOUNT_SUCCESS", null)
+                ApiResponse.success(200, MessageConstantsVi.Auth.RESEND_TOKEN_VERIFY_ACCOUNT_SUCCESS, null)
         );
     }
 
-    @PostMapping("/forgot-password-send-otp/{email}")
+    @OperatorAction(CommonEnums.Operator.CREATE)
+    @PostMapping(ApiPath.Auth.FORGOT_PASSWORD_SEND_OTP)
     ResponseEntity<ApiResponse<Void>> forgotPasswordSendOTP(@PathVariable("email") String email,
                                                             HttpServletRequest request
     ) {
         String requestIp = request.getRemoteAddr();
         authService.forgotPasswordSendOTP(email, requestIp);
         return ResponseEntity.ok(
-                ApiResponse.success(200, "FORGOT_PASSWORD_SEND_OTP_SUCCESS", null)
+                ApiResponse.success(200, MessageConstantsVi.Auth.FORGOT_PASSWORD_SEND_OTP_SUCCESS, null)
         );
     }
 
-
-    @PostMapping("/forgot-password-resend-otp/{email}")
+    @OperatorAction(CommonEnums.Operator.CREATE)
+    @PostMapping(ApiPath.Auth.FORGOT_PASSWORD_RESEND_OTP)
     ResponseEntity<ApiResponse<Void>> resendOTPForgotPassword(@PathVariable("email") String email,
                                                               HttpServletRequest request) {
         String requestIp = request.getRemoteAddr();
         authService.resendOTPForgotPassword(email, requestIp);
         return ResponseEntity.ok(
-                ApiResponse.success(200, "FORGOT_PASSWORD_RESEND_OTP_SUCCESS", null)
+                ApiResponse.success(200, MessageConstantsVi.Auth.FORGOT_PASSWORD_RESEND_OTP_SUCCESS, null)
         );
     }
 
-    @PostMapping("/verify-forgot-password-otp/{otp}")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @PostMapping(ApiPath.Auth.VERIFY_FORGOT_PASSWORD_OTP)
     ResponseEntity<ApiResponse<Void>> verifyForgotPasswordOtp(@PathVariable("otp") String otp) {
         authService.verifyForgotPasswordOtpHash(otp);
         return ResponseEntity.ok(
-                ApiResponse.success(200, "VERIFY_FORGOT_PASSWORD_OTP_HASH_SUCCESS", null)
+                ApiResponse.success(200, MessageConstantsVi.Auth.VERIFY_FORGOT_PASSWORD_OTP_HASH_SUCCESS, null)
         );
     }
 
-    @PostMapping("/reset-password")
+    @OperatorAction(CommonEnums.Operator.UPDATE)
+    @PostMapping(ApiPath.Auth.RESET_PASSWORD)
     ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody ResetPasswordReq req) {
         authService.resetPasswordWithOtp(req);
         return ResponseEntity.ok(
-                ApiResponse.success(200, "RESET_PASSWORD_SUCCESS", null)
+                ApiResponse.success(200, MessageConstantsVi.Auth.RESET_PASSWORD_SUCCESS, null)
         );
     }
-
-
 }

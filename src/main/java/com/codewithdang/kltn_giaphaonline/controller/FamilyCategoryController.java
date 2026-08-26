@@ -1,9 +1,13 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
+import com.codewithdang.kltn_giaphaonline.config.annotation.OperatorAction;
+import com.codewithdang.kltn_giaphaonline.constants.ApiPath;
+import com.codewithdang.kltn_giaphaonline.constants.MessageConstantsVi;
 import com.codewithdang.kltn_giaphaonline.dto.request.FamilyCategoryReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.FamilyCategoryRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
+import com.codewithdang.kltn_giaphaonline.enums.CommonEnums;
 import com.codewithdang.kltn_giaphaonline.service.tree.family_category.FamilyCategoryService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -15,40 +19,45 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("${api.prefix}/family-categories")
+@RequestMapping(ApiPath.FamilyCategory.BASE)
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "Family Category Management")
 public class FamilyCategoryController {
     FamilyCategoryService familyCategoryService;
 
-    @PostMapping("/family/{familyId}")
+    @OperatorAction(CommonEnums.Operator.CREATE)
+    @PostMapping(ApiPath.FamilyCategory.BY_FAMILY)
     public ResponseEntity<ApiResponse<FamilyCategoryRes>> createFamilyCategory(@PathVariable Long familyId, @Valid @RequestBody FamilyCategoryReq categoryReq) {
-        return ResponseEntity.ok(ApiResponse.success(200, "CREATE_FAMILY_CATEGORY_SUCCESS",
+        return ResponseEntity.ok(ApiResponse.success(200, MessageConstantsVi.FamilyCategory.CREATE_FAMILY_CATEGORY_SUCCESS,
                 familyCategoryService.createFamilyCategory(familyId, categoryReq)));
     }
 
-    @PutMapping("/{categoryId}")
+    @OperatorAction(CommonEnums.Operator.UPDATE)
+    @PutMapping(ApiPath.FamilyCategory.BY_ID)
     public ResponseEntity<ApiResponse<FamilyCategoryRes>> updateFamilyCategory(@PathVariable Long categoryId, @Valid @RequestBody FamilyCategoryReq categoryReq) {
-        return ResponseEntity.ok(ApiResponse.success(200, "UPDATE_FAMILY_CATEGORY_SUCCESS",
+        return ResponseEntity.ok(ApiResponse.success(200, MessageConstantsVi.FamilyCategory.UPDATE_FAMILY_CATEGORY_SUCCESS,
                 familyCategoryService.updateFamilyCategory(categoryId, categoryReq)));
     }
 
-    @DeleteMapping("/{categoryId}")
+    @OperatorAction(CommonEnums.Operator.DELETE)
+    @DeleteMapping(ApiPath.FamilyCategory.BY_ID)
     public ResponseEntity<ApiResponse<Void>> deleteFamilyCategory(@PathVariable Long categoryId) {
         familyCategoryService.deleteFamilyCategory(categoryId);
-        return ResponseEntity.ok(ApiResponse.success(200, "DELETE_FAMILY_CATEGORY_SUCCESS", null));
+        return ResponseEntity.ok(ApiResponse.success(200, MessageConstantsVi.FamilyCategory.DELETE_FAMILY_CATEGORY_SUCCESS, null));
     }
 
-    @GetMapping("/{categoryId}")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @GetMapping(ApiPath.FamilyCategory.BY_ID)
     public ResponseEntity<ApiResponse<FamilyCategoryRes>> getFamilyCategoryById(@PathVariable Long categoryId) {
-        return ResponseEntity.ok(ApiResponse.success(200, "GET_FAMILY_CATEGORY_BY_ID_SUCCESS",
+        return ResponseEntity.ok(ApiResponse.success(200, MessageConstantsVi.FamilyCategory.GET_FAMILY_CATEGORY_BY_ID_SUCCESS,
                 familyCategoryService.getFamilyCategoryById(categoryId)));
     }
 
-    @GetMapping("/family/{familyId}")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @GetMapping(ApiPath.FamilyCategory.BY_FAMILY)
     public ResponseEntity<ApiResponse<PageResponse<FamilyCategoryRes>>> getAllCategoryByFamilyId(@PathVariable Long familyId, Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success(200, "GET_ALL_CATEGORY_BY_FAMILY_ID_SUCCESS",
+        return ResponseEntity.ok(ApiResponse.success(200, MessageConstantsVi.FamilyCategory.GET_ALL_CATEGORY_BY_FAMILY_ID_SUCCESS,
                 familyCategoryService.getAllCategoryByFamilyId(familyId, pageable)));
     }
 }

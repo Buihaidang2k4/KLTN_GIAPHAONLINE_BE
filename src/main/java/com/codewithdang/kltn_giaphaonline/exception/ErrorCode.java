@@ -163,9 +163,10 @@ public enum ErrorCode {
 
     // feedback
     FEEDBACK_NOT_FOUND(3300, "Feedback not found", NOT_FOUND),
-    FEEDBACK_IS_EXISTED(3301, "Feedback is existed", BAD_REQUEST);
+    FEEDBACK_IS_EXISTED(3301, "Feedback is existed", BAD_REQUEST),
 
-
+    // resouce
+    RESOURCE_NOT_FOUND(3400, "Resource not found", NOT_FOUND);
     final int code;
     final String message;
     final HttpStatusCode statusCode;

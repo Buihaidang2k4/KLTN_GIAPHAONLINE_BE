@@ -1,9 +1,13 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
+import com.codewithdang.kltn_giaphaonline.config.annotation.OperatorAction;
 import com.codewithdang.kltn_giaphaonline.config.fe.FrontendProperties;
+import com.codewithdang.kltn_giaphaonline.constants.ApiPath;
+import com.codewithdang.kltn_giaphaonline.constants.MessageConstantsVi;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.PaymentCreateRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.VNPayCallbackRes;
+import com.codewithdang.kltn_giaphaonline.enums.CommonEnums;
 import com.codewithdang.kltn_giaphaonline.enums.PaymentProvider;
 import com.codewithdang.kltn_giaphaonline.service.payment.PaymentApplicationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -20,7 +24,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.Map;
 
 @RestController
-@RequestMapping("${api.prefix}/payments/vnpay")
+@RequestMapping(ApiPath.VNPay.BASE)
 @RequiredArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "VNPay Payment")
@@ -29,6 +33,7 @@ public class VNPayController {
     PaymentApplicationService paymentApplicationService;
     FrontendProperties frontendProperties;
 
+    @OperatorAction(CommonEnums.Operator.CREATE)
     @PostMapping
     public ResponseEntity<ApiResponse<PaymentCreateRes>> createPayment(
             @RequestParam Long familyId,
@@ -36,12 +41,13 @@ public class VNPayController {
             @RequestParam(required = false, defaultValue = "NCB") String bankCode,
             HttpServletRequest request) {
         String ipAddress = getIpAddress(request);
-        return ResponseEntity.ok(ApiResponse.success(201, "CREATE_PAYMENT_SUCCESS",
+        return ResponseEntity.ok(ApiResponse.success(201, MessageConstantsVi.VNPay.CREATE_PAYMENT_SUCCESS,
                 paymentApplicationService.handlePayment(
                         familyId, subscriptionPlanId, PaymentProvider.VNPAY, bankCode, ipAddress)));
     }
 
-    @GetMapping("/callback")
+    @OperatorAction(CommonEnums.Operator.UPDATE)
+    @GetMapping(ApiPath.VNPay.CALLBACK)
     public ResponseEntity<Void> callback(
             @RequestParam Map<String, String> params) throws JsonProcessingException {
         VNPayCallbackRes result = paymentApplicationService.handleCallback(PaymentProvider.VNPAY, params);

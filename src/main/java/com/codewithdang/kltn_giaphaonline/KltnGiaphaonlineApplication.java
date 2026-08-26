@@ -16,5 +16,4 @@ public class KltnGiaphaonlineApplication {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         SpringApplication.run(KltnGiaphaonlineApplication.class, args);
     }
-
 }

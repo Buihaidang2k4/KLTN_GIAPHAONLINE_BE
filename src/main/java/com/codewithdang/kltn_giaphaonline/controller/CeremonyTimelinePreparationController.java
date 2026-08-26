@@ -1,10 +1,13 @@
 package com.codewithdang.kltn_giaphaonline.controller;
 
+import com.codewithdang.kltn_giaphaonline.config.annotation.OperatorAction;
+import com.codewithdang.kltn_giaphaonline.constants.ApiPath;
+import com.codewithdang.kltn_giaphaonline.constants.MessageConstantsVi;
 import com.codewithdang.kltn_giaphaonline.dto.request.CeremonyTimelinePreparationReq;
-import com.codewithdang.kltn_giaphaonline.dto.request.CeremonyTimelinePreparationUpdateReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.CeremonyTimelinePreparationRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
+import com.codewithdang.kltn_giaphaonline.enums.CommonEnums;
 import com.codewithdang.kltn_giaphaonline.service.ceremony.ceremony_timeline_preparation.CeremonyTimelinePreparationService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,7 +22,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("${api.prefix}/ceremony-timeline-preparations")
+@RequestMapping(ApiPath.CeremonyTimelinePreparation.BASE)
 @RequiredArgsConstructor
 @Validated
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -27,32 +30,36 @@ import org.springframework.web.bind.annotation.*;
 public class CeremonyTimelinePreparationController {
     CeremonyTimelinePreparationService preparationService;
 
+    @OperatorAction(CommonEnums.Operator.CREATE)
     @PostMapping
     ResponseEntity<ApiResponse<CeremonyTimelinePreparationRes>> createPreparation(
             @RequestParam Long timelineId,
             @Valid @RequestBody CeremonyTimelinePreparationReq req) {
         return ResponseEntity.ok(ApiResponse.success(201,
-                "CREATE_PREPARATION_SUCCESS",
+                MessageConstantsVi.CeremonyTimelinePreparation.CREATE_PREPARATION_SUCCESS,
                 preparationService.createPreparation(timelineId, req)));
     }
 
-    @GetMapping("/{preparationId}")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @GetMapping(ApiPath.CeremonyTimelinePreparation.BY_ID)
     ResponseEntity<ApiResponse<CeremonyTimelinePreparationRes>> getById(@PathVariable Long preparationId) {
         return ResponseEntity.ok(ApiResponse.success(200,
-                "GET_PREPARATION_BY_ID_SUCCESS",
+                MessageConstantsVi.CeremonyTimelinePreparation.GET_PREPARATION_BY_ID_SUCCESS,
                 preparationService.getPreparationById(preparationId)));
     }
 
-    @GetMapping("/timeline/{timelineId}")
+    @OperatorAction(CommonEnums.Operator.READ)
+    @GetMapping(ApiPath.CeremonyTimelinePreparation.BY_TIMELINE)
     ResponseEntity<ApiResponse<PageResponse<CeremonyTimelinePreparationRes>>> getByTimelineId(
             @PathVariable Long timelineId,
             Pageable pageable
     ) {
         return ResponseEntity.ok(ApiResponse.success(200,
-                "GET_PREPARATION_BY_TIMELINE_SUCCESS",
+                MessageConstantsVi.CeremonyTimelinePreparation.GET_PREPARATION_BY_TIMELINE_SUCCESS,
                 preparationService.getPreparationByTimelineId(pageable, timelineId)));
     }
 
+    @OperatorAction(CommonEnums.Operator.READ)
     @GetMapping
     ResponseEntity<ApiResponse<PageResponse<CeremonyTimelinePreparationRes>>> getAll(
             @PageableDefault(
@@ -61,24 +68,26 @@ public class CeremonyTimelinePreparationController {
             ) Pageable pageable
     ) {
         return ResponseEntity.ok(ApiResponse.success(200,
-                "GET_ALL_PREPARATION_SUCCESS",
+                MessageConstantsVi.CeremonyTimelinePreparation.GET_ALL_PREPARATION_SUCCESS,
                 preparationService.getPreparationList(pageable)));
     }
 
-    @PutMapping("/{preparationId}")
+    @OperatorAction(CommonEnums.Operator.UPDATE)
+    @PutMapping(ApiPath.CeremonyTimelinePreparation.BY_ID)
     ResponseEntity<ApiResponse<CeremonyTimelinePreparationRes>> updatePreparation(
             @PathVariable Long preparationId,
             @Valid @RequestBody CeremonyTimelinePreparationReq updateReq) {
         return ResponseEntity.ok(ApiResponse.success(200,
-                "UPDATE_PREPARATION_SUCCESS",
+                MessageConstantsVi.CeremonyTimelinePreparation.UPDATE_PREPARATION_SUCCESS,
                 preparationService.updatePreparation(preparationId, updateReq)));
     }
 
-    @DeleteMapping("/{preparationId}")
+    @OperatorAction(CommonEnums.Operator.DELETE)
+    @DeleteMapping(ApiPath.CeremonyTimelinePreparation.BY_ID)
     ResponseEntity<ApiResponse<Void>> deleteById(@PathVariable Long preparationId) {
         preparationService.deletePreparationById(preparationId);
         return ResponseEntity.ok(ApiResponse.success(200,
-                "DELETE_PREPARATION_SUCCESS",
+                MessageConstantsVi.CeremonyTimelinePreparation.DELETE_PREPARATION_SUCCESS,
                 null));
     }
 }
