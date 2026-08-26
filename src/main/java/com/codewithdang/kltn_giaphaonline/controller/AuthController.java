@@ -10,6 +10,7 @@ import com.codewithdang.kltn_giaphaonline.dto.request.ResetPasswordReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.LoginRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.RegisterRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.UserSessionRes;
 import com.codewithdang.kltn_giaphaonline.enums.CommonEnums;
 import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
 import com.codewithdang.kltn_giaphaonline.service.account_verification_token.AccountVerificationTokenService;
@@ -27,6 +28,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
+import java.util.List;
 
 @RestController
 @RequestMapping(ApiPath.Auth.BASE)
@@ -106,6 +108,27 @@ public class AuthController {
         authService.logout(request, response);
         return ResponseEntity.ok(
                 ApiResponse.success(200, MessageConstantsVi.Auth.LOGOUT_SUCCESS, null)
+        );
+    }
+
+    @OperatorAction(CommonEnums.Operator.CANCEL)
+    @PostMapping(ApiPath.Auth.LOGOUT_ALL)
+    ResponseEntity<ApiResponse<Void>> logoutAll(HttpServletRequest request,
+                                                HttpServletResponse response
+    ) throws ParseException {
+        authService.logoutAll(request, response);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, MessageConstantsVi.Auth.LOGOUT_ALL_SUCCESS, null)
+        );
+    }
+
+    @OperatorAction(CommonEnums.Operator.READ)
+    @GetMapping(ApiPath.Auth.SESSIONS)
+    ResponseEntity<ApiResponse<List<UserSessionRes>>> getActiveSessions(
+            HttpServletRequest request
+    ) throws ParseException {
+        return ResponseEntity.ok(
+                ApiResponse.success(200, MessageConstantsVi.Auth.GET_ACTIVE_SESSIONS_SUCCESS, authService.getActiveSessions(request))
         );
     }
 

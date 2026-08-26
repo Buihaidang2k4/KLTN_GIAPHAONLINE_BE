@@ -17,6 +17,8 @@ public final class ApiPath {
         public static final String REFRESH_TOKEN = "/refresh-token";
         public static final String INTROSPECT = "/introspect";
         public static final String LOGOUT = "/logout";
+        public static final String LOGOUT_ALL = "/logout-all";
+        public static final String SESSIONS = "/sessions";
         public static final String VERIFY_ACCOUNT = "/verify-account/{token-verify}";
         public static final String RESEND_TOKEN_VERIFY = "/re-send-token-verify/{email}";
         public static final String FORGOT_PASSWORD_SEND_OTP = "/forgot-password-send-otp/{email}";

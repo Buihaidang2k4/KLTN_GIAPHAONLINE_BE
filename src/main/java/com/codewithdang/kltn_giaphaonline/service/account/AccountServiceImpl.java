@@ -60,6 +60,7 @@ public class AccountServiceImpl implements AccountService {
     FamilyInvitationRepo familyInvitationRepo;
     FamilyMemberRepo familyMemberRepo;
     NotificationRepo notificationRepo;
+    com.codewithdang.kltn_giaphaonline.service.session.SessionService sessionService;
 
 
     @Override
@@ -105,7 +106,10 @@ public class AccountServiceImpl implements AccountService {
 
         account.setPasswordHash(passwordEncoder.encode(req.newPassword()));
         accountRepo.save(account);
-        log.info("=== Change Password Successfully  Account Id = {} ===", accountId);
+        
+        // Hủy toàn bộ phiên đăng nhập cũ trên các thiết bị khác khi đổi mật khẩu thành công
+        sessionService.removeAllSessions(accountId);
+        log.info("=== Change Password Successfully Account Id = {}, All sessions revoked ===", accountId);
     }
 
     @Override
@@ -137,6 +141,8 @@ public class AccountServiceImpl implements AccountService {
             account.setAccountStatus(req.accountStatus());
             account.setLockReason(req.lockReason());
             account.setLockedAt(LocalDateTime.now());
+            // Khi khóa tài khoản, lập tức đá văng người dùng ra khỏi tất cả các thiết bị
+            sessionService.removeAllSessions(accountId);
 
         } else if (account.getAccountStatus().equals(AccountStatus.LOCKED)
                 && req.accountStatus().equals(AccountStatus.ACTIVE)

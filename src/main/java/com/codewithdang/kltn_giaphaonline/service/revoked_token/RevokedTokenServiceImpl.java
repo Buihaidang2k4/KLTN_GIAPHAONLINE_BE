@@ -64,10 +64,10 @@ public class RevokedTokenServiceImpl implements RevokedTokenService {
         Boolean exists = redisTemplate.hasKey(redisKey);
         if (Boolean.TRUE.equals(exists)) return true;
 
-        boolean revokedInDB = revokedTokenRepo.existsByTokenHash(token);
+        boolean revokedInDB = revokedTokenRepo.existsByTokenHash(tokenHash);
 
         if (revokedInDB) {
-            revokedTokenRepo.findByTokenHash(token).ifPresent(rt -> {
+            revokedTokenRepo.findByTokenHash(tokenHash).ifPresent(rt -> {
                 long ttlSeconds = rt.getExpiresAt().getEpochSecond() - Instant.now().getEpochSecond();
                 if (ttlSeconds > 0) {
                     redisTemplate.opsForValue()

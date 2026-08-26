@@ -7,11 +7,13 @@ import com.codewithdang.kltn_giaphaonline.dto.request.ResetPasswordReq;
 import com.codewithdang.kltn_giaphaonline.dto.response.LoginRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.IntrospectRes;
 import com.codewithdang.kltn_giaphaonline.dto.response.RegisterRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.UserSessionRes;
 import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.text.ParseException;
+import java.util.List;
 
 public interface AuthService {
     LoginRes authenticate(LoginReq loginReq, HttpServletResponse response) throws ParseException;
@@ -33,6 +35,10 @@ public interface AuthService {
     IntrospectRes introspect(String token) throws ParseException, JOSEException;
 
     void logout(HttpServletRequest request, HttpServletResponse response) throws ParseException;
+
+    void logoutAll(HttpServletRequest request, HttpServletResponse response) throws ParseException;
+
+    List<UserSessionRes> getActiveSessions(HttpServletRequest request) throws ParseException;
 
     String getTokenFromCookie(HttpServletRequest request, String cookieName);
 

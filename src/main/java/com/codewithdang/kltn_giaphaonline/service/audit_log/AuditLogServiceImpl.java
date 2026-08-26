@@ -16,6 +16,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     AuditLogMapper auditLogMapper;
     PageMapper pageMapper;
 
+    @Async
     @Override
     @Transactional
     public void log(CreateAuditLogReq req) {
@@ -48,7 +50,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             auditLogRepo.save(auditLog);
 
             log.info("Audit logged: action={}, entityType={}, entityId={}",
-                    req.getAuditAction(), req.getEntityType(), req.getEntityType());
+                    req.getAuditAction(), req.getEntityType(), req.getEntityId());
         } catch (Exception e) {
             log.error("Failed to write audit log. action={}, entityType={}, entityId={}",
                     req.getAuditAction(), req.getEntityType(), req.getEntityId(), e);

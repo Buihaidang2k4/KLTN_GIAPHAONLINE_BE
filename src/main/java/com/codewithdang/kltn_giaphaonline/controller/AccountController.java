@@ -13,7 +13,9 @@ import com.codewithdang.kltn_giaphaonline.dto.response.ApiResponse;
 import com.codewithdang.kltn_giaphaonline.dto.response.PageResponse;
 import com.codewithdang.kltn_giaphaonline.enums.CommonEnums;
 import com.codewithdang.kltn_giaphaonline.service.account.AccountService;
+import com.codewithdang.kltn_giaphaonline.utils.ConstantUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,8 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -73,8 +77,22 @@ public class AccountController {
 
     @OperatorAction(CommonEnums.Operator.UPDATE)
     @PutMapping(ApiPath.Account.CHANGE_PASSWORD)
-    ResponseEntity<ApiResponse<Void>> changePass(@PathVariable Long accountId, @Valid @RequestBody ChangePasswordAccountReq req) {
+    ResponseEntity<ApiResponse<Void>> changePass(
+            @PathVariable Long accountId,
+            @Valid @RequestBody ChangePasswordAccountReq req,
+            HttpServletResponse response
+    ) {
         accountService.changePassword(accountId, req);
+
+        // Xóa cookie ngay trên trình duyệt hiện tại
+        ResponseCookie clearAccess = ResponseCookie.from(ConstantUtils.ACCESS_TOKEN, "")
+                .httpOnly(true).secure(true).sameSite("Strict").path("/").maxAge(0).build();
+        ResponseCookie clearRefresh = org.springframework.http.ResponseCookie.from(com.codewithdang.kltn_giaphaonline.utils.ConstantUtils.REFRESH_TOKEN, "")
+                .httpOnly(true).secure(true).sameSite("Strict").path("/").maxAge(0).build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, clearAccess.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, clearRefresh.toString());
+
         return ResponseEntity.ok(
                 ApiResponse.success(200, MessageConstantsVi.Account.CHANGE_PASSWORD_SUCCESS, null)
         );

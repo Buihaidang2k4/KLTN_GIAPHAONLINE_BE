@@ -2,10 +2,7 @@ package com.codewithdang.kltn_giaphaonline.service.auth;
 
 import com.codewithdang.kltn_giaphaonline.dto.event.UserRegisteredEvent;
 import com.codewithdang.kltn_giaphaonline.dto.request.*;
-import com.codewithdang.kltn_giaphaonline.dto.response.LoginRes;
-import com.codewithdang.kltn_giaphaonline.dto.response.IntrospectRes;
-import com.codewithdang.kltn_giaphaonline.dto.response.RegisterRes;
-import com.codewithdang.kltn_giaphaonline.dto.response.FamilyRes;
+import com.codewithdang.kltn_giaphaonline.dto.response.*;
 import com.codewithdang.kltn_giaphaonline.entity.*;
 import com.codewithdang.kltn_giaphaonline.enums.AccountStatus;
 import com.codewithdang.kltn_giaphaonline.enums.FamilyInvitationStatus;
@@ -23,6 +20,7 @@ import com.codewithdang.kltn_giaphaonline.service.family_subscription.FamilySubs
 import com.codewithdang.kltn_giaphaonline.service.forgot_password.PasswordResetTokenService;
 import com.codewithdang.kltn_giaphaonline.service.revoked_token.RevokedTokenService;
 import com.codewithdang.kltn_giaphaonline.service.role.RoleService;
+import com.codewithdang.kltn_giaphaonline.service.session.SessionService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -75,6 +73,7 @@ public class AuthServiceImpl implements AuthService {
     PasswordResetTokenService passwordResetTokenService;
     PasswordResetTokenRepo passwordResetTokenRepo;
     FamilySubscriptionService familySubscriptionService;
+    SessionService sessionService;
 
     @NonFinal
     @Value("${jwt.secret}")
@@ -109,6 +108,12 @@ public class AuthServiceImpl implements AuthService {
 
         String accessToken = buildToken(account, Duration.ofMillis(ACCESS_TOKEN_DURATION), ACCESS_TOKEN);
         String refreshToken = buildToken(account, Duration.ofMillis(REFRESH_TOKEN_DURATION), REFRESH_TOKEN);
+
+        // Lưu active session vào Redis
+        JWTClaimsSet accessClaims = decodeToken(accessToken);
+        String jwtId = accessClaims.getJWTID();
+        long ttlSeconds = ACCESS_TOKEN_DURATION / 1000;
+        sessionService.saveSession(account.getAccountId(), jwtId, account.getEmail(), null, null, ttlSeconds);
 
         ResponseCookie cookieAccess = buildCookie(accessToken, ACCESS_TOKEN);
         ResponseCookie cookieRefresh = buildCookie(refreshToken, REFRESH_TOKEN);
@@ -248,11 +253,16 @@ public class AuthServiceImpl implements AuthService {
         Instant expiryTime = jwtClaimsSet.getExpirationTime().toInstant();
         revokedTokenService.revokedToken(refreshTokenFromCookieOld, expiryTime, request);
 
-        Account account = accountRepo.
-                findByEmail(email).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
+        Account account = accountRepo.findByEmail(email).orElseThrow(() -> new AppException(ErrorCode.ACCOUNT_NOT_EXISTED));
 
         String newAccessToken = buildToken(account, Duration.ofMillis(ACCESS_TOKEN_DURATION), ACCESS_TOKEN);
         String newRefreshToken = buildToken(account, Duration.ofMillis(REFRESH_TOKEN_DURATION), REFRESH_TOKEN);
+
+        // Cập nhật session mới vào Redis
+        JWTClaimsSet accessClaims = decodeToken(newAccessToken);
+        String jwtId = accessClaims.getJWTID();
+        long ttlSeconds = ACCESS_TOKEN_DURATION / 1000;
+        sessionService.saveSession(account.getAccountId(), jwtId, account.getEmail(), null, null, ttlSeconds);
 
         ResponseCookie cookieAccess = buildCookie(newAccessToken, ACCESS_TOKEN);
         ResponseCookie cookieRefresh = buildCookie(newRefreshToken, REFRESH_TOKEN);
@@ -324,7 +334,10 @@ public class AuthServiceImpl implements AuthService {
         account.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         resetToken.setIsSuccess(false);
         accountRepo.save(account);
-        log.info("=== Change Password Successfully  Account Id = {} ===", account.getAccountId());
+
+        // Thu hồi toàn bộ phiên đăng nhập cũ trên mọi thiết bị khi đổi mật khẩu
+        sessionService.removeAllSessions(account.getAccountId());
+        log.info("=== Change Password Successfully  Account Id = {}, Revoked all sessions ===", account.getAccountId());
     }
 
     /***
@@ -374,26 +387,61 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = getTokenFromCookie(request, REFRESH_TOKEN);
         String accessToken = getTokenFromCookie(request, ACCESS_TOKEN);
 
-        if (accessToken != null)
+        if (accessToken != null) {
+            JWTClaimsSet accessClaims = decodeToken(accessToken);
             revokedTokenService.revokedToken(
                     accessToken,
-                    decodeToken(accessToken).getExpirationTime().toInstant(),
+                    accessClaims.getExpirationTime().toInstant(),
                     request
             );
+            // Xóa session khỏi Redis
+            String email = accessClaims.getSubject();
+            accountRepo.findByEmail(email).ifPresent(acc ->
+                    sessionService.removeSession(acc.getAccountId(), accessClaims.getJWTID())
+            );
+        }
 
         // Thu hồi Refresh Token
-        if (refreshToken != null)
+        if (refreshToken != null) {
             revokedTokenService.revokedToken(
                     refreshToken,
                     decodeToken(refreshToken).getExpirationTime().toInstant(),
                     request
             );
+        }
 
         // Clear cookies
         response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(ACCESS_TOKEN).toString());
         response.addHeader(HttpHeaders.SET_COOKIE, clearCookie(REFRESH_TOKEN).toString());
     }
 
+    @Override
+    public void logoutAll(HttpServletRequest request, HttpServletResponse response) throws ParseException {
+        String accessToken = getTokenFromCookie(request, ACCESS_TOKEN);
+        if (accessToken != null) {
+            JWTClaimsSet claims = decodeToken(accessToken);
+            String email = claims.getSubject();
+            accountRepo.findByEmail(email).ifPresent(acc ->
+                    sessionService.removeAllSessions(acc.getAccountId())
+            );
+        }
+        logout(request, response);
+    }
+
+    @Override
+    public List<UserSessionRes> getActiveSessions(HttpServletRequest request) throws ParseException {
+        String accessToken = getTokenFromCookie(request, ACCESS_TOKEN);
+        if (accessToken == null) return Collections.emptyList();
+
+        JWTClaimsSet claims = decodeToken(accessToken);
+        String email = claims.getSubject();
+        String currentJwtId = claims.getJWTID();
+
+        Optional<Account> accountOpt = accountRepo.findByEmail(email);
+        if (accountOpt.isEmpty()) return Collections.emptyList();
+
+        return sessionService.getActiveSessions(accountOpt.get().getAccountId(), currentJwtId);
+    }
 
     private ResponseCookie clearCookie(String cookieName) {
         return ResponseCookie.from(cookieName, "")
@@ -451,6 +499,7 @@ public class AuthServiceImpl implements AuthService {
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(duration).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString())
+                .claim("accountId", account.getAccountId())
                 .claim("scope", buildScope(account))
                 .claim("type", type)
                 .build();

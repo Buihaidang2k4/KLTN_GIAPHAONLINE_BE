@@ -14,6 +14,8 @@ public final class MessageConstantsVi {
         public static final String REFRESH_TOKEN_SUCCESS = "Làm mới phiên đăng nhập thành công";
         public static final String INTROSPECT_SUCCESS = "Kiểm tra token thành công";
         public static final String LOGOUT_SUCCESS = "Đăng xuất thành công";
+        public static final String LOGOUT_ALL_SUCCESS = "Đăng xuất khỏi tất cả các thiết bị thành công";
+        public static final String GET_ACTIVE_SESSIONS_SUCCESS = "Lấy danh sách phiên đăng nhập thành công";
         public static final String VERIFY_ACCOUNT_SUCCESS = "Xác thực tài khoản thành công";
         public static final String RESEND_TOKEN_VERIFY_ACCOUNT_SUCCESS = "Gửi lại mã xác thực tài khoản thành công";
         public static final String FORGOT_PASSWORD_SEND_OTP_SUCCESS = "Gửi mã OTP quên mật khẩu thành công";
